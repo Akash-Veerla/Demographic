@@ -1,61 +1,253 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
-const passport = require('passport');
-const cookieSession = require('cookie-session');
 const csv = require('csv-parser');
-require('dotenv').config();
-require('./config/passport');
+const mongoose = require('mongoose');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
+const MongoStore = require('connect-mongo').default;
+const User = require('./models/User');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT"]
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (origin.startsWith('http://localhost')) return callback(null, true);
+        if (origin === process.env.CLIENT_URL) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
+    methods: ["GET", "POST", "PUT"],
+    credentials: true
   }
 });
 
-io.on('connection', (socket) => {
-  console.log('New client connected', socket.id);
+// --- Database Connection ---
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.error('MongoDB Connection Error:', err));
 
-  socket.on('join', (userId) => {
-    if (userId) {
-      socket.join(userId);
-      console.log(`User ${userId} joined room ${userId}`);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
-});
-
-// Middleware
+// --- Middleware ---
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (origin.startsWith('http://localhost')) return callback(null, true);
+        if (origin === process.env.CLIENT_URL) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 app.use(express.json());
-app.use(
-  cookieSession({
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    keys: [process.env.COOKIE_KEY || 'secret_key']
-  })
-);
+
+// --- Session Setup ---
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'dev_secret',
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    cookie: {
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
+    }
+}));
+
+// --- Passport Setup ---
 app.use(passport.initialize());
 app.use(passport.session());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/mapData')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Could not connect to MongoDB', err));
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        let user = await User.findOne({ googleId: profile.id });
+        if (!user) {
+            user = await User.create({
+                googleId: profile.id,
+                displayName: profile.displayName,
+                email: profile.emails?.[0]?.value,
+                profilePhoto: profile.photos?.[0]?.value
+            });
+        } else {
+            user.lastLogin = Date.now();
+            await user.save();
+        }
+        return done(null, user);
+    } catch (err) {
+        return done(err, null);
+    }
+}));
 
-// Load Interests
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
+});
+
+// --- Socket.io Logic ---
+// Map<socketId, userId> to track active connections
+const socketToUser = new Map();
+
+io.on('connection', (socket) => {
+    console.log('New client connected', socket.id);
+
+    socket.on('register_user', async (userId) => {
+        if (!userId) return;
+        socketToUser.set(socket.id, userId);
+        socket.join(userId); // Join a room named after the userId for private messaging
+        console.log(`Socket ${socket.id} mapped to User ${userId}`);
+
+        // Trigger an initial broadcast for this user
+        broadcastNearbyUsers(socket, userId);
+    });
+
+    socket.on('update_location', async (data) => {
+        // data: { lat, lng }
+        const userId = socketToUser.get(socket.id);
+        if (!userId || !data) return;
+
+        try {
+            // Update DB
+            await User.findByIdAndUpdate(userId, {
+                location: {
+                    type: 'Point',
+                    coordinates: [data.lng, data.lat]
+                }
+            });
+            // Broadcast new nearby users
+            broadcastNearbyUsers(socket, userId);
+        } catch (err) {
+            console.error('Error updating location:', err);
+        }
+    });
+
+    socket.on('join_chat', ({ targetUserId }) => {
+       const currentUserId = socketToUser.get(socket.id);
+       if (!currentUserId) return;
+
+       const roomId = [currentUserId, targetUserId].sort().join('_');
+       socket.join(roomId);
+
+       // Find the target user's socket(s)
+       // Simplified: Assuming we can emit to the user's room (since we joined `userId` room on register)
+       io.to(targetUserId).emit('chat_request', {
+           from: currentUserId,
+           roomId
+       });
+       socket.emit('chat_joined', { roomId });
+    });
+
+    socket.on('accept_chat', ({ roomId }) => {
+        socket.join(roomId);
+    });
+
+    socket.on('send_message', ({ roomId, message }) => {
+        const userId = socketToUser.get(socket.id);
+        io.to(roomId).emit('receive_message', {
+            text: message,
+            senderId: userId,
+            timestamp: new Date()
+        });
+    });
+
+    socket.on('disconnect', () => {
+        socketToUser.delete(socket.id);
+        console.log('Client disconnected', socket.id);
+    });
+});
+
+async function broadcastNearbyUsers(socket, userId) {
+    try {
+        const currentUser = await User.findById(userId);
+        if (!currentUser || !currentUser.location || !currentUser.location.coordinates) return;
+
+        const [lng, lat] = currentUser.location.coordinates;
+
+        // Find users within 10km
+        const nearbyUsers = await User.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [lng, lat]
+                    },
+                    $maxDistance: 10000 // 10km
+                }
+            },
+            _id: { $ne: userId } // Exclude self
+        }).select('displayName interests location profilePhoto'); // Select specific fields
+
+        // Filter by shared interests (Javascript logic for now, or could use aggregation)
+        // If user has no interests, they see no one? Or everyone?
+        // Prompt implies: "Ensure the 'Nearby Users' logic has data to work with immediately."
+        // We will filter if both parties have interests.
+
+        const relevantUsers = nearbyUsers.filter(otherUser => {
+            const sharedInterests = currentUser.interests.filter(i =>
+                otherUser.interests.some(oi => oi === i || oi.name === i) // Handle string or object structure if needed
+            );
+            return sharedInterests.length > 0;
+        });
+
+        socket.emit('nearby_users', relevantUsers);
+    } catch (err) {
+        console.error('Error broadcasting nearby users:', err);
+    }
+}
+
+
+// --- Routes ---
+
+// Auth Routes
+app.get('/auth/google', passport.authenticate('google', {
+    scope: ['profile', 'email']
+}));
+
+app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: process.env.CLIENT_URL }),
+    (req, res) => {
+        // Redirect to client
+        res.redirect(process.env.CLIENT_URL);
+    }
+);
+
+app.get('/api/current_user', (req, res) => {
+    res.send(req.user);
+});
+
+app.get('/api/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) return res.status(500).send(err);
+        res.redirect(process.env.CLIENT_URL);
+    });
+});
+
+// User Updates
+app.post('/api/user/interests', async (req, res) => {
+    if (!req.user) return res.status(401).send('Unauthorized');
+    try {
+        const { interests } = req.body; // Expecting array of strings
+        await User.findByIdAndUpdate(req.user.id, { interests });
+        res.send(await User.findById(req.user.id));
+    } catch (err) {
+        res.status(500).send(err);
+    }
+});
+
+// Load Interests CSV
 const interests = [];
 fs.createReadStream(path.join(__dirname, 'Interests.csv'))
   .pipe(csv())
@@ -70,46 +262,8 @@ fs.createReadStream(path.join(__dirname, 'Interests.csv'))
     console.log('Interests loaded');
   });
 
-app.set('interests', interests);
-app.set('io', io);
-
-// Legacy Location Logic
-const JSON_FILE_PATH = path.join(__dirname, 'locations.json');
-function handleJsonUpdate(newData) {
-  fs.readFile(JSON_FILE_PATH, 'utf8', (err, data) => {
-    let jsonArray = [];
-    if (!err && data) {
-      try {
-        jsonArray = JSON.parse(data);
-      } catch (e) {
-        jsonArray = [];
-      }
-    }
-    jsonArray.push(newData);
-    fs.writeFile(JSON_FILE_PATH, JSON.stringify(jsonArray, null, 2), (writeErr) => {
-      if (writeErr) console.error("Error writing JSON:", writeErr);
-    });
-  });
-}
-
-// Route Imports
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/user');
-const chatRoutes = require('./routes/chat');
-
-app.use('/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/chats', chatRoutes);
-
-// Legacy Route for Search Logging
-app.post('/api/locations', (req, res) => {
-  handleJsonUpdate(req.body);
-  res.status(200).send({ status: 'saved' });
-});
-
-// Get Interests Endpoint
 app.get('/api/interests', (req, res) => {
-  res.json(interests);
+    res.json(interests);
 });
 
 const PORT = process.env.PORT || 3000;

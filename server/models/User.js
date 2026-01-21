@@ -1,54 +1,44 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const userSchema = new mongoose.Schema({
-  googleId: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  name: {
-    type: String,
-    required: true
-  },
-  email: String,
-  about: {
-    type: String,
-    default: ''
-  },
-  photo: String,
-  interests: {
-    type: [String],
-    default: []
-  },
-  location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point'
+const userSchema = new Schema({
+    googleId: {
+        type: String,
+        required: true,
+        unique: true
     },
-    coordinates: {
-      type: [Number], // [longitude, latitude]
-      default: [0, 0]
-    }
-  },
-  lastActive: {
-    type: Date,
-    default: Date.now
-  },
-  // To track who we have already notified about to avoid spamming
-  notifiedMatches: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+    displayName: {
+        type: String,
+        required: true
     },
-    timestamp: {
-      type: Date,
-      default: Date.now
+    email: {
+        type: String
+    },
+    profilePhoto: {
+        type: String
+    },
+    interests: {
+        type: [String],
+        default: []
+    },
+    location: {
+        type: {
+            type: String, // Don't do `{ location: { type: String } }`
+            enum: ['Point'], // 'location.type' must be 'Point'
+            default: 'Point'
+        },
+        coordinates: {
+            type: [Number],
+            default: [0, 0] // [longitude, latitude]
+        }
+    },
+    lastLogin: {
+        type: Date,
+        default: Date.now
     }
-  }]
 }, { timestamps: true });
 
-// Create a geospatial index on the location field
+// Index for geospatial queries
 userSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('User', userSchema);

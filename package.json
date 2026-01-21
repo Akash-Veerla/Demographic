@@ -2,6 +2,7 @@
   "name": "social-map-app",
   "version": "1.0.0",
   "description": "Social Map Application (MERN)",
+  "license": "MIT",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
@@ -9,16 +10,17 @@
     "dev": "concurrently \"npm start\" \"cd client && npm run dev\""
   },
   "dependencies": {
-    "cookie-session": "^2.1.1",
+    "concurrently": "^8.2.0",
+    "connect-mongo": "^6.0.0",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "mongoose": "^9.1.4",
+    "express-session": "^1.18.2",
+    "mongoose": "^9.1.5",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "socket.io": "^4.8.3",
-    "concurrently": "^8.2.0"
+    "socket.io": "^4.8.3"
   },
   "engines": {
     "node": ">=18.x"
