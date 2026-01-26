@@ -6,8 +6,8 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "build": "cd client && npm install && npm run build && cd .. && rm -rf dist && mv client/dist dist",
-    "vercel-build": "npm run build",
+    "build": "cd client && npm ci && npm run build && rm -rf ../dist && mv dist ../dist",
+    "vercel-build": "cd client && npm install && npm run build",
     "dev": "concurrently \"npm start\" \"cd client && npm run dev\""
   },
   "dependencies": {

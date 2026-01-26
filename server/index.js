@@ -17,10 +17,6 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
     console.error('FATAL: MONGO_URI environment variable is not defined.');
-    // In production, we must exit. In dev, we might survive if just testing UI, but for this app DB is critical.
-    if (process.env.NODE_ENV === 'production') {
-        process.exit(1);
-    }
 }
 
 const app = express();
