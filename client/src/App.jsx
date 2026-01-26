@@ -8,9 +8,17 @@ import Login from './components/Login';
 import InterestModal from './components/InterestModal';
 import { Box, CircularProgress } from '@mui/material';
 
+const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated } = useSelector(state => state.auth);
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+    return children;
+};
+
 const App = () => {
     const dispatch = useDispatch();
-    const { user, isAuthenticated, loading } = useSelector(state => state.auth);
+    const { loading } = useSelector(state => state.auth);
 
     useEffect(() => {
         dispatch(fetchCurrentUser());
@@ -24,19 +32,23 @@ const App = () => {
         );
     }
 
-    if (!isAuthenticated) {
-        return <Login />;
-    }
-
     return (
         <BrowserRouter>
-            <Layout>
-                <InterestModal />
-                <Routes>
-                    <Route path="/" element={<MapComponent />} />
-                    <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-            </Layout>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                    path="/"
+                    element={
+                        <ProtectedRoute>
+                            <Layout>
+                                <InterestModal />
+                                <MapComponent />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
         </BrowserRouter>
     );
 };
