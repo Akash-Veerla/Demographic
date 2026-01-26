@@ -1,10 +1,12 @@
-# Demographic - Social Map Application (Guest Mode)
+# Demographic - Social Map Application (Production)
 
-A real-time location-based social app connecting users via shared interests without account registration.
+A real-time location-based social app connecting users via shared interests using Google Authentication.
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18 or higher)
+- MongoDB Atlas Account
+- Google Cloud Console Project (OAuth credentials)
 
 ## Project Structure
 
@@ -33,14 +35,22 @@ A real-time location-based social app connecting users via shared interests with
 
 ## Configuration
 
-Create a `.env` file in the root directory (optional, defaults provided):
+Create a `.env` file in the root directory:
 
 ```env
-# Client URL (for CORS)
-CLIENT_URL=http://localhost:5173
+# MongoDB & Server Config
+MONGO_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/?appName=Cluster0
+PORT=10000
+SESSION_SECRET=your_secure_session_secret
 
-# Server Port
-PORT=3000
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+CALLBACK_URL=http://localhost:10000/auth/google/callback
+
+# URLs for CORS and Redirects
+CLIENT_URL=http://localhost:5173
+SERVER_URL=http://localhost:10000
 ```
 
 ## Running Locally
@@ -51,30 +61,79 @@ To run both the backend and frontend concurrently:
 npm run dev
 ```
 
-- **Backend:** http://localhost:3000
+- **Backend:** http://localhost:10000
 - **Frontend:** http://localhost:5173
-
-## How it Works
-
-1.  **Guest Login:** Users enter their name and select interests in the browser. This data is stored locally.
-2.  **Real-time Map:** The app broadcasts your location to the server (in-memory only).
-3.  **Discovery:** The server finds other users within 10km who share at least one interest.
-4.  **Chat:** Users can initiate direct chats with nearby users via ephemeral socket connections.
 
 ## Deployment
 
 ### Backend (Render)
 
 1.  Create a **Web Service** on Render.
-2.  Set `Build Command` to empty or `npm install`.
-3.  Set `Start Command` to `node server/index.js`.
-4.  Environment Variables:
-    - `CLIENT_URL`: Your production frontend URL.
+2.  Set `Build Command`: `npm install`
+3.  Set `Start Command`: `node server/index.js`
+4.  Add Environment Variables from the Ledger below.
 
 ### Frontend (Vercel)
 
 1.  Import project.
-2.  **Build Command:** `npm run build`
-3.  **Output Directory:** `dist`
-4.  **Environment Variables:**
-    - `VITE_API_URL`: Your production backend URL.
+2.  **Root Directory:** `.` (Repo Root)
+3.  **Build Command:** `npm install && cd client && npm install && npm run build`
+4.  **Output Directory:** `client/dist`
+5.  **Environment Variables:**
+    - `VITE_SERVER_URL`: Your production backend URL (e.g., https://your-app.onrender.com)
+
+---
+
+## Development Ledger
+
+### Files Modified
+
+1.  **`server/index.js`**:
+    -   Updated CORS configuration to dynamically allow `CLIENT_URL` and localhost.
+    -   Configured `mongoose.connect` with `MONGO_URI` and added error handling (process exit on failure).
+    -   Updated Passport Google Strategy to use `CALLBACK_URL`.
+    -   Implemented `requireAuth` middleware for protected routes (`/api/interests`, `/api/user/interests`).
+    -   Ensured server listens on `0.0.0.0` and `PORT`.
+    -   Removed implicit guest handling.
+
+2.  **`client/src/App.jsx`**:
+    -   Refactored to use `ProtectedRoute`.
+    -   Implemented strict redirect: Unauthenticated users are redirected to `/login`.
+    -   Added `/login` route.
+
+3.  **`client/src/components/Chat.jsx`**:
+    -   **Deleted**: Legacy guest mode chat component replaced by `ChatOverlay.jsx` usage in `Map.jsx`.
+
+4.  **`client/src/store/authSlice.js`**:
+    -   Verified removal of guest logic.
+
+5.  **`package.json`**:
+    -   Updated `build` script to handle client/server dependency installation and build for Vercel monorepo structure.
+
+6.  **`vercel.json`**:
+    -   Updated `outputDirectory` to `client/dist`.
+    -   Configured rewrites for SPA routing.
+
+### Transition Fixes
+
+-   **Guest Mode Removal**: Completely stripped the "Guest" access path. The application now strictly enforces Google OAuth.
+-   **Authentication Enforcement**: Added server-side middleware to reject unauthenticated API requests with 401. Added client-side routing guards to redirect to login.
+-   **MongoDB Connectivity**: Switched to environment-variable based connection with strict error handling to ensure production readiness.
+-   **Deployment Compatibility**:
+    -   **Render**: Fixed port binding (0.0.0.0) and dynamic callback URLs.
+    -   **Vercel**: Configured build scripts and output directories to support the `client/` subdirectory structure within the root repo.
+
+### Environment Variables Checklist
+
+#### Render (Backend)
+-   `MONGO_URI`: Connection string for MongoDB Atlas.
+-   `PORT`: `10000` (or as assigned).
+-   `SESSION_SECRET`: Secret for session signing.
+-   `GOOGLE_CLIENT_ID`: OAuth Client ID.
+-   `GOOGLE_CLIENT_SECRET`: OAuth Client Secret.
+-   `CALLBACK_URL`: `https://<your-render-url>/auth/google/callback`
+-   `CLIENT_URL`: `https://<your-vercel-url>`
+-   `SERVER_URL`: `https://<your-render-url>`
+
+#### Vercel (Frontend)
+-   `VITE_SERVER_URL`: `https://<your-render-url>`

@@ -17,6 +17,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
     console.error('FATAL: MONGO_URI environment variable is not defined.');
+    process.exit(1);
 }
 
 const app = express();
@@ -25,8 +26,10 @@ const io = socketIo(server, {
   cors: {
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (origin.startsWith('http://localhost')) return callback(null, true);
-        if (origin === process.env.CLIENT_URL) return callback(null, true);
+        const allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000'];
+        if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
+            return callback(null, true);
+        }
         return callback(new Error('Not allowed by CORS'));
     },
     methods: ["GET", "POST", "PUT"],
@@ -36,14 +39,19 @@ const io = socketIo(server, {
 
 mongoose.connect(mongoUri)
     .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+    .catch(err => {
+        console.error('MongoDB Connection Error:', err);
+        process.exit(1);
+    });
 
 // --- Middleware ---
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (origin.startsWith('http://localhost')) return callback(null, true);
-        if (origin === process.env.CLIENT_URL) return callback(null, true);
+        const allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000'];
+        if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
+            return callback(null, true);
+        }
         return callback(new Error('Not allowed by CORS'));
     },
     credentials: true
@@ -68,7 +76,7 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: (process.env.SERVER_URL || '') + '/auth/google/callback',
+    callbackURL: process.env.CALLBACK_URL,
     proxy: true
 }, async (accessToken, refreshToken, profile, done) => {
     try {
@@ -102,6 +110,14 @@ passport.deserializeUser(async (id, done) => {
         done(err, null);
     }
 });
+
+// --- Auth Middleware ---
+const requireAuth = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.status(401).send('Unauthorized');
+};
 
 // --- Socket.io Logic ---
 // Map<socketId, userId> to track active connections
@@ -203,14 +219,10 @@ async function broadcastNearbyUsers(socket, userId) {
             _id: { $ne: userId } // Exclude self
         }).select('displayName interests location profilePhoto'); // Select specific fields
 
-        // Filter by shared interests (Javascript logic for now, or could use aggregation)
-        // If user has no interests, they see no one? Or everyone?
-        // Prompt implies: "Ensure the 'Nearby Users' logic has data to work with immediately."
-        // We will filter if both parties have interests.
-
+        // Filter by shared interests
         const relevantUsers = nearbyUsers.filter(otherUser => {
             const sharedInterests = currentUser.interests.filter(i =>
-                otherUser.interests.some(oi => oi === i || oi.name === i) // Handle string or object structure if needed
+                otherUser.interests.some(oi => oi === i || oi.name === i)
             );
             return sharedInterests.length > 0;
         });
@@ -238,6 +250,7 @@ app.get('/auth/google/callback',
 );
 
 app.get('/api/current_user', (req, res) => {
+    if (!req.user) return res.status(401).send('');
     res.send(req.user);
 });
 
@@ -248,9 +261,8 @@ app.get('/api/logout', (req, res) => {
     });
 });
 
-// User Updates
-app.post('/api/user/interests', async (req, res) => {
-    if (!req.user) return res.status(401).send('Unauthorized');
+// User Updates - Protected
+app.post('/api/user/interests', requireAuth, async (req, res) => {
     try {
         const { interests } = req.body; // Expecting array of strings
         await User.findByIdAndUpdate(req.user.id, { interests });
@@ -275,9 +287,10 @@ fs.createReadStream(path.join(__dirname, 'Interests.csv'))
     console.log('Interests loaded');
   });
 
-app.get('/api/interests', (req, res) => {
+// Interests - Protected
+app.get('/api/interests', requireAuth, (req, res) => {
     res.json(interests);
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
