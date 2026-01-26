@@ -17,7 +17,7 @@ const Login = () => {
         }}>
             <Paper elevation={3} sx={{ p: 4, textAlign: 'center', maxWidth: 400 }}>
                 <Typography variant="h4" gutterBottom>
-                    Hotspot Connect
+                    KON-NECT
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3 }}>
                     Connect with people nearby who share your interests.
