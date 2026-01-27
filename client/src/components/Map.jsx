@@ -7,8 +7,8 @@ import OSM from 'ol/source/OSM';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Feature } from 'ol';
-import { Point, Circle } from 'ol/geom';
-import { Style, Circle as CircleStyle, Fill, Stroke, Text } from 'ol/style';
+import { Point, Circle as GeomCircle } from 'ol/geom';
+import { Style, Circle as StyleCircle, Fill, Stroke, Text } from 'ol/style';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Box, Paper, InputBase, IconButton, List, ListItem, ListItemText, Divider, Typography, Button, Avatar, Slider } from '@mui/material';
 import { Search, Crosshair, MessageSquare } from 'lucide-react';
@@ -76,7 +76,7 @@ const MapComponent = () => {
                 const color = isMatch ? '#4caf50' : '#ff9800'; // Green for match, Yellow for others
 
                 feature.setStyle(new Style({
-                    image: new CircleStyle({
+                    image: new StyleCircle({
                         radius: 8,
                         fill: new Fill({ color: color }),
                         stroke: new Stroke({ color: 'white', width: 2 })
@@ -157,7 +157,7 @@ const MapComponent = () => {
             geometry: new Point(userCoord)
         });
         selfFeature.setStyle(new Style({
-            image: new CircleStyle({
+            image: new StyleCircle({
                 radius: 10,
                 fill: new Fill({ color: '#2196f3' }), // Blue
                 stroke: new Stroke({ color: 'white', width: 3 })
@@ -196,7 +196,7 @@ const MapComponent = () => {
         const scale = 1 / Math.cos(lat * Math.PI / 180);
 
         const circleFeature = new Feature({
-            geometry: new Circle(userCoord, (radius * 1000) * scale) // Adjust for latitude distortion
+            geometry: new GeomCircle(userCoord, (radius * 1000) * scale) // Adjust for latitude distortion
         });
         circleFeature.setStyle(new Style({
             fill: new Fill({ color: 'rgba(33, 150, 243, 0.1)' }), // Blue with 0.1 opacity
