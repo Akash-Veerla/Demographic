@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Button, TextField, Typography, Paper, Alert, Divider, Link, InputAdornment, IconButton } from '@mui/material';
+import { Box, Button, TextField, Typography, Paper, Alert, Divider, Link, InputAdornment, IconButton, CircularProgress } from '@mui/material';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import { loginUser } from '../store/authSlice';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 const Login = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error } = useSelector(state => state.auth);
+    const { loading, error, isAuthenticated } = useSelector(state => state.auth);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -16,16 +16,21 @@ const Login = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
 
+    // Reliable navigation effect
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/');
+        }
+    }, [isAuthenticated, navigate]);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const result = await dispatch(loginUser(formData));
-        if (loginUser.fulfilled.match(result)) {
-            navigate('/');
-        }
+        dispatch(loginUser(formData));
+        // Navigation handled by useEffect
     };
 
     const handleGoogleLogin = () => {
@@ -38,13 +43,26 @@ const Login = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            bgcolor: '#f5f5f5'
+            bgcolor: 'transparent' // Handled by global background
         }}>
-            <Paper elevation={3} sx={{ p: 4, textAlign: 'center', maxWidth: 400, width: '100%' }}>
-                <Typography variant="h4" gutterBottom>
+            <Paper
+                elevation={10}
+                sx={{
+                    p: 4,
+                    textAlign: 'center',
+                    maxWidth: 400,
+                    width: '100%',
+                    borderRadius: 3,
+                    background: 'rgba(30, 41, 59, 0.7)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'white'
+                }}
+            >
+                <Typography variant="h4" fontWeight="800" gutterBottom sx={{ background: 'linear-gradient(45deg, #38bdf8, #818cf8)', backgroundClip: 'text', textFillColor: 'transparent' }}>
                     KON-NECT
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3 }}>
+                <Typography variant="body1" sx={{ mb: 3, color: 'rgba(255,255,255,0.7)' }}>
                     Connect with people nearby who share your interests.
                 </Typography>
 
@@ -60,6 +78,16 @@ const Login = () => {
                         onChange={handleChange}
                         margin="normal"
                         required
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                color: 'white',
+                                '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                                '&:hover fieldset': { borderColor: '#38bdf8' },
+                                '&.Mui-focused fieldset': { borderColor: '#38bdf8' },
+                            },
+                            '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                            '& .MuiInputLabel-root.Mui-focused': { color: '#38bdf8' }
+                        }}
                     />
                     <TextField
                         fullWidth
@@ -77,11 +105,22 @@ const Login = () => {
                                         aria-label="toggle password visibility"
                                         onClick={() => setShowPassword(!showPassword)}
                                         edge="end"
+                                        sx={{ color: 'rgba(255,255,255,0.7)' }}
                                     >
                                         {showPassword ? <EyeOff /> : <Eye />}
                                     </IconButton>
                                 </InputAdornment>
                             )
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                color: 'white',
+                                '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                                '&:hover fieldset': { borderColor: '#38bdf8' },
+                                '&.Mui-focused fieldset': { borderColor: '#38bdf8' },
+                            },
+                            '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                            '& .MuiInputLabel-root.Mui-focused': { color: '#38bdf8' }
                         }}
                     />
 
@@ -90,15 +129,22 @@ const Login = () => {
                         variant="contained"
                         fullWidth
                         size="large"
-                        sx={{ mt: 2 }}
+                        sx={{
+                            mt: 3,
+                            mb: 2,
+                            bgcolor: '#38bdf8',
+                            color: '#0f172a',
+                            fontWeight: 'bold',
+                            '&:hover': { bgcolor: '#7dd3fc' }
+                        }}
                         disabled={loading}
                     >
-                        {loading ? 'Logging in...' : 'Login'}
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
                     </Button>
                 </form>
 
                 <Box sx={{ my: 2 }}>
-                    <Divider>OR</Divider>
+                    <Divider sx={{ '&::before, &::after': { borderColor: 'rgba(255,255,255,0.2)' }, color: 'rgba(255,255,255,0.5)' }}>OR</Divider>
                 </Box>
 
                 <Button
@@ -106,13 +152,14 @@ const Login = () => {
                     startIcon={<LogIn />}
                     onClick={handleGoogleLogin}
                     fullWidth
+                    sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' } }}
                 >
                     Login with Google
                 </Button>
 
                 <Box sx={{ mt: 3 }}>
-                    <Typography variant="body2">
-                        Don't have an account? <Link href="/register">Register</Link>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                        Don't have an account? <Link href="/register" sx={{ color: '#38bdf8', textDecoration: 'none' }}>Register</Link>
                     </Typography>
                 </Box>
             </Paper>
