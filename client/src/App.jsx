@@ -6,13 +6,14 @@ import MapComponent from './components/Map';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
+import Landing from './components/Landing';
 import InterestModal from './components/InterestModal';
 import { Box, CircularProgress } from '@mui/material';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated } = useSelector(state => state.auth);
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/welcome" replace />;
     }
     return children;
 };
@@ -36,6 +37,7 @@ const App = () => {
     return (
         <BrowserRouter>
             <Routes>
+                <Route path="/welcome" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route

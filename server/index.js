@@ -2,8 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const http = require('http');
-const socketIo = require('socket.io');
 const csv = require('csv-parser');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
@@ -39,7 +37,7 @@ if (!mongoUri) {
                 const encodedPass = encodeURIComponent(pass);
                 // Reconstruct only if password changed (encoding needed)
                 if (pass !== encodedPass) {
-                    mongoUri = `mongodb+srv://${user}:${encodedPass}@${parts[1]}`;
+                    mongoUri = `mongodb + srv://${user}:${encodedPass}@${parts[1]}`;
                     console.log("Encoded special characters in MongoDB password.");
                 }
             }
@@ -194,39 +192,74 @@ io.on('connection', (socket) => {
     });
 });
 
-async function broadcastNearbyUsers(socket, userId) {
+// --- New API Routes for Dynamic Discovery ---
+
+// Get Nearby Users (Dynamic Radius)
+app.get('/api/users/nearby', requireAuth, async (req, res) => {
     try {
-        const currentUser = await User.findById(userId);
-        if (!currentUser || !currentUser.location || !currentUser.location.coordinates) return;
+        const { lat, lng, radius, interests } = req.query;
+        const userId = req.user.id;
 
-        const [lng, lat] = currentUser.location.coordinates;
+        if (!lat || !lng) {
+            return res.status(400).json({ error: 'Latitude and Longitude required' });
+        }
 
-        // Find users within 10km
+        const maxDistance = (radius ? parseFloat(radius) : 10) * 1000; // Default 10km, convert to meters
+
+        // Find users within radius
+        // Note: $near requires geospatial index (added in User model)
         const nearbyUsers = await User.find({
             location: {
                 $near: {
                     $geometry: {
                         type: 'Point',
-                        coordinates: [lng, lat]
+                        coordinates: [parseFloat(lng), parseFloat(lat)]
                     },
-                    $maxDistance: 10000 // 10km
+                    $maxDistance: maxDistance
                 }
             },
             _id: { $ne: userId } // Exclude self
-        }).select('displayName interests location profilePhoto'); // Select specific fields
+        }).select('displayName interests location profilePhoto bio');
 
-        // Filter by shared interests
-        const relevantUsers = nearbyUsers.filter(otherUser => {
-            const sharedInterests = currentUser.interests.filter(i =>
-                otherUser.interests.some(oi => oi === i || oi.name === i)
+        // Optional Interest Filtering
+        let filteredUsers = nearbyUsers;
+        if (interests && interests !== 'all') {
+            const userInterests = interests.split(',');
+            filteredUsers = nearbyUsers.filter(u =>
+                u.interests.some(i => userInterests.includes(typeof i === 'string' ? i : i.name))
             );
-            return sharedInterests.length > 0;
-        });
+        }
 
-        socket.emit('nearby_users', relevantUsers);
+        res.json(filteredUsers);
     } catch (err) {
-        console.error('Error broadcasting nearby users:', err);
+        console.error('Error fetching nearby users:', err);
+        res.status(500).json({ error: 'Server error' });
     }
+});
+
+// Get Global Users (For when no one is nearby or explicit global search)
+app.get('/api/users/global', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        // Fetch recent 50 users globally, excluding self
+        const globalUsers = await User.find({ _id: { $ne: userId } })
+            .sort({ lastLogin: -1 }) // active users first
+            .limit(50)
+            .select('displayName interests location profilePhoto bio');
+
+        res.json(globalUsers);
+    } catch (err) {
+        console.error('Error fetching global users:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+
+async function broadcastNearbyUsers(socket, userId) {
+    // Deprecated in favor of REST API for map polling/radius, 
+    // but kept for initial socket connection if needed.
+    // For now, doing nothing to avoid conflicting with the new frontend logic
+    // which handles fetching data via API.
 }
 
 

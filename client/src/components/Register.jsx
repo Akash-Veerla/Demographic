@@ -123,30 +123,30 @@ const Register = () => {
                         rows={3}
                     />
 
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel>Interests</InputLabel>
-                        <Select
-                            multiple
-                            value={formData.interests}
-                            onChange={handleInterestChange}
-                            input={<OutlinedInput label="Interests" />}
-                            renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
-                                        <Chip key={value} label={value} />
-                                    ))}
-                                </Box>
-                            )}
-                        >
-                            {INTEREST_CATEGORIES.map((name) => (
-                                <MenuItem key={name} value={name}>
-                                    {name}
-                                </MenuItem>
-                            ))}
-                            {/* Allow selecting previously added custom interests if needed,
-                                but mainly they are added via the text field below */}
-                        </Select>
-                    </FormControl>
+                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                        Select Interests (at least one)
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                        {INTEREST_CATEGORIES.map((interest) => (
+                            <Chip
+                                key={interest}
+                                label={interest}
+                                onClick={() => {
+                                    const selected = formData.interests.includes(interest);
+                                    let newInterests;
+                                    if (selected) {
+                                        newInterests = formData.interests.filter(i => i !== interest);
+                                    } else {
+                                        newInterests = [...formData.interests, interest];
+                                    }
+                                    setFormData({ ...formData, interests: newInterests });
+                                }}
+                                color={formData.interests.includes(interest) ? "primary" : "default"}
+                                variant={formData.interests.includes(interest) ? "filled" : "outlined"}
+                                sx={{ cursor: 'pointer' }}
+                            />
+                        ))}
+                    </Box>
 
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 2 }}>
                         <TextField
