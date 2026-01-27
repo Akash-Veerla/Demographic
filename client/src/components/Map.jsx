@@ -82,12 +82,11 @@ const MapComponent = () => {
                         stroke: new Stroke({ color: 'white', width: 2 })
                     }),
                     text: new Text({
-                        text: u.displayName, // Only show name on hover/click? Or always? Keeping always for now
+                        text: u.displayName,
                         offsetY: -15,
                         font: '12px Roboto, sans-serif',
                         fill: new Fill({ color: '#333' }),
-                        backgroundFill: new Fill({ color: 'rgba(255,255,255,0.8)' }),
-                        padding: [2, 2, 2, 2]
+                        stroke: new Stroke({ color: 'white', width: 2 })
                     })
                 }));
                 userSource.addFeature(feature);
