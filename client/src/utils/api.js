@@ -5,6 +5,8 @@ const api = axios.create({
     withCredentials: true // Still kept for legacy or potential future cookie use, though we are moving to JWT in headers
 });
 
+console.log('API Base URL:', api.defaults.baseURL); // Debugging: Check if VITE_SERVER_URL is loaded
+
 // Add a request interceptor to include the JWT token
 api.interceptors.request.use(
     (config) => {
