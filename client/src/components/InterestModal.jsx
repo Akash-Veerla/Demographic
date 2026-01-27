@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateInterests } from '../store/authSlice';
 import { Dialog, DialogTitle, DialogContent, Box, TextField, Button, Autocomplete, Chip, Typography } from '@mui/material';
-import axios from 'axios';
+import api from '../utils/api';
 
 const InterestModal = () => {
     const dispatch = useDispatch();
@@ -22,8 +22,8 @@ const InterestModal = () => {
     useEffect(() => {
         const fetchInterests = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
-                const res = await axios.get(`${apiUrl}/api/interests`);
+                // Use the configured api instance which handles base URL and headers
+                const res = await api.get('/api/interests');
                 setAvailableInterests(res.data);
             } catch (err) {
                 console.error("Failed to load interests", err);
