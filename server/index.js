@@ -52,19 +52,19 @@ if (!mongoUri) {
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: {
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        const clientUrl = (process.env.CLIENT_URL || "https://demographic-alpha.vercel.app").replace(/\/$/, "");
-        const allowedOrigins = [clientUrl, 'https://demographic-alpha.vercel.app', 'http://localhost:5173', 'http://localhost:3000'];
-        if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
-            return callback(null, true);
-        }
-        return callback(new Error('Not allowed by CORS'));
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true
-  }
+    cors: {
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            const clientUrl = (process.env.CLIENT_URL || "https://demographic-alpha.vercel.app").replace(/\/$/, "");
+            const allowedOrigins = [clientUrl, 'https://demographic-alpha.vercel.app', 'http://localhost:5173', 'http://localhost:5000', 'http://localhost:3000'];
+            if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
+                return callback(null, true);
+            }
+            return callback(new Error('Not allowed by CORS'));
+        },
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        credentials: true
+    }
 });
 
 console.log("Attempting to connect to MongoDB Atlas...");
@@ -152,26 +152,26 @@ io.on('connection', (socket) => {
     });
 
     socket.on('join_chat', async ({ targetUserId }) => {
-       const currentUserId = socketToUser.get(socket.id);
-       if (!currentUserId) return;
+        const currentUserId = socketToUser.get(socket.id);
+        if (!currentUserId) return;
 
-       try {
-           const currentUser = await User.findById(currentUserId);
-           const fromName = currentUser ? currentUser.displayName : 'User';
+        try {
+            const currentUser = await User.findById(currentUserId);
+            const fromName = currentUser ? currentUser.displayName : 'User';
 
-           const roomId = [currentUserId, targetUserId].sort().join('_');
-           socket.join(roomId);
+            const roomId = [currentUserId, targetUserId].sort().join('_');
+            socket.join(roomId);
 
-           // Find the target user's socket(s)
-           io.to(targetUserId).emit('chat_request', {
-               from: currentUserId,
-               fromName,
-               roomId
-           });
-           socket.emit('chat_joined', { roomId });
-       } catch (err) {
-           console.error('Error joining chat:', err);
-       }
+            // Find the target user's socket(s)
+            io.to(targetUserId).emit('chat_request', {
+                from: currentUserId,
+                fromName,
+                roomId
+            });
+            socket.emit('chat_joined', { roomId });
+        } catch (err) {
+            console.error('Error joining chat:', err);
+        }
     });
 
     socket.on('accept_chat', ({ roomId }) => {
@@ -258,22 +258,22 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
 // Load Interests CSV
 const interests = [];
 fs.createReadStream(path.join(__dirname, 'Interests.csv'))
-  .pipe(csv())
-  .on('data', (row) => {
-     Object.keys(row).forEach(category => {
-         if(row[category]) {
-             interests.push({ category, name: row[category] });
-         }
-     });
-  })
-  .on('end', () => {
-    console.log('Interests loaded');
-  });
+    .pipe(csv())
+    .on('data', (row) => {
+        Object.keys(row).forEach(category => {
+            if (row[category]) {
+                interests.push({ category, name: row[category] });
+            }
+        });
+    })
+    .on('end', () => {
+        console.log('Interests loaded');
+    });
 
 // Interests - Protected
 app.get('/api/interests', requireAuth, (req, res) => {
     res.json(interests);
 });
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
