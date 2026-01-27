@@ -10,8 +10,8 @@ import { Feature } from 'ol';
 import { Point, Circle as GeomCircle } from 'ol/geom';
 import { Style, Circle as StyleCircle, Fill, Stroke, Text } from 'ol/style';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { Box, Paper, InputBase, IconButton, List, ListItem, ListItemText, Divider, Typography, Button, Avatar, Slider } from '@mui/material';
-import { Search, Crosshair, MessageSquare } from 'lucide-react';
+import { Box, Paper, InputBase, IconButton, List, ListItem, ListItemText, Divider, Typography, Button, Avatar, Slider, Snackbar, Alert } from '@mui/material';
+import { Search, Crosshair, MessageSquare, Globe } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import io from 'socket.io-client';
 import ChatOverlay from './ChatOverlay';
@@ -23,9 +23,8 @@ const MapComponent = () => {
     const [userSource] = useState(new VectorSource());
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
-
-    // Dynamic Radius State
-    const [radius, setRadius] = useState(10); // Default 10km
+    const [radius, setRadius] = useState(10);
+    const [showGlobalAlert, setShowGlobalAlert] = useState(false);
 
     const { user } = useSelector(state => state.auth);
     const socketRef = useRef(null);
@@ -47,18 +46,32 @@ const MapComponent = () => {
     const [selfSource] = useState(new VectorSource());
 
     // Fetch Users based on dynamic radius
-    const fetchNearbyUsers = useCallback(async (centerLat, centerLng) => {
+    const fetchNearbyUsers = useCallback(async (centerLat, centerLng, forceGlobal = false) => {
         if (!centerLat || !centerLng) return;
         try {
-            const res = await api.get('/api/users/nearby', {
-                params: {
-                    lat: centerLat,
-                    lng: centerLng,
-                    radius: radius,
-                    interests: 'all'
-                }
-            });
-            const users = res.data;
+            let users = [];
+
+            if (!forceGlobal) {
+                const res = await api.get('/api/users/nearby', {
+                    params: {
+                        lat: centerLat,
+                        lng: centerLng,
+                        radius: radius,
+                        interests: 'all'
+                    }
+                });
+                users = res.data;
+            }
+
+            // Fallback to Global if no users found
+            if (users.length === 0) {
+                if (!forceGlobal) setShowGlobalAlert(true);
+                const resGlobal = await api.get('/api/users/global');
+                users = resGlobal.data;
+            } else {
+                setShowGlobalAlert(false);
+            }
+
             userSource.clear();
 
             users.forEach(u => {
@@ -73,20 +86,23 @@ const MapComponent = () => {
 
                 // Style Logic
                 const isMatch = user && checkInterestMatch(u.interests, user.interests);
-                const color = isMatch ? '#4caf50' : '#ff9800'; // Green for match, Yellow for others
+                const color = isMatch ? '#38bdf8' : '#eab308'; // Sky Blue (Match) vs Yellow (Others)
 
                 feature.setStyle(new Style({
                     image: new StyleCircle({
                         radius: 8,
                         fill: new Fill({ color: color }),
-                        stroke: new Stroke({ color: 'white', width: 2 })
+                        stroke: new Stroke({ color: '#0f172a', width: 2 })
                     }),
                     text: new Text({
                         text: u.displayName,
-                        offsetY: -15,
-                        font: '12px Roboto, sans-serif',
-                        fill: new Fill({ color: '#333' }),
-                        stroke: new Stroke({ color: 'white', width: 2 })
+                        offsetY: -20,
+                        font: 'bold 13px Inter, sans-serif',
+                        fill: new Fill({ color: '#fff' }),
+                        stroke: new Stroke({ color: '#0f172a', width: 3 }),
+                        backgroundFill: new Fill({ color: 'rgba(15, 23, 42, 0.7)' }),
+                        padding: [4, 8, 4, 8],
+                        backgroundStroke: new Stroke({ color: color, width: 1 })
                     })
                 }));
                 userSource.addFeature(feature);
@@ -99,15 +115,17 @@ const MapComponent = () => {
 
     // Initial Map Setup (Run ONCE)
     useEffect(() => {
-        // Default Center (Vijayawada/AP)
         const initialCenter = fromLonLat([80.6480, 16.5062]);
 
         const initialMap = new Map({
             target: mapRef.current,
             layers: [
-                new TileLayer({ source: new OSM() }),
+                new TileLayer({
+                    source: new OSM(),
+                    className: 'dark-map-layer' // We will target this in CSS/sx
+                }),
                 new VectorLayer({ source: userSource, zIndex: 10 }),
-                new VectorLayer({ source: selfSource, zIndex: 5 }) // Radius/Self layer
+                new VectorLayer({ source: selfSource, zIndex: 5 })
             ],
             view: new View({
                 center: initialCenter,
@@ -115,9 +133,13 @@ const MapComponent = () => {
             })
         });
 
+        // Add CSS filter for Dark Mode Map directly to canvas (easiest way)
+        initialMap.on('postrender', () => {
+            // Handled via container style below
+        });
+
         setMap(initialMap);
 
-        // Click Handler for Pins
         initialMap.on('click', (e) => {
             const feature = initialMap.forEachFeatureAtPixel(e.pixel, (f) => f);
             if (feature && feature.get('type') === 'user') {
@@ -127,19 +149,13 @@ const MapComponent = () => {
             }
         });
 
-        // Listen for map move end to re-fetch users? 
         initialMap.on('moveend', () => {
             const center = toLonLat(initialMap.getView().getCenter());
-            // Debounce this inside fetchNearbyUsers or here? 
-            // Ideally we shouldn't spam the API. 
-            // For now, let's rely on manual refresh or radius change, 
-            // but user requested "Global Connection philosophy".
-            // Let's call it but maybe userSource limits flickering.
             fetchNearbyUsers(center[1], center[0]);
         });
 
         return () => initialMap.setTarget(null);
-    }, []); // Empty dependency array to fix Ocean Reset Bug
+    }, []);
 
     // Handle User Location Updates & Radius Circle
     useEffect(() => {
@@ -148,63 +164,29 @@ const MapComponent = () => {
         const [lng, lat] = user.location.coordinates;
         const userCoord = fromLonLat([lng, lat]);
 
-        // Clear previous self markers
         selfSource.clear();
 
-        // 1. My Location Marker (Blue)
-        const selfFeature = new Feature({
-            geometry: new Point(userCoord)
-        });
+        // 1. My Location Marker
+        const selfFeature = new Feature({ geometry: new Point(userCoord) });
         selfFeature.setStyle(new Style({
             image: new StyleCircle({
-                radius: 10,
-                fill: new Fill({ color: '#2196f3' }), // Blue
+                radius: 12,
+                fill: new Fill({ color: '#38bdf8' }), // Sky 400
                 stroke: new Stroke({ color: 'white', width: 3 })
             })
         }));
         selfSource.addFeature(selfFeature);
 
         // 2. Radius Circle
-        // OpenLayers Circle geometry is in map projection units (meters if View is generic, depends).
-        // Since we are using EPSG:3857 (Web Mercator) from OSM, Circle radius is tricky near poles.
-        // Best approach: Use a circular polygon or adjust radius resolution.
-        // Simple approach: Tissot's indicatrix approximation or just geometry.Circle with transformation?
-        // Let's use ol/geom/Circle with proper projection handling or draw a polygon approximation.
-        // Actually, creating a circle in LonLat and transforming it is standard.
-        // However, ol.geom.Circle takes radius in projection units.
-        // 1 meter at equator is approx 1 unit in 3857.
-        // Let's use `circular` from `ol/geom/Polygon` if available or approximation.
-        // For simplicity in this fix, we will use a rough approximation: radius * 1000 meters
-        // Note: In Web Mercator, meters distortion increases with latitude.
-        // A better way is to make a circular polygon.
-
-        // Let's try simple Circle first, recognizing it might be slightly distorted.
-        // Radius in meters / resolution at latitude.
-        const metersPerUnit = map.getView().getProjection().getMetersPerUnit();
-        // This is complex. Let's use a simpler visual for now or just the pin.
-        // User requested "Radius Circle".
-        // Let's try drawing a feature with a style that is a circle, but that's fixed pixels.
-        // We need a geometry circle.
-
-        // Simplified:
-        const circleParams = {
-            center: userCoord,
-            radius: radius * 1000 // This is technically in map units, which is roughly meters at equator.
-        };
-        // Adjustment factor for latitude: 1 / cos(lat)
         const scale = 1 / Math.cos(lat * Math.PI / 180);
-
         const circleFeature = new Feature({
-            geometry: new GeomCircle(userCoord, (radius * 1000) * scale) // Adjust for latitude distortion
+            geometry: new GeomCircle(userCoord, (radius * 1000) * scale)
         });
         circleFeature.setStyle(new Style({
-            fill: new Fill({ color: 'rgba(33, 150, 243, 0.1)' }), // Blue with 0.1 opacity
-            stroke: new Stroke({ color: '#2196f3', width: 1 })
+            fill: new Fill({ color: 'rgba(56, 189, 248, 0.1)' }),
+            stroke: new Stroke({ color: 'rgba(56, 189, 248, 0.4)', width: 1, lineDash: [10, 10] })
         }));
         selfSource.addFeature(circleFeature);
-
-        // Center map on user ONLY on first load or explicit request
-        // map.getView().animate({ center: userCoord, zoom: 11 }); // Removed to prevent "Ocean Bug" causing forced jumps
 
         // Fetch users around ME initially
         fetchNearbyUsers(lat, lng);
@@ -213,7 +195,7 @@ const MapComponent = () => {
 
     // Socket for Chat
     useEffect(() => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'; // Make sure port matches
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         socketRef.current = io(apiUrl, { withCredentials: true });
         setSocketReady(true);
 
@@ -259,7 +241,6 @@ const MapComponent = () => {
         map.getView().animate({ center: coord, zoom: 12 });
         setSuggestions([]);
         setSearchQuery(place.display_name.split(',')[0]);
-        // Trigger fetch
         fetchNearbyUsers(lat, lon);
     };
 
@@ -272,21 +253,34 @@ const MapComponent = () => {
 
     return (
         <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-            {/* Search Bar */}
+            {/* Search Bar - Glass */}
             <Box sx={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: '90%', maxWidth: 400 }}>
-                <Paper component="form" sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }} onSubmit={(e) => e.preventDefault()}>
-                    <InputBase sx={{ ml: 1, flex: 1 }} placeholder="Search Location" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                    <IconButton type="button" sx={{ p: '10px' }}> <Search /> </IconButton>
+                <Paper component="form" sx={{
+                    p: '2px 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: 'rgba(30, 41, 59, 0.8)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'white'
+                }} onSubmit={(e) => e.preventDefault()}>
+                    <InputBase
+                        sx={{ ml: 1, flex: 1, color: 'white' }}
+                        placeholder="Search Location"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <IconButton type="button" sx={{ p: '10px', color: '#38bdf8' }}> <Search /> </IconButton>
                 </Paper>
                 {suggestions.length > 0 && (
-                    <Paper sx={{ mt: 1, maxHeight: 200, overflow: 'auto' }}>
+                    <Paper sx={{ mt: 1, maxHeight: 200, overflow: 'auto', bgcolor: '#1e293b', color: 'white' }}>
                         <List dense>
                             {suggestions.map((place) => (
                                 <React.Fragment key={place.place_id}>
                                     <ListItem button onClick={() => handleSelectLocation(place)}>
-                                        <ListItemText primary={place.display_name} />
+                                        <ListItemText primary={place.display_name} primaryTypographyProps={{ color: 'white' }} />
                                     </ListItem>
-                                    <Divider />
+                                    <Divider sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
                                 </React.Fragment>
                             ))}
                         </List>
@@ -294,7 +288,7 @@ const MapComponent = () => {
                 )}
             </Box>
 
-            {/* Radius Slider Control */}
+            {/* Radius Slider Control - Glass */}
             <Paper sx={{
                 position: 'absolute',
                 bottom: 30,
@@ -306,56 +300,68 @@ const MapComponent = () => {
                 p: 2,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center'
+                alignItems: 'center',
+                bgcolor: 'rgba(30, 41, 59, 0.8)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 4
             }}>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
+                <Typography variant="body2" sx={{ color: '#38bdf8', fontWeight: 600, mb: 1 }}>
                     Discovery Radius: {radius} km
                 </Typography>
                 <Slider
                     value={radius}
                     onChange={(e, newVal) => setRadius(newVal)}
                     onChangeCommitted={(e, newVal) => {
-                        // Re-fetch when slider stops moving
                         if (map) {
                             const center = toLonLat(map.getView().getCenter());
                             fetchNearbyUsers(center[1], center[0]);
                         }
                     }}
                     min={1}
-                    max={10}
+                    max={50}
                     step={1}
                     valueLabelDisplay="auto"
-                    marks={[
-                        { value: 1, label: '1km' },
-                        { value: 5, label: '5km' },
-                        { value: 10, label: '10km' },
-                    ]}
+                    sx={{ color: '#38bdf8' }}
                 />
             </Paper>
 
-            <div ref={mapRef} style={{ width: '100%', height: '100%' }}></div>
+            {/* Global Fallback Alert (Snackbar) */}
+            <Snackbar open={showGlobalAlert} autoHideDuration={6000} onClose={() => setShowGlobalAlert(false)}>
+                <Alert severity="info" sx={{ bgcolor: '#334155', color: 'white' }} icon={<Globe color="#38bdf8" />}>
+                    No one nearby? Showing global community.
+                </Alert>
+            </Snackbar>
 
-            {/* User Popover */}
+            {/* Map Container with Dark Filter */}
+            <div ref={mapRef} style={{ width: '100%', height: '100%', filter: 'grayscale(100%) invert(100%) contrast(90%) brightness(120%) hue-rotate(180deg)' }}></div>
+
+            {/* User Popover - Premium Card */}
             {selectedUser && (
-                <Paper sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 200, p: 3, minWidth: 300, textAlign: 'center', borderRadius: 2 }}>
+                <Paper sx={{
+                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 200,
+                    p: 4, minWidth: 320, textAlign: 'center', borderRadius: 4,
+                    bgcolor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(56, 189, 248, 0.3)', color: 'white',
+                    boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+                }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <Avatar src={selectedUser.profilePhoto} sx={{ width: 64, height: 64 }} />
-                        <Typography variant="h5">{selectedUser.displayName}</Typography>
-                        {selectedUser.bio && <Typography variant="body2" color="text.secondary">{selectedUser.bio}</Typography>}
+                        <Avatar src={selectedUser.profilePhoto} sx={{ width: 80, height: 80, border: '3px solid #38bdf8' }} />
+                        <Typography variant="h5" fontWeight="bold">{selectedUser.displayName}</Typography>
+                        {selectedUser.bio && <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>{selectedUser.bio}</Typography>}
                     </Box>
                     <Box sx={{ mt: 1, mb: 3 }}>
-                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 1 }}>Interests</Typography>
+                        <Typography variant="caption" display="block" sx={{ color: '#38bdf8', mb: 1, fontWeight: 'bold' }}>INTERESTS</Typography>
                         {selectedUser.interests && selectedUser.interests.map((int, i) => (
-                            <Typography key={i} variant="caption" sx={{ display: 'inline-block', bgcolor: '#e0f7fa', borderRadius: 1, px: 1, mx: 0.5, my: 0.2 }}>
+                            <Typography key={i} variant="caption" sx={{ display: 'inline-block', bgcolor: 'rgba(56,189,248,0.2)', color: '#38bdf8', borderRadius: 1, px: 1, mx: 0.5, my: 0.2 }}>
                                 {int.name || int}
                             </Typography>
                         ))}
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                        <Button variant="contained" startIcon={<MessageSquare size={16} />} onClick={handleStartChat}>
+                        <Button variant="contained" startIcon={<MessageSquare size={16} />} onClick={handleStartChat} sx={{ bgcolor: '#38bdf8', color: '#0f172a', fontWeight: 'bold' }}>
                             Chat
                         </Button>
-                        <Button variant="outlined" onClick={() => setSelectedUser(null)}>Close</Button>
+                        <Button variant="outlined" onClick={() => setSelectedUser(null)} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>Close</Button>
                     </Box>
                 </Paper>
             )}
@@ -370,7 +376,7 @@ const MapComponent = () => {
                 />
             )}
 
-            <IconButton sx={{ position: 'absolute', bottom: 120, right: 20, bgcolor: 'white' }} onClick={() => {
+            <IconButton sx={{ position: 'absolute', bottom: 120, right: 20, bgcolor: '#38bdf8', color: '#0f172a', '&:hover': { bgcolor: '#7dd3fc' } }} onClick={() => {
                 navigator.geolocation.getCurrentPosition((pos) => {
                     if (map) {
                         map.getView().animate({ center: fromLonLat([pos.coords.longitude, pos.coords.latitude]), zoom: 12 });
@@ -378,7 +384,7 @@ const MapComponent = () => {
                     }
                 });
             }}>
-                <Crosshair color="#1976d2" />
+                <Crosshair />
             </IconButton>
         </Box>
     );
