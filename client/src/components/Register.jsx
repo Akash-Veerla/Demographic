@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Button, TextField, Typography, Paper, Alert, Link, Chip, FormControl, InputLabel, Select, MenuItem, OutlinedInput, Stack } from '@mui/material';
+import { Box, Button, TextField, Typography, Paper, Alert, Link, Chip, FormControl, InputLabel, Select, MenuItem, OutlinedInput, Stack, InputAdornment, IconButton } from '@mui/material';
+import { Eye, EyeOff } from 'lucide-react';
 import { registerUser } from '../store/authSlice';
 import { useNavigate } from 'react-router-dom';
 
@@ -101,16 +102,33 @@ const Register = () => {
                         margin="normal"
                         required
                     />
+                    const [showPassword, setShowPassword] = useState(false);
+
+                    // ... inside return ...
+
                     <TextField
                         fullWidth
                         label="Password"
                         name="password"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         value={formData.password}
                         onChange={handleChange}
                         margin="normal"
                         required
                         helperText="Minimum 8 characters"
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label="toggle password visibility"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        edge="end"
+                                    >
+                                        {showPassword ? <EyeOff /> : <Eye />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )
+                        }}
                     />
                     <TextField
                         fullWidth

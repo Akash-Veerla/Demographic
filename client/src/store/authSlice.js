@@ -55,8 +55,8 @@ export const updateInterests = createAsyncThunk(
 export const updateLocation = createAsyncThunk(
     'auth/updateLocation',
     async ({ lat, lng }, { rejectWithValue }) => {
-         // Optimistic update
-         return { lat, lng };
+        // Optimistic update
+        return { lat, lng };
     }
 );
 
@@ -65,7 +65,7 @@ const authSlice = createSlice({
     initialState: {
         user: null,
         isAuthenticated: false,
-        loading: false, // Default to false, let fetchCurrentUser set it to true if needed
+        loading: !!localStorage.getItem('token'), // Block UI if token exists while fetching user
         error: null
     },
     reducers: {
