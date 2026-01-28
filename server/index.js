@@ -255,92 +255,59 @@ app.get('/api/admin/seed', async (req, res) => {
         await User.deleteMany({ email: { $regex: /@example\.com$/ } });
         console.log('Cleared previous seed users');
 
-        // Data Helpers
-        const CITIES = [
-            { name: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
-            { name: 'Vijayawada', lat: 16.5062, lng: 80.6480 },
-            { name: 'Visakhapatnam', lat: 17.6868, lng: 83.2185 },
-            { name: 'Guntur', lat: 16.3067, lng: 80.4365 },
-            { name: 'Nellore', lat: 14.4426, lng: 79.9865 },
-            { name: 'Kurnool', lat: 15.8281, lng: 78.0373 },
-            { name: 'Rajahmundry', lat: 17.0005, lng: 81.8040 },
-            { name: 'Tirupati', lat: 13.6288, lng: 79.4192 },
-            { name: 'Kakinada', lat: 16.9891, lng: 82.2475 },
-            { name: 'Warangal', lat: 17.9689, lng: 79.5941 },
-            { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
-            { name: 'Delhi', lat: 28.7041, lng: 77.1025 },
-            { name: 'Bangalore', lat: 12.9716, lng: 77.5946 },
-            { name: 'Chennai', lat: 13.0827, lng: 80.2707 },
-            { name: 'Kolkata', lat: 22.5726, lng: 88.3639 }
-        ];
+        // Andhra Pradesh Bounding Box
+        const LAT_MIN = 12.5;
+        const LAT_MAX = 19.0;
+        const LNG_MIN = 77.0;
+        const LNG_MAX = 84.5;
 
         const NAMES = [
             "Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Sai", "Reyansh", "Ayaan", "Krishna", "Ishaan",
             "Diya", "Saanvi", "Aditi", "Myra", "Ananya", "Pari", "Riya", "Aarya", "Anika", "Navya",
             "Ganesh", "Ravi", "Suresh", "Ramesh", "Lakshmi", "Venkatesh", "Srinivas", "Nagarjuna", "Chiranjeevi", "Pawan",
-            "Mahesh", "Prabhas", "Allu", "Ram", "NTR", "Vijay", "Samantha", "Kajal", "Tamannaah", "Rashmika",
-            "Charan", "Tarak", "Bunny", "Cherry", "Nani", "Karthik", "Surya", "Vikram", "Dhanush", "Siddharth",
-            "Amara", "Bhavya", "Chandana", "Deepika", "Esha", "Farida", "Gitanjali", "Harini", "Indu", "Jaya",
-            "Kavya", "Lavanya", "Meghana", "Nithya", "Oormila", "Padma", "Quincy", "Radha", "Sandhya", "Tejaswini",
-            "Uma", "Vani", "Yamini", "Zara", "Abhi", "Balaji", "Chaitanya", "Deepak", "Eswar", "Gopi"
+            "Mahesh", "Prabhas", "Allu", "Ram", "NTR", "Vijay", "Samantha", "Kajal", "Tamannaah", "Rashmika"
         ];
 
         const INTERESTS_LIST = [
-            'Sports & Outdoors', 'Special Interest Travel', 'Business & Industry',
-            'Entertainment & Media', 'Food & Drink', 'Home Family & Pets',
-            'Lifestyle & Values', 'Science & Education', 'Automotive',
-            'Art & Design', 'History & Humanities', 'Programming and Technologies'
+            'Coding', 'Design', 'Music', 'Travel', 'Food', 'Gaming', 'Reading', 'Fitness',
+            'Photography', 'Art', 'Movies', 'Tech', 'Startups', 'Nature', 'Dancing'
         ];
-
-        const getRandomInterests = () => {
-            const num = Math.floor(Math.random() * 3) + 1;
-            const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
-            return shuffled.slice(0, num);
-        };
-
-        // Function to generate random point within X km of a city
-        const getRandomLocationNearCity = (city, radiusKm = 5) => {
-            const r = radiusKm / 111.32; // Rough conversion to degrees
-            const u = Math.random();
-            const v = Math.random();
-            const w = r * Math.sqrt(u);
-            const t = 2 * Math.PI * v;
-            const x = w * Math.cos(t);
-            const y = w * Math.sin(t);
-
-            const newLat = city.lat + x;
-            const newLng = city.lng + y / Math.cos(city.lat * Math.PI / 180);
-            return { lat: newLat, lng: newLng };
-        };
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash('password123', salt);
 
         const users = [];
 
-        for (let i = 0; i < 100; i++) {
-            const city = CITIES[i % CITIES.length];
-            const loc = getRandomLocationNearCity(city, 8); // Within 8km
-            const name = NAMES[i % NAMES.length] + ` ${Math.floor(Math.random() * 99)}`;
+        for (let i = 0; i < 80; i++) {
+            const name = NAMES[Math.floor(Math.random() * NAMES.length)] + " " + NAMES[Math.floor(Math.random() * NAMES.length)];
+
+            // Random Interests
+            const numInterests = Math.floor(Math.random() * 4) + 1;
+            const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
+            const selectedInterests = shuffled.slice(0, numInterests).map(n => ({ name: n }));
+
+            // Random Location in AP Box
+            const lat = LAT_MIN + Math.random() * (LAT_MAX - LAT_MIN);
+            const lng = LNG_MIN + Math.random() * (LNG_MAX - LNG_MIN);
 
             users.push({
+                googleId: `remote_seed_${i}_${Date.now()}`,
                 displayName: name,
-                email: `user${i}_${Date.now()}@example.com`,
+                email: `user${i}_${Date.now()}@konnect.com`,
                 password: hashedPassword,
-                bio: `Hello from ${city.name}! I love connecting.`,
-                interests: getRandomInterests(),
+                profilePhoto: `https://ui-avatars.com/api/?name=${name.replace(' ', '+')}&background=random`,
+                bio: "Generated User from AP Region",
+                interests: selectedInterests,
+                lastLogin: new Date(),
                 location: {
-                    type: 'Point',
-                    coordinates: [loc.lng, loc.lat]
-                },
-                profilePhoto: null,
-                lastLogin: new Date(Date.now() - Math.floor(Math.random() * 24 * 60 * 60 * 1000))
+                    type: "Point",
+                    coordinates: [lng, lat]
+                }
             });
         }
 
         await User.insertMany(users);
-        console.log(`✅ Successfully seeded ${users.length} users across major Indian cities.`);
-        res.json({ success: true, message: `Seeded ${users.length} users successfully (On Land).` });
+        res.json({ message: `Seeded ${users.length} users in Andhra Pradesh region!` });
 
     } catch (err) {
         console.error('Seeding failed:', err);
