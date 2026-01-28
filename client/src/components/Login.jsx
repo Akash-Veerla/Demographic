@@ -28,18 +28,16 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const resultAction = await dispatch(loginUser(formData));
-            const user = resultAction.payload; // Or unwrap()
+            const user = await dispatch(loginUser(formData)).unwrap();
 
-            if (loginUser.fulfilled.match(resultAction)) {
-                // Synchronously set token if not already handled by thunk side-effect (safe measure)
-                if (user && user.token) {
-                    localStorage.setItem('token', user.token);
-                }
-                navigate('/', { replace: true });
+            // Synchronously set token if not already handled by thunk side-effect (safe measure)
+            if (user && user.token) {
+                localStorage.setItem('token', user.token);
             }
+            navigate('/', { replace: true });
         } catch (err) {
             console.error("Login failed:", err);
+            // Error state handled by Redux
         }
     };
 

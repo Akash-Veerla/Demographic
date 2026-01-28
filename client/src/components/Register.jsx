@@ -33,11 +33,13 @@ const Register = () => {
         interests: []
     });
 
-    const [customInterest, setCustomInterest] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
+    const [customInterest, setCustomInterest] = useState('');
 
     const handleInterestChange = (event) => {
         const { target: { value } } = event;
@@ -59,9 +61,14 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const result = await dispatch(registerUser(formData));
-        if (registerUser.fulfilled.match(result)) {
-            navigate('/');
+        try {
+            const userData = await dispatch(registerUser(formData)).unwrap();
+            if (userData) {
+                localStorage.setItem('token', userData.token); // Redundant if slice does it, but safe
+                navigate('/', { replace: true });
+            }
+        } catch (err) {
+            console.error("Registration failed:", err);
         }
     };
 
@@ -71,12 +78,17 @@ const Register = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            bgcolor: '#f5f5f5',
-            overflowY: 'auto',
-            py: 4
+            bgcolor: 'transparent' // Match Login
         }}>
-            <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 500 }}>
-                <Typography variant="h4" gutterBottom align="center">
+            <Paper elevation={3} sx={{
+                p: 4, width: '100%', maxWidth: 500,
+                borderRadius: 3,
+                background: 'rgba(30, 41, 59, 0.7)', // Match Login
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'white'
+            }}>
+                <Typography variant="h4" gutterBottom align="center" fontWeight="800" sx={{ background: 'linear-gradient(45deg, #38bdf8, #818cf8)', backgroundClip: 'text', textFillColor: 'transparent' }}>
                     Register
                 </Typography>
 
@@ -91,6 +103,10 @@ const Register = () => {
                         onChange={handleChange}
                         margin="normal"
                         required
+                        sx={{
+                            '& .MuiOutlinedInput-root': { color: 'white', borderRadius: '12px', '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' } },
+                            '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' }
+                        }}
                     />
                     <TextField
                         fullWidth
@@ -101,11 +117,11 @@ const Register = () => {
                         onChange={handleChange}
                         margin="normal"
                         required
+                        sx={{
+                            '& .MuiOutlinedInput-root': { color: 'white', borderRadius: '12px', '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' } },
+                            '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' }
+                        }}
                     />
-                    const [showPassword, setShowPassword] = useState(false);
-
-                    // ... inside return ...
-
                     <TextField
                         fullWidth
                         label="Password"
@@ -123,11 +139,17 @@ const Register = () => {
                                         aria-label="toggle password visibility"
                                         onClick={() => setShowPassword(!showPassword)}
                                         edge="end"
+                                        sx={{ color: 'rgba(255,255,255,0.7)' }}
                                     >
                                         {showPassword ? <EyeOff /> : <Eye />}
                                     </IconButton>
                                 </InputAdornment>
                             )
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': { color: 'white', borderRadius: '12px', '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' } },
+                            '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                            '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.5)' }
                         }}
                     />
                     <TextField
