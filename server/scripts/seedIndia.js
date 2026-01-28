@@ -1,112 +1,80 @@
+require('dotenv').config({ path: '../../.env' }); // Adjust path to root .env
 const mongoose = require('mongoose');
-const User = require('../models/User'); // Adjust path as necessary
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+const { faker } = require('@faker-js/faker');
+const User = require('../models/User'); // Adjust path to User model
 
-const CITIES = [
-    { name: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
-    { name: 'Vijayawada', lat: 16.5062, lng: 80.6480 },
-    { name: 'Visakhapatnam', lat: 17.6868, lng: 83.2185 },
-    { name: 'Guntur', lat: 16.3067, lng: 80.4365 },
-    { name: 'Nellore', lat: 14.4426, lng: 79.9865 },
-    { name: 'Kurnool', lat: 15.8281, lng: 78.0373 },
-    { name: 'Rajahmundry', lat: 17.0005, lng: 81.8040 },
-    { name: 'Tirupati', lat: 13.6288, lng: 79.4192 },
-    { name: 'Kakinada', lat: 16.9891, lng: 82.2475 },
-    { name: 'Warangal', lat: 17.9689, lng: 79.5941 },
-    { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
-    { name: 'Delhi', lat: 28.7041, lng: 77.1025 },
-    { name: 'Bangalore', lat: 12.9716, lng: 77.5946 },
-    { name: 'Chennai', lat: 13.0827, lng: 80.2707 },
-    { name: 'Kolkata', lat: 22.5726, lng: 88.3639 }
-];
-
-const NAMES = [
-    "Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Sai", "Reyansh", "Ayaan", "Krishna", "Ishaan",
-    "Diya", "Saanvi", "Aditi", "Myra", "Ananya", "Pari", "Riya", "Aarya", "Anika", "Navya",
-    "Ganesh", "Ravi", "Suresh", "Ramesh", "Lakshmi", "Venkatesh", "Srinivas", "Nagarjuna", "Chiranjeevi", "Pawan",
-    "Mahesh", "Prabhas", "Allu", "Ram", "NTR", "Vijay", "Samantha", "Kajal", "Tamannaah", "Rashmika",
-    "Charan", "Tarak", "Bunny", "Cherry", "Nani", "Karthik", "Surya", "Vikram", "Dhanush", "Siddharth",
-    "Amara", "Bhavya", "Chandana", "Deepika", "Esha", "Farida", "Gitanjali", "Harini", "Indu", "Jaya",
-    "Kavya", "Lavanya", "Meghana", "Nithya", "Oormila", "Padma", "Quincy", "Radha", "Sandhya", "Tejaswini",
-    "Uma", "Vani", "Yamini", "Zara", "Abhi", "Balaji", "Chaitanya", "Deepak", "Eswar", "Gopi"
-];
+// Hardcoded URI as fallback if .env fails in this specific script context context
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://konnect-admin:konnect123@cluster0.mongodb.net/konnect?retryWrites=true&w=majority";
 
 const INTERESTS_LIST = [
-    'Sports & Outdoors', 'Special Interest Travel', 'Business & Industry',
-    'Entertainment & Media', 'Food & Drink', 'Home Family & Pets',
-    'Lifestyle & Values', 'Science & Education', 'Automotive',
-    'Art & Design', 'History & Humanities', 'Programming and Technologies'
+    'Coding', 'Design', 'Music', 'Travel', 'Food', 'Gaming', 'Reading', 'Fitness',
+    'Photography', 'Art', 'Movies', 'Tech', 'Startups', 'Nature', 'Dancing',
+    'Writing', 'History', 'Science', 'Yoga', 'Hiking'
 ];
 
-const getRandomInterests = () => {
-    const num = Math.floor(Math.random() * 3) + 1;
-    const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, num);
-};
-
-// Function to generate random point within X km of a city
-const getRandomLocationNearCity = (city, radiusKm = 5) => {
-    const r = radiusKm / 111.32; // Rough conversion to degrees
-    const u = Math.random();
-    const v = Math.random();
-    const w = r * Math.sqrt(u);
-    const t = 2 * Math.PI * v;
-    const x = w * Math.cos(t);
-    const y = w * Math.sin(t);
-
-    // Adjust logic slightly, but simple offset is fine for small radius
-    const newLat = city.lat + x;
-    const newLng = city.lng + y / Math.cos(city.lat * Math.PI / 180);
-    return { lat: newLat, lng: newLng };
-};
-
-const seed = async () => {
+async function seedUsers() {
     try {
-        const mongoUri = process.env.MONGO_URI;
-        if (!mongoUri) throw new Error("MONGO_URI is missing");
+        console.log('🌱 Connectivity Check...');
+        await mongoose.connect(MONGO_URI);
+        console.log('✅ Connected to MongoDB Atlas');
 
-        await mongoose.connect(mongoUri);
-        console.log('MongoDB Connected');
-
-        // Delete existing seeded users
-        const deleteRes = await User.deleteMany({ email: { $regex: /@example\.com$/ } });
-        console.log(`Deleted ${deleteRes.deletedCount} existing seeded users.`);
-
-        const bcrypt = require('bcryptjs');
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('password123', salt);
+        console.log('🧹 Clearing existing users...');
+        await User.deleteMany({ email: { $ne: 'admin@konnect.com' } }); // Keep admin if exists
+        console.log('✅ Setup Clean');
 
         const users = [];
+        const NUM_USERS = 80;
 
-        // Generate 100 users scattered across the CITIES list
-        for (let i = 0; i < 100; i++) {
-            const city = CITIES[i % CITIES.length];
-            const loc = getRandomLocationNearCity(city, 8); // Within 8km of city center (guaranteed land mostly)
-            const name = NAMES[i % NAMES.length] + ` ${Math.floor(Math.random() * 99)}`;
+        // Andhra Pradesh Bounding Box
+        // Lat: 12.5 - 19.0
+        // Lng: 77.0 - 84.5
+        const LAT_MIN = 12.5;
+        const LAT_MAX = 19.0;
+        const LNG_MIN = 77.0;
+        const LNG_MAX = 84.5;
+
+        console.log(`🚀 Generating ${NUM_USERS} users in AP Region...`);
+
+        for (let i = 0; i < NUM_USERS; i++) {
+            const firstName = faker.person.firstName();
+            const lastName = faker.person.lastName();
+            const displayName = `${firstName} ${lastName}`;
+            const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+
+            // Generate random interests (1-4)
+            const numInterests = Math.floor(Math.random() * 4) + 1;
+            const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
+            const selectedInterests = shuffled.slice(0, numInterests).map(name => ({ name }));
+
+            // Generate Location in AP Box
+            const lat = LAT_MIN + Math.random() * (LAT_MAX - LAT_MIN);
+            const lng = LNG_MIN + Math.random() * (LNG_MAX - LNG_MIN);
 
             users.push({
-                displayName: name,
-                email: `user${i}_${Date.now()}@example.com`,
-                password: hashedPassword,
-                bio: `Hello from ${city.name}! I love connecting.`,
-                interests: getRandomInterests(),
+                googleId: `seed_${faker.string.uuid()}`,
+                displayName,
+                email,
+                profilePhoto: faker.image.avatar(),
+                bio: faker.person.bio(),
+                interests: selectedInterests,
                 location: {
                     type: 'Point',
-                    coordinates: [loc.lng, loc.lat]
+                    coordinates: [lng, lat] // GeoJSON is [lng, lat]
                 },
-                profilePhoto: null,
-                lastLogin: new Date(Date.now() - Math.floor(Math.random() * 12 * 60 * 60 * 1000)) // Active recently
+                lastLogin: faker.date.recent({ days: 2 }) // Online recently
             });
         }
 
         await User.insertMany(users);
-        console.log(`✅ Successfully seeded ${users.length} users across major Indian cities.`);
+        console.log(`✨ Successfully seeded ${users.length} users!`);
+        console.log('📍 Location Distribution: Andhra Pradesh (Lat: 12.5-19.0, Lng: 77.0-84.5)');
+
         process.exit(0);
-    } catch (err) {
-        console.error("Seeding error:", err);
+
+    } catch (error) {
+        console.error('❌ Seeding Failed:', error);
         process.exit(1);
     }
-};
+}
 
-seed();
+seedUsers();

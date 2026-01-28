@@ -16,12 +16,10 @@ const Login = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
 
-    // Reliable navigation effect
-    useEffect(() => {
-        if (isAuthenticated) {
-            navigate('/');
-        }
-    }, [isAuthenticated, navigate]);
+    // Race Condition Fix: Removed useEffect dependency for navigation.
+    // Handling navigation imperatively after thunk resolution.
+
+    // const { loading, error, isAuthenticated } = useSelector(state => state.auth); // Keeping for UI state
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,8 +27,20 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        dispatch(loginUser(formData));
-        // Navigation handled by useEffect
+        try {
+            const resultAction = await dispatch(loginUser(formData));
+            const user = resultAction.payload; // Or unwrap()
+
+            if (loginUser.fulfilled.match(resultAction)) {
+                // Synchronously set token if not already handled by thunk side-effect (safe measure)
+                if (user && user.token) {
+                    localStorage.setItem('token', user.token);
+                }
+                navigate('/', { replace: true });
+            }
+        } catch (err) {
+            console.error("Login failed:", err);
+        }
     };
 
     const handleGoogleLogin = () => {
@@ -81,6 +91,7 @@ const Login = () => {
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 color: 'white',
+                                borderRadius: '16px', // Matches new theme
                                 '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
                                 '&:hover fieldset': { borderColor: '#38bdf8' },
                                 '&.Mui-focused fieldset': { borderColor: '#38bdf8' },
@@ -115,6 +126,7 @@ const Login = () => {
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 color: 'white',
+                                borderRadius: '16px',
                                 '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
                                 '&:hover fieldset': { borderColor: '#38bdf8' },
                                 '&.Mui-focused fieldset': { borderColor: '#38bdf8' },
@@ -135,6 +147,7 @@ const Login = () => {
                             bgcolor: '#38bdf8',
                             color: '#0f172a',
                             fontWeight: 'bold',
+                            borderRadius: '100px', // Pill shape
                             '&:hover': { bgcolor: '#7dd3fc' }
                         }}
                         disabled={loading}

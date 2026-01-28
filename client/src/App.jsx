@@ -50,8 +50,12 @@ const App = () => {
 
     const theme = useMemo(() => getTheme(mode, accent), [mode, accent]);
 
+    // Initial Auth Check override
     useEffect(() => {
-        dispatch(fetchCurrentUser());
+        const token = localStorage.getItem('token');
+        if (token) {
+            dispatch(fetchCurrentUser());
+        }
     }, [dispatch]);
 
     if (loading) {
