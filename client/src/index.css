@@ -18,7 +18,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Scrollbar Styling - Themed dynamically via MUI CssBaseline usually, but hardcoded fallback here is fine for now */
+/* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -28,15 +28,27 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.5);
+  background: var(--scrollbar-thumb, rgba(100, 116, 139, 0.5));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.8);
+  background: var(--scrollbar-thumb-hover, rgba(100, 116, 139, 0.8));
 }
 
 a {
   text-decoration: inherit;
   transition: color 0.2s;
+}
+
+/* Map Tile Filters - Controlled via Class or JS, but variables help */
+.map-tile-layer {
+  /* Base filter */
+  transition: filter 0.3s ease;
+}
+
+/* Hardcoded overrides for specific libraries if needed */
+.ol-zoom {
+  display: none;
+  /* Hide default OL controls for custom UI */
 }
