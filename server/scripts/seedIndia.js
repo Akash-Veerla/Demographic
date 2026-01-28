@@ -44,7 +44,7 @@ async function seedUsers() {
             // Generate random interests (1-4)
             const numInterests = Math.floor(Math.random() * 4) + 1;
             const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
-            const selectedInterests = shuffled.slice(0, numInterests).map(name => ({ name }));
+            const selectedInterests = shuffled.slice(0, numInterests); // Array of strings
 
             // Generate Location in AP Box
             const lat = LAT_MIN + Math.random() * (LAT_MAX - LAT_MIN);
@@ -61,7 +61,7 @@ async function seedUsers() {
                     type: 'Point',
                     coordinates: [lng, lat] // GeoJSON is [lng, lat]
                 },
-                lastLogin: faker.date.recent({ days: 2 }) // Online recently
+                lastLogin: new Date() // Force Online Now
             });
         }
 

@@ -284,7 +284,7 @@ app.get('/api/admin/seed', async (req, res) => {
             // Random Interests
             const numInterests = Math.floor(Math.random() * 4) + 1;
             const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
-            const selectedInterests = shuffled.slice(0, numInterests).map(n => ({ name: n }));
+            const selectedInterests = shuffled.slice(0, numInterests);
 
             // Random Location in AP Box
             const lat = LAT_MIN + Math.random() * (LAT_MAX - LAT_MIN);
