@@ -131,44 +131,56 @@ const MapComponent = () => {
     };
 
     // --- Fetch Users ---
-    const fetchNearbyUsers = useCallback(async (centerLat, centerLng, forceGlobal = false) => {
-        if (!centerLat || !centerLng) return;
+    // --- Fetch Users ---
+    const fetchNearbyUsers = useCallback(async () => {
+        if (!user) return; // Need user for interests matching
+
         try {
             let users = [];
-            if (!forceGlobal) {
+
+            // Helper to get interests string
+            const getInterestsParam = () => {
+                if (filterMode === 'interests' && user.interests && user.interests.length > 0) {
+                    // Extract strings if object, or use as is
+                    return user.interests.map(i => typeof i === 'string' ? i : i.name).join(',');
+                }
+                return 'all';
+            };
+
+            if (viewMode === 'local') {
+                if (!myLocation) return;
                 const res = await api.get('/api/users/nearby', {
-                    params: { lat: centerLat, lng: centerLng, radius: radius, interests: 'all' }
+                    params: {
+                        lat: myLocation.lat,
+                        lng: myLocation.lng,
+                        radius: radius,
+                        interests: getInterestsParam()
+                    }
+                });
+                users = res.data;
+            } else {
+                // Global Mode
+                const res = await api.get('/api/users/global', {
+                    params: { interests: getInterestsParam() }
                 });
                 users = res.data;
             }
 
-            if (users.length === 0) {
-                if (!forceGlobal) setShowGlobalAlert(true);
-                const resGlobal = await api.get('/api/users/global');
-                users = resGlobal.data;
-            } else {
-                setShowGlobalAlert(false);
-            }
+            // Deduplicate logic
+            const uniqueUsers = Array.from(new Map(users.map(u => [u._id, u])).values());
 
             userSource.clear();
-            users.forEach(u => {
+            uniqueUsers.forEach(u => {
                 if (!u.location?.coordinates) return;
                 const [lng, lat] = u.location.coordinates;
 
-                // Filter Logic
-                const isMatch = user && checkInterestMatch(u.interests, user.interests);
-                if (!showGlobalUsers && !isMatch) return;
-
                 const isOnline = u.lastLogin && (new Date() - new Date(u.lastLogin)) < (15 * 60 * 1000);
+                const isMatch = user && checkInterestMatch(u.interests, user.interests);
 
-                // Marker Styling (Material You Colors)
+                // Marker Styling
                 let fillColor = theme.palette.text.disabled;
-                let strokeColor = theme.palette.background.paper;
-
                 if (isOnline) {
                     fillColor = isMatch ? theme.palette.primary.main : theme.palette.warning.main;
-                } else {
-                    fillColor = theme.palette.action.disabledBackground; // Grey
                 }
 
                 const feature = new Feature({
@@ -179,11 +191,10 @@ const MapComponent = () => {
 
                 feature.setStyle(new Style({
                     image: new StyleCircle({
-                        radius: 10, // Slightly larger
+                        radius: 10,
                         fill: new Fill({ color: fillColor }),
-                        stroke: new Stroke({ color: strokeColor, width: 3 })
+                        stroke: new Stroke({ color: theme.palette.background.paper, width: 3 })
                     }),
-                    // Only show name on hover or close zoom ideally, but keeping it for now
                     text: new Text({
                         text: u.displayName,
                         offsetY: -22,
@@ -199,7 +210,14 @@ const MapComponent = () => {
         } catch (err) {
             console.error("Fetch Error:", err);
         }
-    }, [radius, userSource, user, showGlobalUsers, theme]);
+    }, [user, myLocation, radius, viewMode, filterMode, userSource, theme]);
+
+    // Initial load & Polling
+    useEffect(() => {
+        fetchNearbyUsers();
+        const interval = setInterval(fetchNearbyUsers, 30000);
+        return () => clearInterval(interval);
+    }, [fetchNearbyUsers]);
 
     // --- Initialization ---
     useEffect(() => {
