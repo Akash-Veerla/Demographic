@@ -356,23 +356,13 @@ const MapComponent = () => {
                     backdropFilter: 'blur(20px)', bgcolor: 'background.paper', borderRadius: 4,
                     border: '1px solid', borderColor: 'divider'
                 }}>
-                    <Switch
-                        checked={showGlobalUsers}
-                        onChange={(e) => setShowGlobalUsers(e.target.checked)}
-                        sx={{ ml: 'auto' }}
-                    />
-                    <Typography variant="caption" sx={{ mt: -1, ml: 'auto', display: 'block' }}>
-                        {showGlobalUsers ? 'Global View' : 'Relevant Only'}
-                    </Typography>
-
-                    <Divider flexItem />
 
                     {/* Color Picker */}
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                        {['blue', 'green', 'violet', 'orange'].map(c => (
+                        {['blue', 'green', 'violet', 'red', 'orange'].map(c => (
                             <Box key={c} onClick={() => setAccent(c)} sx={{
                                 width: 16, height: 16, borderRadius: '50%', cursor: 'pointer',
-                                bgcolor: c === 'blue' ? '#3b82f6' : c === 'green' ? '#22c55e' : c === 'violet' ? '#8b5cf6' : '#f97316',
+                                bgcolor: c === 'blue' ? '#3b82f6' : c === 'green' ? '#22c55e' : c === 'violet' ? '#8b5cf6' : c === 'red' ? '#ef4444' : '#f97316',
                                 boxShadow: user?.accent === c ? '0 0 0 2px white, 0 0 0 4px ' + c : 'none'
                             }} />
                         ))}

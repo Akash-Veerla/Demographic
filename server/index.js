@@ -143,7 +143,8 @@ io.on('connection', (socket) => {
                 location: {
                     type: 'Point',
                     coordinates: [data.lng, data.lat]
-                }
+                },
+                lastLogin: new Date()
             });
             // Broadcast new nearby users
             broadcastNearbyUsers(socket, userId);

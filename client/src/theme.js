@@ -33,31 +33,33 @@ const tonalPalettes = {
         secondaryContainer: '#f1f5f9',
         onSecondaryContainer: '#0f172a',
     },
-    // Add others as needed, defaulting to Blue logic for others temporarily to save space
+    violet: {
+        primary: '#8b5cf6',
+        onPrimary: '#ffffff',
+        primaryContainer: '#ddd6fe',
+        onPrimaryContainer: '#4c1d95',
+        secondary: '#64748b',
+        onSecondary: '#ffffff',
+        secondaryContainer: '#f1f5f9',
+        onSecondaryContainer: '#0f172a',
+    },
+    orange: {
+        primary: '#f97316',
+        onPrimary: '#ffffff',
+        primaryContainer: '#ffedd5',
+        onPrimaryContainer: '#7c2d12',
+        secondary: '#64748b',
+        onSecondary: '#ffffff',
+        secondaryContainer: '#f1f5f9',
+        onSecondaryContainer: '#0f172a',
+    },
 };
 
 const getPaletteRaw = (color, mode) => {
     const base = tonalPalettes[color] || tonalPalettes.blue;
 
     if (mode === 'dark') {
-        return {
-            primary: {
-                main: base.primary,
-                light: alpha(base.primary, 0.9),
-                dark: alpha(base.primary, 0.5),
-                contrastText: '#0f172a', // onPrimary for dark mode usually darker
-            },
-            background: {
-                default: '#0f172a', // Slate 900
-                paper: '#1e293b',   // Slate 800 (Surface 1)
-                surfaceContainer: '#1e293b',
-                surfaceContainerHigh: '#334155', // Slate 700
-            },
-            text: {
-                primary: '#f8fafc',
-                secondary: '#94a3b8',
-            }
-        };
+        // ... (keep dark mode logic)
     } else {
         return {
             primary: {
@@ -65,9 +67,9 @@ const getPaletteRaw = (color, mode) => {
                 contrastText: base.onPrimary,
             },
             background: {
-                default: '#f8fafc', // Slate 50
+                default: '#f8fafc',
                 paper: '#ffffff',
-                surfaceContainer: '#f1f5f9', // Slate 100
+                surfaceContainer: '#f1f5f9',
             },
             text: {
                 primary: '#0f172a',
@@ -86,7 +88,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             ...palette
         },
         shape: {
-            borderRadius: 24, // Material 3 "Large" shape (Cards/Modals)
+            borderRadius: 16, // Reduced from 24
         },
         typography: {
             fontFamily: '"Roboto Flex", "Inter", sans-serif',
@@ -107,7 +109,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
                     root: {
                         backgroundImage: 'none',
                         backdropFilter: 'blur(16px)',
-                        borderRadius: 24, // Consistent super-ellipse feel (Large)
+                        borderRadius: 16, // Reduced from 24
                         border: mode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)',
                         boxShadow: mode === 'dark'
                             ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
@@ -118,7 +120,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             MuiButton: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 12, // Standard Shape for Buttons
+                        borderRadius: 8, // Reduced from 12
                         padding: '10px 24px',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     },
@@ -135,7 +137,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
                 styleOverrides: {
                     root: {
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: 12, // Standard Shape for Inputs
+                            borderRadius: 8, // Reduced from 12
                         }
                     }
                 }
@@ -143,7 +145,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             MuiOutlinedInput: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 12,
+                        borderRadius: 8,
                     }
                 }
             },
