@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Paper, Typography, TextField, Button, IconButton, Divider, List, ListItem, ListItemText } from '@mui/material';
+import { Box, Paper, Typography, TextField, Button, IconButton, Divider, List, ListItem, ListItemText, useTheme } from '@mui/material';
 import { X, Send } from 'lucide-react';
 
 const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
@@ -53,6 +53,10 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
         }
     };
 
+    const theme = useTheme(); // Import useTheme
+
+    // ...
+
     return (
         <Paper sx={{
             position: 'absolute',
@@ -63,38 +67,50 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
             display: 'flex',
             flexDirection: 'column',
             zIndex: 1000,
-            boxShadow: 3
+            boxShadow: 6,
+            borderRadius: '24px', // M3 Large
+            overflow: 'hidden',
+            border: `1px solid ${theme.palette.divider}`
         }}>
             {/* Header */}
-            <Box sx={{ p: 2, bgcolor: '#1976d2', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="subtitle1">{targetUser.displayName || targetUser.name}</Typography>
-                <IconButton size="small" onClick={onClose} sx={{ color: 'white' }}>
+            <Box sx={{
+                p: 2,
+                bgcolor: 'var(--md-sys-color-primary)',
+                color: 'var(--md-sys-color-on-primary)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            }}>
+                <Typography variant="subtitle1" fontWeight="600">{targetUser.displayName || targetUser.name}</Typography>
+                <IconButton size="small" onClick={onClose} sx={{ color: 'inherit' }}>
                     <X size={18} />
                 </IconButton>
             </Box>
 
             {/* Messages */}
-            <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: '#f5f5f5' }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: theme.palette.background.default }}>
                 {messages.length === 0 && (
-                    <Typography variant="caption" color="textSecondary" align="center" display="block">
+                    <Typography variant="caption" color="textSecondary" align="center" display="block" sx={{ mt: 4 }}>
                         Start the conversation!
                     </Typography>
                 )}
                 {messages.map((msg, idx) => {
-                    const isMe = msg.senderId === user._id; // Compare with MongoDB User ID
+                    const isMe = msg.senderId === user._id;
                     return (
                         <Box key={idx} sx={{
                             display: 'flex',
                             justifyContent: isMe ? 'flex-end' : 'flex-start',
-                            mb: 1
+                            mb: 1.5
                         }}>
                             <Paper sx={{
-                                p: 1,
+                                p: '10px 16px',
                                 maxWidth: '80%',
-                                bgcolor: isMe ? '#e3f2fd' : 'white',
-                                borderRadius: 2
+                                bgcolor: isMe ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',
+                                color: isMe ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)',
+                                borderRadius: isMe ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                                boxShadow: 0
                             }}>
-                                {!isMe && <Typography variant="caption" color="textSecondary" display="block">{msg.senderName}</Typography>}
+                                {!isMe && <Typography variant="caption" display="block" sx={{ opacity: 0.7, mb: 0.5 }}>{msg.senderName}</Typography>}
                                 <Typography variant="body2">{msg.text}</Typography>
                             </Paper>
                         </Box>

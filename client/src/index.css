@@ -9,11 +9,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html,
 /* Global Theme Variables */
 :root {
   --md-sys-color-primary: #3b82f6;
+  --md-sys-color-on-primary: #ffffff;
   --md-sys-color-surface: #ffffff;
+  --md-sys-color-on-surface: #0f172a;
+  --md-sys-color-primary-container: #dbeafe;
+  --md-sys-color-on-primary-container: #1e3a8a;
+  --md-sys-color-surface-container-high: #f1f5f9;
   --scrollbar-thumb: rgba(100, 116, 139, 0.5);
   --scrollbar-thumb-hover: rgba(100, 116, 139, 0.8);
 }
@@ -21,10 +25,16 @@ html,
 @media (prefers-color-scheme: dark) {
   :root {
     --md-sys-color-primary: #60a5fa;
+    --md-sys-color-on-primary: #0f172a;
     --md-sys-color-surface: #0f172a;
+    --md-sys-color-on-surface: #f8fafc;
+    --md-sys-color-primary-container: #1e3a8a;
+    --md-sys-color-on-primary-container: #dbeafe;
+    --md-sys-color-surface-container-high: #334155;
   }
 }
 
+html,
 body {
   margin: 0;
   padding: 0;

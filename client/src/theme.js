@@ -86,7 +86,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             ...palette
         },
         shape: {
-            borderRadius: 28, // Material 3 "Large" shape
+            borderRadius: 24, // Material 3 "Large" shape (Cards/Modals)
         },
         typography: {
             fontFamily: '"Roboto Flex", "Inter", sans-serif',
@@ -107,7 +107,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
                     root: {
                         backgroundImage: 'none',
                         backdropFilter: 'blur(16px)',
-                        borderRadius: 28, // Consistent super-ellipse feel
+                        borderRadius: 24, // Consistent super-ellipse feel (Large)
                         border: mode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)',
                         boxShadow: mode === 'dark'
                             ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
@@ -118,8 +118,8 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             MuiButton: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 100, // Pill shape (M3 standard)
-                        padding: '12px 24px',
+                        borderRadius: 12, // Standard Shape for Buttons
+                        padding: '10px 24px',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     },
                     contained: {
@@ -135,7 +135,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
                 styleOverrides: {
                     root: {
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: 16, // Medium shape for inputs
+                            borderRadius: 12, // Standard Shape for Inputs
                         }
                     }
                 }
@@ -143,7 +143,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             MuiOutlinedInput: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 16,
+                        borderRadius: 12,
                     }
                 }
             },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Box, useMediaQuery, useTheme, BottomNavigation, BottomNavigationAction, Paper, Container } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Box, useMediaQuery, useTheme, BottomNavigation, BottomNavigationAction, Paper, Container, alpha } from '@mui/material';
 import { Menu as MenuIcon, LogOut, Map as MapIcon, MessageSquare, User } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -36,14 +36,16 @@ const Layout = ({ children }) => {
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'transparent', color: 'text.primary' }}>
-            <AppBar position="fixed" elevation={0} sx={{
-                bgcolor: 'rgba(15, 23, 42, 0.8)',
+            <AppBar position="fixed" elevation={1} sx={{
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                color: theme.palette.text.primary,
                 backdropFilter: 'blur(12px)',
-                borderBottom: '1px solid rgba(255,255,255,0.1)'
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                boxShadow: theme.shadows[1] // Elevation 1 (shadow-sm)
             }}>
                 <Toolbar>
-                    <MapIcon color="#38bdf8" style={{ marginRight: '10px' }} />
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: '800', letterSpacing: '-0.5px', background: 'linear-gradient(45deg, #38bdf8, #818cf8)', backgroundClip: 'text', textFillColor: 'transparent', color: 'transparent' }}>
+                    <MapIcon color={theme.palette.primary.main} style={{ marginRight: '10px' }} />
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: '800', letterSpacing: '-0.5px' }}>
                         KON-NECT
                     </Typography>
 
@@ -54,10 +56,10 @@ const Layout = ({ children }) => {
                                 startIcon={<MapIcon size={20} />}
                                 onClick={() => navigate('/')}
                                 sx={{
-                                    color: location.pathname === '/' ? '#38bdf8' : 'rgba(255,255,255,0.7)',
+                                    color: location.pathname === '/' ? theme.palette.primary.main : theme.palette.text.secondary,
                                     fontWeight: location.pathname === '/' ? 600 : 400,
                                     position: 'relative',
-                                    '&:hover': { bgcolor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8' },
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main },
                                     '&::after': location.pathname === '/' ? {
                                         content: '""',
                                         position: 'absolute',
@@ -65,7 +67,7 @@ const Layout = ({ children }) => {
                                         left: '20%',
                                         width: '60%',
                                         height: '2px',
-                                        bgcolor: '#38bdf8',
+                                        bgcolor: theme.palette.primary.main,
                                         borderRadius: '2px'
                                     } : {}
                                 }}
@@ -76,10 +78,10 @@ const Layout = ({ children }) => {
                                 startIcon={<MessageSquare size={20} />}
                                 onClick={() => navigate('/chat')}
                                 sx={{
-                                    color: location.pathname === '/chat' ? '#38bdf8' : 'rgba(255,255,255,0.7)',
+                                    color: location.pathname === '/chat' ? theme.palette.primary.main : theme.palette.text.secondary,
                                     fontWeight: location.pathname === '/chat' ? 600 : 400,
                                     position: 'relative',
-                                    '&:hover': { bgcolor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8' },
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main },
                                     '&::after': location.pathname === '/chat' ? {
                                         content: '""',
                                         position: 'absolute',
@@ -87,7 +89,7 @@ const Layout = ({ children }) => {
                                         left: '20%',
                                         width: '60%',
                                         height: '2px',
-                                        bgcolor: '#38bdf8',
+                                        bgcolor: theme.palette.primary.main,
                                         borderRadius: '2px'
                                     } : {}
                                 }}
@@ -95,12 +97,12 @@ const Layout = ({ children }) => {
                                 Chat
                             </Button>
 
-                            <Box sx={{ width: 1, height: 24, bgcolor: 'rgba(255,255,255,0.1)', mx: 2 }} />
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2, cursor: 'pointer', p: 0.5, borderRadius: 2, '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }} onClick={() => navigate('/profile')}>
-                                <Avatar user={user} sx={{ width: 32, height: 32, border: '2px solid rgba(56, 189, 248, 0.5)' }} />
-                                <Typography variant="body2" sx={{ fontWeight: 500, color: 'white' }}>{user.displayName}</Typography>
+                            <Box sx={{ width: 1, height: 24, bgcolor: theme.palette.divider, mx: 2 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2, cursor: 'pointer', p: 0.5, borderRadius: 2, '&:hover': { bgcolor: theme.palette.action.hover } }} onClick={() => navigate('/profile')}>
+                                <Avatar user={user} sx={{ width: 32, height: 32, border: `2px solid ${theme.palette.primary.main}` }} />
+                                <Typography variant="body2" sx={{ fontWeight: 500, color: theme.palette.text.primary }}>{user.displayName}</Typography>
                             </Box>
-                            <IconButton onClick={handleLogout} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: '#ef4444' } }} title="Logout">
+                            <IconButton onClick={handleLogout} sx={{ color: theme.palette.text.secondary, '&:hover': { color: theme.palette.error.main } }} title="Logout">
                                 <LogOut size={20} />
                             </IconButton>
                         </Box>
