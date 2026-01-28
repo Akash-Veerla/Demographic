@@ -10,7 +10,7 @@ import { Feature } from 'ol';
 import { Point, Circle as GeomCircle, LineString } from 'ol/geom';
 import { Style, Circle as StyleCircle, Fill, Stroke, Text } from 'ol/style';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { Box, Paper, InputBase, IconButton, List, ListItem, ListItemText, Divider, Typography, Button, Avatar, Slider, Snackbar, Alert, Switch, useTheme, Fab } from '@mui/material';
+import { Box, Paper, InputBase, IconButton, List, ListItem, ListItemText, Divider, Typography, Button, Avatar, Slider, Snackbar, Alert, Switch, useTheme, Fab, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { Search, Crosshair, MessageSquare, Globe, Palette, Navigation, User } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import io from 'socket.io-client';
@@ -50,6 +50,8 @@ const MapComponent = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [radius, setRadius] = useState(10);
+    const [viewMode, setViewMode] = useState('local'); // 'local' | 'global'
+    const [filterMode, setFilterMode] = useState('all'); // 'all' | 'interests'
     const [showGlobalAlert, setShowGlobalAlert] = useState(false);
     const [showGlobalUsers, setShowGlobalUsers] = useState(false);
 
@@ -372,7 +374,7 @@ const MapComponent = () => {
                 {/* 2. Search Bar */}
                 <Box sx={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 50, width: '90%', maxWidth: 360 }}>
                     <Paper component="form" elevation={4} sx={{
-                        p: '4px 12px', display: 'flex', alignItems: 'center', borderRadius: 28, height: 56
+                        p: '4px 12px', display: 'flex', alignItems: 'center', height: 56
                     }} onSubmit={(e) => e.preventDefault()}>
                         <Search size={20} color={theme.palette.text.secondary} />
                         <InputBase
@@ -384,20 +386,53 @@ const MapComponent = () => {
                     </Paper>
                 </Box>
 
-                {/* 3. Bottom Controls (Radius & Recenter) */}
+                {/* 3. Bottom Controls (Radius & View Toggles) */}
                 <Paper elevation={4} sx={{
                     position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 50,
-                    width: 'auto', minWidth: 280, p: 2, px: 4, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 2
+                    width: 'auto', minWidth: 320, p: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5,
+                    borderRadius: 4 // Using theme
                 }}>
-                    <Typography variant="body2" fontWeight="bold" noWrap>
-                        {radius} km
-                    </Typography>
-                    <Slider
-                        value={radius}
-                        onChange={(e, v) => setRadius(v)}
-                        min={1} max={50}
-                        sx={{ width: 150 }}
-                    />
+                    {/* View & Filter Toggles */}
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <ToggleButtonGroup
+                            value={viewMode}
+                            exclusive
+                            onChange={(e, newMode) => { if (newMode) setViewMode(newMode); }}
+                            size="small"
+                            sx={{ '& .MuiToggleButton-root': { borderRadius: '12px', px: 2 } }}
+                        >
+                            <ToggleButton value="local">Local</ToggleButton>
+                            <ToggleButton value="global">Global</ToggleButton>
+                        </ToggleButtonGroup>
+
+                        <Divider orientation="vertical" flexItem />
+
+                        <ToggleButtonGroup
+                            value={filterMode}
+                            exclusive
+                            onChange={(e, newMode) => { if (newMode) setFilterMode(newMode); }}
+                            size="small"
+                            sx={{ '& .MuiToggleButton-root': { borderRadius: '12px', px: 2 } }}
+                        >
+                            <ToggleButton value="all">All</ToggleButton>
+                            <ToggleButton value="interests">Interests</ToggleButton>
+                        </ToggleButtonGroup>
+                    </Box>
+
+                    {/* Radius Slider (Only visible in Local mode) */}
+                    {viewMode === 'local' && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2 }}>
+                            <Typography variant="body2" fontWeight="bold" noWrap sx={{ minWidth: 40 }}>
+                                {radius} km
+                            </Typography>
+                            <Slider
+                                value={radius}
+                                onChange={(e, v) => setRadius(v)}
+                                min={1} max={50}
+                                sx={{ width: 180 }}
+                            />
+                        </Box>
+                    )}
                 </Paper>
 
                 <Fab
@@ -418,7 +453,7 @@ const MapComponent = () => {
                 {selectedUser && (
                     <Paper elevation={24} sx={{
                         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100,
-                        width: 320, p: 4, borderRadius: 6,
+                        width: 320, p: 4,
                         background: mode === 'dark' ? 'rgba(30,30,45,0.85)' : 'rgba(255,255,255,0.85)',
                         backdropFilter: 'blur(16px)',
                         textAlign: 'center',
@@ -452,7 +487,7 @@ const MapComponent = () => {
                             <Button
                                 variant="contained"
                                 color="secondary"
-                                sx={{ borderRadius: 4, minWidth: 50, px: 2 }}
+                                sx={{ minWidth: 50, px: 2 }}
                                 onClick={() => handleNavigate({
                                     lat: selectedUser.location.coordinates[1],
                                     lng: selectedUser.location.coordinates[0]
@@ -465,7 +500,7 @@ const MapComponent = () => {
                                 variant="contained"
                                 startIcon={<MessageSquare size={18} />}
                                 onClick={() => { setChatTarget(selectedUser); setSelectedUser(null); }}
-                                sx={{ borderRadius: 100, flex: 1 }}
+                                sx={{ flex: 1 }}
                             >
                                 Connect
                             </Button>

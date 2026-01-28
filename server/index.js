@@ -319,13 +319,30 @@ app.get('/api/admin/seed', async (req, res) => {
 app.get('/api/users/global', requireAuth, async (req, res) => {
     try {
         const userId = req.user.id;
-        // Fetch recent 50 users globally, excluding self
-        const globalUsers = await User.find({ _id: { $ne: userId } })
+        const { interests } = req.query;
+
+        // Fetch recent 100 users globally, excluding self
+        // Increased limit to allow for filtering
+        let query = { _id: { $ne: userId } };
+
+        // Optimize: If interests filter is active, we might want to query it at DB level
+        // But for now, let's fetch active users and filter in memory to ensure "freshness" priority
+        // unless the set is too large. 
+
+        const globalUsers = await User.find(query)
             .sort({ lastLogin: -1 }) // active users first
-            .limit(50)
+            .limit(100)
             .select('displayName interests location profilePhoto bio');
 
-        res.json(globalUsers);
+        let filteredUsers = globalUsers;
+        if (interests && interests !== 'all') {
+            const userInterests = interests.split(',');
+            filteredUsers = globalUsers.filter(u =>
+                u.interests && u.interests.some(i => userInterests.includes(typeof i === 'string' ? i : i.name))
+            );
+        }
+
+        res.json(filteredUsers);
     } catch (err) {
         console.error('Error fetching global users:', err);
         res.status(500).json({ error: 'Server error' });
