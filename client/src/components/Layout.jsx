@@ -64,6 +64,28 @@ const Layout = ({ children }) => {
                     {!isMobile && user && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Button
+                                startIcon={<MapIcon size={20} />}
+                                onClick={() => navigate('/')}
+                                sx={{
+                                    color: location.pathname === '/' ? theme.palette.primary.main : theme.palette.text.secondary,
+                                    fontWeight: location.pathname === '/' ? 600 : 400,
+                                    position: 'relative',
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main },
+                                    '&::after': location.pathname === '/' ? {
+                                        content: '""',
+                                        position: 'absolute',
+                                        bottom: 0,
+                                        left: '20%',
+                                        width: '60%',
+                                        height: '2px',
+                                        bgcolor: theme.palette.primary.main,
+                                        borderRadius: '2px'
+                                    } : {}
+                                }}
+                            >
+                                Map
+                            </Button>
+                            <Button
                                 startIcon={<MessageSquare size={20} />}
                                 onClick={() => navigate('/chat')}
                                 sx={{
@@ -86,7 +108,7 @@ const Layout = ({ children }) => {
                                 Chat
                             </Button>
 
-                            <Box sx={{ width: 1, height: 24, bgcolor: theme.palette.divider, mx: 2 }} />
+                            <Box sx={{ width: '1px', height: 24, bgcolor: theme.palette.divider, mx: 2 }} />
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2, cursor: 'pointer', p: 0.5, borderRadius: 2, '&:hover': { bgcolor: theme.palette.action.hover } }} onClick={() => navigate('/profile')}>
                                 <Avatar user={user} sx={{ width: 32, height: 32, border: `2px solid ${theme.palette.primary.main}` }} />
                                 <Typography variant="body2" sx={{ fontWeight: 500, color: theme.palette.text.primary }}>{user.displayName}</Typography>
