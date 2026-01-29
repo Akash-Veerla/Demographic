@@ -168,7 +168,12 @@ const MapComponent = () => {
 
             // Deduplicate logic
             if (!Array.isArray(users)) users = [];
-            const uniqueUsers = [...new Map(users.map(u => [u._id, u])).values()];
+            const seenIds = new Set();
+            const uniqueUsers = users.filter(u => {
+                if (!u || !u._id || seenIds.has(u._id)) return false;
+                seenIds.add(u._id);
+                return true;
+            });
 
             userSource.clear();
             uniqueUsers.forEach(u => {

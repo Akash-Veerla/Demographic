@@ -45,35 +45,24 @@ const Layout = ({ children }) => {
             }}>
                 <Toolbar>
                     <MapIcon color={theme.palette.primary.main} style={{ marginRight: '10px' }} />
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: '800', letterSpacing: '-0.5px' }}>
+                    <Typography
+                        variant="h6"
+                        component="div"
+                        onClick={() => navigate('/')}
+                        sx={{
+                            flexGrow: 1,
+                            fontWeight: '800',
+                            letterSpacing: '-0.5px',
+                            cursor: 'pointer',
+                            userSelect: 'none'
+                        }}
+                    >
                         KON-NECT
                     </Typography>
 
                     {/* Desktop Nav */}
                     {!isMobile && user && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Button
-                                startIcon={<MapIcon size={20} />}
-                                onClick={() => navigate('/')}
-                                sx={{
-                                    color: location.pathname === '/' ? theme.palette.primary.main : theme.palette.text.secondary,
-                                    fontWeight: location.pathname === '/' ? 600 : 400,
-                                    position: 'relative',
-                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main },
-                                    '&::after': location.pathname === '/' ? {
-                                        content: '""',
-                                        position: 'absolute',
-                                        bottom: 0,
-                                        left: '20%',
-                                        width: '60%',
-                                        height: '2px',
-                                        bgcolor: theme.palette.primary.main,
-                                        borderRadius: '2px'
-                                    } : {}
-                                }}
-                            >
-                                Map
-                            </Button>
                             <Button
                                 startIcon={<MessageSquare size={20} />}
                                 onClick={() => navigate('/chat')}
