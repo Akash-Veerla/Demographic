@@ -491,24 +491,11 @@ const MapComponent = () => {
                         </Box>
 
                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-                            {/* Navigation Button */}
-                            <Button
-                                variant="contained"
-                                color="secondary"
-                                sx={{ minWidth: 50, px: 2 }}
-                                onClick={() => handleNavigate({
-                                    lat: selectedUser.location.coordinates[1],
-                                    lng: selectedUser.location.coordinates[0]
-                                })}
-                            >
-                                <Navigation size={20} />
-                            </Button>
-
                             <Button
                                 variant="contained"
                                 startIcon={<MessageSquare size={18} />}
                                 onClick={() => { setChatTarget(selectedUser); setSelectedUser(null); }}
-                                sx={{ flex: 1 }}
+                                sx={{ flex: 1, borderRadius: '8px' }}
                             >
                                 Connect
                             </Button>

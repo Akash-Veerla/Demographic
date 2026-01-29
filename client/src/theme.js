@@ -88,7 +88,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             ...palette
         },
         shape: {
-            borderRadius: 16, // Reduced from 24
+            borderRadius: 12, // Reduced from 16
         },
         typography: {
             fontFamily: '"Roboto Flex", "Inter", sans-serif',
@@ -109,7 +109,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
                     root: {
                         backgroundImage: 'none',
                         backdropFilter: 'blur(16px)',
-                        borderRadius: 16, // Reduced from 24
+                        borderRadius: 12, // Reduced from 16
                         border: mode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)',
                         boxShadow: mode === 'dark'
                             ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
@@ -120,7 +120,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             MuiButton: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 8, // Reduced from 12
+                        borderRadius: 6, // Sharp but friendly
                         padding: '10px 24px',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     },
@@ -137,7 +137,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
                 styleOverrides: {
                     root: {
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: 8, // Reduced from 12
+                            borderRadius: 6, // Sharp
                         }
                     }
                 }
@@ -145,7 +145,7 @@ export const getTheme = (mode = 'dark', accentColor = 'blue') => {
             MuiOutlinedInput: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 8,
+                        borderRadius: 6,
                     }
                 }
             },

@@ -375,11 +375,35 @@ app.get('/api/current_user', requireAuth, async (req, res) => {
 });
 
 // User Updates - Protected
+app.post('/api/user/profile', requireAuth, async (req, res) => {
+    try {
+        const { displayName, bio } = req.body;
+        const updateData = {};
+        if (displayName) updateData.displayName = displayName;
+        if (bio) updateData.bio = bio;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            updateData,
+            { new: true }
+        ).select('-password');
+
+        res.json(updatedUser);
+    } catch (err) {
+        console.error("Profile update error:", err);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
 app.post('/api/user/interests', requireAuth, async (req, res) => {
     try {
         const { interests } = req.body; // Expecting array of strings
-        await User.findByIdAndUpdate(req.user.id, { interests });
-        res.send(await User.findById(req.user.id));
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            { interests },
+            { new: true }
+        ).select('-password');
+        res.send(updatedUser);
     } catch (err) {
         res.status(500).send(err);
     }
