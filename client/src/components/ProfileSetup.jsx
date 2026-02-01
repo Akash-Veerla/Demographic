@@ -5,6 +5,7 @@ import { updateInterests, fetchCurrentUser } from '../store/authSlice';
 import api from '../utils/api';
 
 const ProfileSetup = () => {
+    console.log("ProfileSetup mounting...");
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { user } = useSelector(state => state.auth);
