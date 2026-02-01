@@ -377,10 +377,11 @@ app.get('/api/current_user', requireAuth, async (req, res) => {
 // User Updates - Protected
 app.post('/api/user/profile', requireAuth, async (req, res) => {
     try {
-        const { displayName, bio } = req.body;
+        const { displayName, bio, profilePhoto } = req.body;
         const updateData = {};
         if (displayName) updateData.displayName = displayName;
         if (bio) updateData.bio = bio;
+        if (profilePhoto) updateData.profilePhoto = profilePhoto;
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
