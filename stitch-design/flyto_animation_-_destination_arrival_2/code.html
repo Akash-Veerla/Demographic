@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FlyTo Animation - Destination Arrival (Dark Theme)</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#f20d33",
+              "background-light": "#f8f5f6",
+              "background-dark": "#12080a",
+              "card-dark": "#1c0d10",
+              "surface-dark": "#2a1418"
+            },
+            fontFamily: {
+              "display": ["Be Vietnam Pro", "sans-serif"],
+              "body": ["Noto Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+            boxShadow: {
+                'sidebar': '0 20px 40px -5px rgba(0, 0, 0, 0.4), 0 10px 20px -5px rgba(0, 0, 0, 0.3)',
+                'glow': '0 0 20px rgba(242, 13, 51, 0.4)',
+            }
+          },
+        },
+      }
+    </script>
+<style type="text/tailwindcss">
+        .map-layer {
+            background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuDUd4nIs1agLqEQQBZ0hVOjqYV73e504lmkfxGt-VPVFXrC6pKs-TVOuMxIq3AaKmGIVk-qF_pcTNBbLeyQDUBK2ITRimgIqpAZ6_HiQRvoO8Rv9_6NOoZO6UK9i41AAblGmtguFMwIbOk5JTie0iTvpoLYKYBNoK2Lc5dzQrnDZmf9mR3aQRtn31irJwOkB4bxprj1t_96bOsEtxNPwFx-TvqlsxWGrNgB8SvsdwcKPJFSAOVvEA_n1iq8-zUvMU5umpWh7jRqJnjv);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(242, 13, 51, 0.2);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(242, 13, 51, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background-dark font-display text-gray-200 antialiased overflow-hidden h-screen flex flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-white/5 bg-background-dark/95 backdrop-blur-sm px-6 py-3 z-30 shrink-0">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4">
+<div class="size-8 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">share_location</span>
+</div>
+<h2 class="text-white text-xl font-bold leading-tight tracking-[-0.015em]">KON-NECT</h2>
+</div>
+<label class="hidden md:flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-full h-full bg-card-dark border border-white/10 group focus-within:ring-2 ring-primary/40 transition-all">
+<div class="text-gray-400 flex border-none items-center justify-center pl-4">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-full text-white focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-gray-500 px-3 text-sm font-normal leading-normal" placeholder="Search places..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<div class="flex gap-2">
+<button class="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-card-dark border border-white/10 hover:bg-surface-dark text-gray-300 transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-card-dark border border-white/10 hover:bg-surface-dark text-gray-300 transition-colors">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-primary/30" data-alt="User profile avatar showing a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD5td4ICGYOsEsD-QO9wHLLmUcFmUJOigtRv2v89yxs9BoENRlgzwOJ8CNs3n2gm_V4ZM9S9lYtyZgdE2EpCRo7MvG-lxLs9vsz9AtWSk83v4o4pC-riFx67xMUrX-wk41Mqq7H7yeOVpUtCTeT58Mu43SORQS_BOB5TqNdAaOibNcOfGVVlPGRn3ebySOYzN4jZ1zigl2TZ8YprjqzdAeQ1MDj7HZ6FwHy17LFN5yzBofR9DI0p7LzFgnR476x6Xeugd8ucjqSimsT");'></div>
+</div>
+</header>
+<main class="relative flex-1 w-full overflow-hidden">
+<div class="absolute inset-0 z-0 map-layer bg-cover bg-center" data-location="Shibuya, Tokyo">
+<div class="w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&amp;w=2074&amp;auto=format&amp;fit=crop')] bg-cover bg-center opacity-60 grayscale brightness-50 mix-blend-multiply" data-alt="Detailed street map view of Shibuya district"></div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10 translate-x-[180px]">
+<div class="absolute w-[600px] h-[600px] rounded-full border border-primary/20 bg-primary/5 opacity-40"></div>
+<div class="absolute w-[350px] h-[350px] rounded-full border border-primary/40 bg-primary/10 opacity-60"></div>
+<div class="absolute w-[140px] h-[140px] rounded-full border-2 border-primary/60 bg-primary/20 opacity-80 animate-pulse"></div>
+<div class="relative flex flex-col items-center justify-center -mt-8">
+<div class="size-12 bg-primary rounded-full shadow-glow flex items-center justify-center text-white z-20">
+<span class="material-symbols-outlined text-[28px] fill-current">location_on</span>
+</div>
+<div class="w-4 h-2 bg-black/60 rounded-[100%] blur-[2px] mt-1"></div>
+</div>
+</div>
+<div class="absolute top-6 left-6 bottom-6 w-[380px] z-20 flex flex-col">
+<div class="flex flex-col h-full bg-background-dark/90 backdrop-blur-xl shadow-sidebar border border-white/10 rounded-[28px] overflow-hidden">
+<div class="px-6 pt-8 pb-4">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-2 text-primary bg-primary/20 border border-primary/30 px-3 py-1 rounded-full w-fit">
+<span class="material-symbols-outlined text-sm">flight_land</span>
+<span class="text-xs font-bold uppercase tracking-wider">Arrival Complete</span>
+</div>
+<button class="text-gray-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<h2 class="text-white text-[28px] font-bold leading-tight tracking-tight mb-2">Arrived: Shibuya</h2>
+<p class="text-gray-400 text-sm font-medium">Coordinate: 35.6591° N, 139.7005° E</p>
+</div>
+<div class="px-6 pb-4">
+<div class="flex w-full items-center rounded-xl bg-surface-dark/50 h-12 shadow-sm border border-white/5">
+<div class="text-gray-400 pl-4 flex items-center">
+<span class="material-symbols-outlined">person_search</span>
+</div>
+<input class="w-full bg-transparent border-none focus:ring-0 text-white placeholder:text-gray-500 text-sm h-full px-3" placeholder="Find people nearby..."/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 pb-6 custom-scrollbar">
+<div class="flex flex-col gap-3">
+<div class="text-xs font-bold text-primary/80 uppercase tracking-wider px-2 mt-2 mb-1">Nearby Locals</div>
+<div class="flex items-center gap-4 bg-card-dark border border-white/5 p-3 rounded-2xl shadow-sm hover:bg-surface-dark transition-all cursor-pointer group">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-14 ring-2 ring-transparent group-hover:ring-primary/40 transition-all" data-alt="Portrait of Kenji Sato" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCWX-eyT9UvKvZQnQPKs9yROI2hDmD9Eyt2hvAfcDOttJhAhNPAJTF6ZEWZ6Rq-IDjpB9RPNrF8S6ISNJXrmtvzZGpw_Uw98cHsDxLQLgU8NuAsFyi5JjhIT5u72oOUaeJYSPwS2C_PGu37RLBN5A4XoH4oUyE51XLslHA74PL3NFfAEdqm8ijbHzt8xVOMrNDFZIMWToaI6SqETLoO1gfBcSjERzYx4k1sr59Htbin8qJ7Q-0Ox9Dce9MYNY8C1zcjJ9kmSZCR-JVM");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-green-500 border-2 border-card-dark rounded-full"></div>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-white text-base font-bold leading-snug truncate">Kenji Sato</p>
+<p class="text-gray-400 text-sm font-normal truncate">Graphic Designer</p>
+<div class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+<span class="material-symbols-outlined text-[14px]">near_me</span>
+<span>0.1 km away</span>
+</div>
+</div>
+<button class="size-10 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shrink-0">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+</button>
+</div>
+<div class="flex items-center gap-4 bg-card-dark border border-white/5 p-3 rounded-2xl shadow-sm hover:bg-surface-dark transition-all cursor-pointer group">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-14 ring-2 ring-transparent group-hover:ring-primary/40 transition-all" data-alt="Portrait of Yuki Tanaka" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDC7NcnJRHZWvcWclwNQ8IxTxj4965TIJlIAJk61EXTN0baihZkf9Yh6bGx_yEdm1I9-7zqjg8JNNuW6FoovQRxlnIt_hRfouhC0mKwMBREWiU5h2uKQy6LIf_N4E2KpCTBkDNr7HeZtjH8CZnuCKDQdTK1vrdOGwUswL05wPnUKDUv5ma6wYELN3j8bgkaqbgSXG2qK4nGSVvhCq1aMTmkYsdSVt8tojEmaXy_zv0q0hDekl8gwKeRG0eu0hhGw_yB3ENDa9Kn-HYx");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-amber-400 border-2 border-card-dark rounded-full"></div>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-white text-base font-bold leading-snug truncate">Yuki Tanaka</p>
+<p class="text-gray-400 text-sm font-normal truncate">Photographer</p>
+<div class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+<span class="material-symbols-outlined text-[14px]">near_me</span>
+<span>0.3 km away</span>
+</div>
+</div>
+<button class="size-10 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shrink-0">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+</button>
+</div>
+<div class="flex items-center gap-4 bg-card-dark border border-white/5 p-3 rounded-2xl shadow-sm hover:bg-surface-dark transition-all cursor-pointer group">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-14 ring-2 ring-transparent group-hover:ring-primary/40 transition-all" data-alt="Portrait of Aiko Miller" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBbVGheTUrgw-GCyiz4BSjU30sXEo9AWBQPbk24U9IH6fOyVF52T5O6PMHAwQfextBk0UKLKtLiYnCbzj_W0n-4yfDr7voHb0aGMmF1Vh0plZd_SSRkx4O6-Uzf2EyFZWA7CrpM0vOvMx96vWoJ3k8RGC9dGSiwbhDtlgzjBcrz3XzfPnNagdSqMcmb_cpAitEw3OgiYDEPIg-avrGgOhDqdKyc9wcdHpvqGvg4ebUBbOygWfmpny59D3Y_-JMSOS3CCpRBjoJ8cC-n");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-gray-600 border-2 border-card-dark rounded-full"></div>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-white text-base font-bold leading-snug truncate">Aiko Miller</p>
+<p class="text-gray-400 text-sm font-normal truncate">Digital Nomad</p>
+<div class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+<span class="material-symbols-outlined text-[14px]">near_me</span>
+<span>0.5 km away</span>
+</div>
+</div>
+<button class="size-10 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shrink-0">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-white/10 bg-white/5">
+<button class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-full transition-all shadow-lg shadow-primary/40">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+                    Broadcast Presence
+                </button>
+</div>
+</div>
+</div>
+<div class="absolute bottom-8 right-8 flex flex-col items-center gap-4 z-20">
+<div class="flex flex-col bg-card-dark rounded-full shadow-lg overflow-hidden border border-white/10">
+<button class="size-12 flex items-center justify-center hover:bg-surface-dark text-gray-200 active:bg-white/10 transition-colors border-b border-white/5">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="size-12 flex items-center justify-center hover:bg-surface-dark text-gray-200 active:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">remove</span>
+</button>
+</div>
+<button class="size-14 bg-card-dark rounded-full shadow-xl flex items-center justify-center text-primary border-2 border-white/10 hover:border-primary/50 hover:scale-105 transition-all">
+<span class="material-symbols-outlined text-[28px]">my_location</span>
+</button>
+</div>
+</main>
+
+</body></html>

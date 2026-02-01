@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FlyTo Animation - Radius Selection</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f46734",
+                        "background-light": "#f8f6f5",
+                        "background-dark": "#221510",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom range slider styling for Webkit */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+        }
+
+        input[type=range]:focus {
+            outline: none; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#1c110d] dark:text-[#fcf9f8] overflow-hidden">
+<div class="relative flex h-screen w-full flex-col group/design-root">
+<!-- Top Navbar -->
+<header class="z-30 flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f4eae7] dark:border-[#3a2822] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-6 py-3 shadow-sm">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4">
+<div class="size-8 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">hub</span>
+</div>
+<h2 class="text-[#1c110d] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">KON-NECT</h2>
+</div>
+<!-- Search Bar -->
+<label class="hidden md:flex flex-col min-w-40 !h-10 w-96">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-[#f4eae7] dark:bg-[#3a2822] border border-transparent focus-within:border-primary/50 transition-colors">
+<div class="text-[#9c5f49] dark:text-[#ccaca2] flex items-center justify-center pl-4 rounded-l-lg border-r-0">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#1c110d] dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent focus:border-none h-full placeholder:text-[#9c5f49] dark:placeholder:text-[#ccaca2]/70 px-4 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal" placeholder="Search cities, places..." value="San Francisco, CA"/>
+</div>
+</label>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-[#1c110d] dark:text-white">notifications</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-white dark:border-[#3a2822] shadow-sm" data-alt="User profile avatar showing a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBvtLEkQz8ZQ5C517bzKDKmoUeME5dJSh_uM7BnDBA4gH816fM4SXIDJeOw5No2ZqveMPM0sevxKJbDVtDOR70j6fLnnw8ggzY55iHDMc0rLhR9BRT2U15gZVXYOtDuG8fITZSPxsEgRorTfMOJqLSzwJW3iB2f9ljTH64k5nPFtzwZBbvL0MjBdhWkXuyNO5lVIBJtXk9EukU8GsTC6tNnfoPaDsugwMexabKA4tlJJt_VnBNA6W9CWkJFgABkhGPSG_yIqWUVuice");'></div>
+</div>
+</header>
+<!-- Main Map Area -->
+<main class="relative flex-1 w-full h-full overflow-hidden bg-[#e5e7eb] dark:bg-[#1a1a1a]">
+<!-- Map Background Image -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-700 ease-in-out" data-alt="Light colored stylized map of a city grid with streets and parks" data-location="San Francisco" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDxJ2II23zUzLzEkTCopCggS1mXgbpq-A0d-5GN9KMjGAcunZxGI0_nqjrSlXb5ADVAoteoLO4P6yeH3Hrre7bC3GSbEeBw6Ostgk1dxupgnm3qlaaUy5Zzpp8scoC8BdDUq3mVKWXJXDra3vLg1u22v3llQQShoZhqXW1BT3cYFybS7AIrhK5EszxHivMoMGSju-GGMe_4QrePTneb2IW4NEg50W5FQkV-c77wNaLdkds8qh9nhcU0LkstTB97Z6vxSBc9C9tGG4u7"); filter: grayscale(20%) opacity(0.9);'>
+</div>
+<!-- Map Overlay Gradient for better UI visibility -->
+<div class="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/10 pointer-events-none"></div>
+<!-- "Coral Connect" Radius Overlay - Centered -->
+<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none flex items-center justify-center">
+<!-- The Circle -->
+<div class="w-[500px] h-[500px] rounded-full bg-primary/20 border-2 border-primary shadow-[0_0_40px_rgba(244,103,52,0.2)] animate-pulse flex items-center justify-center relative">
+<!-- Ripple effect -->
+<div class="absolute inset-0 rounded-full border border-primary/40 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+<!-- Center Pin -->
+<div class="relative z-20 -mt-8">
+<span class="material-symbols-outlined text-6xl text-primary drop-shadow-lg filter">location_on</span>
+<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1.5 bg-black/30 blur-sm rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- UI Overlay Container -->
+<div class="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6">
+<!-- Top Section: Sidebar + Controls -->
+<div class="flex justify-between items-start">
+<!-- Floating Sidebar (Left) -->
+<div class="pointer-events-auto w-80 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md shadow-lg rounded-xl overflow-hidden border border-white/20 dark:border-white/5 animate-in slide-in-from-left-4 fade-in duration-500">
+<div class="p-5 flex flex-col gap-4">
+<!-- Header -->
+<div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+<h3 class="text-[#1c110d] dark:text-white text-lg font-bold leading-tight">Search Zone</h3>
+<div class="px-2 py-1 bg-primary/10 rounded text-primary text-xs font-bold uppercase tracking-wider">Active</div>
+</div>
+<!-- Status Block -->
+<div class="flex items-start gap-4">
+<div class="relative flex-shrink-0 size-10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
+</div>
+<div class="flex flex-col gap-1">
+<p class="text-primary font-semibold text-sm">Calculating...</p>
+<p class="text-[#9c5f49] dark:text-[#ccaca2] text-sm leading-snug">
+                                        Scanning for active users and venues within the selected range.
+                                    </p>
+</div>
+</div>
+<!-- Stats (Mock) -->
+<div class="grid grid-cols-2 gap-2 mt-2">
+<div class="bg-[#f4eae7]/50 dark:bg-[#3a2822]/50 p-3 rounded-lg">
+<p class="text-xs text-[#9c5f49] dark:text-[#ccaca2]">Est. Users</p>
+<p class="text-lg font-bold text-[#1c110d] dark:text-white">1,240</p>
+</div>
+<div class="bg-[#f4eae7]/50 dark:bg-[#3a2822]/50 p-3 rounded-lg">
+<p class="text-xs text-[#9c5f49] dark:text-[#ccaca2]">Density</p>
+<p class="text-lg font-bold text-[#1c110d] dark:text-white">High</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Map Controls (Right) -->
+<div class="pointer-events-auto flex flex-col gap-2">
+<div class="bg-background-light dark:bg-background-dark shadow-md rounded-lg flex flex-col overflow-hidden border border-gray-100 dark:border-gray-800">
+<button class="size-10 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 transition-colors text-[#1c110d] dark:text-white border-b border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="size-10 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 transition-colors text-[#1c110d] dark:text-white">
+<span class="material-symbols-outlined">remove</span>
+</button>
+</div>
+<button class="size-10 bg-background-light dark:bg-background-dark shadow-md rounded-lg flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-primary border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined">near_me</span>
+</button>
+</div>
+</div>
+<!-- Bottom Section: Radius Control Panel -->
+<div class="flex justify-center w-full pb-4">
+<div class="pointer-events-auto w-full max-w-2xl bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-6 border border-white/20 dark:border-white/5 animate-in slide-in-from-bottom-8 fade-in duration-500">
+<div class="flex flex-col gap-6">
+<!-- Slider Header -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<p class="text-[#1c110d] dark:text-white text-lg font-bold">Adjust Range</p>
+<p class="text-sm text-[#9c5f49] dark:text-[#ccaca2]">Define the radius for your connection search.</p>
+</div>
+<div class="flex items-center gap-2 bg-[#f4eae7] dark:bg-[#3a2822] px-3 py-1.5 rounded-lg border border-primary/20">
+<span class="material-symbols-outlined text-primary text-sm">radar</span>
+<span class="text-primary font-mono font-bold text-lg">15 km</span>
+</div>
+</div>
+<!-- Slider Input -->
+<div class="relative w-full h-8 flex items-center">
+<!-- Track Background -->
+<div class="absolute w-full h-1.5 bg-[#e8d5ce] dark:bg-[#4a352f] rounded-full overflow-hidden">
+<!-- Active Track (Simulated width 50% for 15km out of 30km) -->
+<div class="h-full bg-primary w-1/2"></div>
+</div>
+<!-- Thumb (Simulated position) -->
+<div class="absolute left-1/2 -translate-x-1/2 size-6 bg-primary rounded-full shadow-md border-[3px] border-white dark:border-[#221510] cursor-pointer hover:scale-110 transition-transform"></div>
+<!-- Actual Range Input (Invisible overlay for interaction) -->
+<input class="absolute w-full h-full opacity-0 cursor-pointer z-10" max="30" min="1" type="range" value="15"/>
+<!-- Tooltip bubble (Simulated) -->
+<div class="absolute left-1/2 -translate-x-1/2 -top-10 bg-[#1c110d] dark:bg-white text-white dark:text-[#1c110d] text-xs font-bold px-2 py-1 rounded shadow-lg opacity-0 hover:opacity-100 transition-opacity">
+                                    15km
+                                </div>
+</div>
+<div class="flex justify-between text-xs font-medium text-[#9c5f49] dark:text-[#ccaca2] -mt-2">
+<span>1 km</span>
+<span>15 km</span>
+<span>30 km</span>
+</div>
+<!-- Action Button -->
+<div class="flex justify-end pt-2">
+<button class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed group">
+<span>Confirm Selection</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform text-xl">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
