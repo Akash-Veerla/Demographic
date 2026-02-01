@@ -9,6 +9,7 @@ import Register from './components/Register';
 import Profile from './components/Profile';
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
+import Social from './components/Social';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from './theme';
 
@@ -82,7 +83,8 @@ const App = () => {
                                 <ProtectedRoute>
                                     <Layout>
                                         <Routes>
-                                            <Route path="/" element={<MapComponent />} />
+                                            <Route path="/" element={<Profile />} />
+                                            <Route path="/social" element={<Social />} />
                                             <Route path="/profile" element={<Profile />} />
                                             <Route path="/setup" element={<ProfileSetup />} />
                                             <Route path="/chat" element={<Chat />} />

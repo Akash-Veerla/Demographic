@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Box, useMediaQuery, useTheme, BottomNavigation, BottomNavigationAction, Paper, Container, alpha } from '@mui/material';
-import { Menu as MenuIcon, LogOut, Map as MapIcon, MessageSquare, User } from 'lucide-react';
+import { Menu as MenuIcon, LogOut, Map as MapIcon, MessageSquare, User, Home } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/authSlice';
 import Avatar from './Avatar';
@@ -29,7 +29,8 @@ const Layout = ({ children }) => {
     };
 
     const navItems = [
-        { label: 'Map', icon: <MapIcon size={20} />, path: '/' },
+        { label: 'Home', icon: <Home size={20} />, path: '/' },
+        { label: 'Social', icon: <MapIcon size={20} />, path: '/social' },
         { label: 'Chat', icon: <MessageSquare size={20} />, path: '/chat' },
         { label: 'Profile', icon: <User size={20} />, path: '/profile' },
     ];
@@ -64,7 +65,7 @@ const Layout = ({ children }) => {
                     {!isMobile && user && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Button
-                                startIcon={<MapIcon size={20} />}
+                                startIcon={<Home size={20} />}
                                 onClick={() => navigate('/')}
                                 sx={{
                                     color: location.pathname === '/' ? theme.palette.primary.main : theme.palette.text.secondary,
@@ -83,7 +84,29 @@ const Layout = ({ children }) => {
                                     } : {}
                                 }}
                             >
-                                Map
+                                Home
+                            </Button>
+                            <Button
+                                startIcon={<MapIcon size={20} />}
+                                onClick={() => navigate('/social')}
+                                sx={{
+                                    color: location.pathname === '/social' ? theme.palette.primary.main : theme.palette.text.secondary,
+                                    fontWeight: location.pathname === '/social' ? 600 : 400,
+                                    position: 'relative',
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main },
+                                    '&::after': location.pathname === '/social' ? {
+                                        content: '""',
+                                        position: 'absolute',
+                                        bottom: 0,
+                                        left: '20%',
+                                        width: '60%',
+                                        height: '2px',
+                                        bgcolor: theme.palette.primary.main,
+                                        borderRadius: '2px'
+                                    } : {}
+                                }}
+                            >
+                                Social
                             </Button>
                             <Button
                                 startIcon={<MessageSquare size={20} />}

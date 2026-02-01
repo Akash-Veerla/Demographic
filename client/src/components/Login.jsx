@@ -134,7 +134,7 @@ const Login = () => {
                 {/* Social Logins */}
                 <div className="flex justify-center gap-5 w-full">
                     {/* Google */}
-                    <button className="w-12 h-12 rounded-full border border-gray-100 dark:border-[#3a2523] bg-white dark:bg-[#3a2523] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#4a2e2b] hover:shadow-md transition-all duration-200 group">
+                    <button type="button" onClick={() => alert("Google Login Coming Soon!")} className="w-12 h-12 rounded-full border border-gray-100 dark:border-[#3a2523] bg-white dark:bg-[#3a2523] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#4a2e2b] hover:shadow-md transition-all duration-200 group">
                         <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
@@ -143,13 +143,13 @@ const Login = () => {
                         </svg>
                     </button>
                     {/* Facebook */}
-                    <button className="w-12 h-12 rounded-full border border-gray-100 dark:border-[#3a2523] bg-white dark:bg-[#3a2523] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#4a2e2b] hover:shadow-md transition-all duration-200 group">
+                    <button type="button" onClick={() => alert("Facebook Login Coming Soon!")} className="w-12 h-12 rounded-full border border-gray-100 dark:border-[#3a2523] bg-white dark:bg-[#3a2523] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#4a2e2b] hover:shadow-md transition-all duration-200 group">
                          <svg className="w-6 h-6 text-[#1877F2] group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
                         </svg>
                     </button>
                     {/* Apple */}
-                    <button className="w-12 h-12 rounded-full border border-gray-100 dark:border-[#3a2523] bg-white dark:bg-[#3a2523] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#4a2e2b] hover:shadow-md transition-all duration-200 group">
+                    <button type="button" onClick={() => alert("Apple Login Coming Soon!")} className="w-12 h-12 rounded-full border border-gray-100 dark:border-[#3a2523] bg-white dark:bg-[#3a2523] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#4a2e2b] hover:shadow-md transition-all duration-200 group">
                          <svg className="w-5 h-5 text-black dark:text-white group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12.046 24C5.397 24 0 18.612 0 11.972 0 5.332 5.397 0 12.046 0c6.648 0 12.045 5.332 12.045 11.972C24.091 18.612 18.694 24 12.046 24zm0-22.954c-6.07 0-11 4.921-11 10.982 0 6.06 4.93 10.982 11 10.982 6.07 0 11-4.921 11-10.982 0-6.06-4.93-10.982-11-10.982z"></path>
                             <path d="M17.051 20.32c-.512.484-1.226.772-2.02.772-1.637 0-2.964-1.325-2.964-2.959 0-1.634 1.327-2.96 2.964-2.96.794 0 1.508.288 2.02.772.378-.378.723-.78 1.054-1.196-.65-.583-1.503-.941-2.434-.941-2.037 0-3.689 1.649-3.689 3.683 0 2.033 1.652 3.682 3.689 3.682.93 0 1.784-.359 2.434-.941-.331-.416-.676-.818-1.054-1.196zM13.25 10.422c-.633 0-1.146.512-1.146 1.144 0 .631.513 1.144 1.146 1.144.633 0 1.145-.512 1.145-1.144 0-.631-.512-1.144-1.145-1.144z"></path>
