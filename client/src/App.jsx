@@ -9,6 +9,7 @@ import Register from './components/Register';
 import Profile from './components/Profile';
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
+import Social from './components/Social';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from './theme';
 
@@ -19,10 +20,18 @@ export const ColorModeContext = createContext({
 });
 
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated } = useSelector(state => state.auth);
+    const { isAuthenticated, user } = useSelector(state => state.auth);
+
     if (!isAuthenticated) {
         return <Navigate to="/welcome" replace />;
     }
+
+    // Enforce Setup if interests are empty (and not currently on setup page)
+    const isSetupPage = window.location.pathname === '/setup';
+    if (isAuthenticated && user && (!user.interests || user.interests.length === 0) && !isSetupPage) {
+        return <Navigate to="/setup" replace />;
+    }
+
     return children;
 };
 
@@ -82,7 +91,8 @@ const App = () => {
                                 <ProtectedRoute>
                                     <Layout>
                                         <Routes>
-                                            <Route path="/" element={<MapComponent />} />
+                                            <Route path="/" element={<Profile />} />
+                                            <Route path="/social" element={<Social />} />
                                             <Route path="/profile" element={<Profile />} />
                                             <Route path="/setup" element={<ProfileSetup />} />
                                             <Route path="/chat" element={<Chat />} />

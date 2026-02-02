@@ -60,6 +60,18 @@ export const updateLocation = createAsyncThunk(
     }
 );
 
+export const forgotPassword = createAsyncThunk(
+    'auth/forgotPassword',
+    async (email, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/api/auth/forgot-password', { email });
+            return response.data; // { message, tempPassword }
+        } catch (err) {
+            return rejectWithValue(err.response?.data || { error: 'Request failed' });
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState: {
@@ -124,8 +136,11 @@ const authSlice = createSlice({
             })
             .addCase(fetchCurrentUser.rejected, (state, action) => {
                 state.loading = false;
-                state.isAuthenticated = false;
-                state.user = null;
+                // Only reset auth if we don't have a user (meaning no parallel login success happened)
+                if (!state.user) {
+                    state.isAuthenticated = false;
+                    state.user = null;
+                }
                 // Don't set error here to avoid flashing error on initial load if not logged in
             })
             // Update Interests

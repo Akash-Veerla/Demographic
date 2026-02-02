@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Box, useMediaQuery, useTheme, BottomNavigation, BottomNavigationAction, Paper, Container, alpha } from '@mui/material';
-import { Menu as MenuIcon, LogOut, Map as MapIcon, MessageSquare, User } from 'lucide-react';
+import { Box, IconButton, useMediaQuery, useTheme, BottomNavigation, BottomNavigationAction, Paper, Menu, MenuItem } from '@mui/material';
+import { LogOut, Map as MapIcon, MessageSquare, User } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/authSlice';
 import Avatar from './Avatar';

@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { validateInterests } = require('../utils/moderation');
 
 // Register
 router.post('/register', async (req, res) => {
     try {
-        const { displayName, email, password, bio, interests } = req.body;
+        const { displayName, email, password } = req.body; // Simplified: Bio/Interests move to step 2
 
         if (!displayName || !email || !password) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -24,41 +25,23 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Email already in use' });
         }
 
-        // Moderation Check
-        const moderationResult = validateInterests(interests);
-        if (!moderationResult.valid) {
-            return res.status(400).json({
-                error: 'Interest rejected: Does not meet community safety guidelines.',
-                flagged: moderationResult.flagged
-            });
-        }
-
         // Hash Password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Generate Initials Avatar Fallback
-        const getInitials = (name) => {
-            const parts = (name || '').split(' ').filter(Boolean);
-            if (parts.length === 0) return '?';
-            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-        };
-        const initials = getInitials(displayName);
-
-        // Create User
+        // Create User (Interests/Bio empty initially)
         const newUser = new User({
             displayName,
             email,
             password: hashedPassword,
-            bio,
-            interests: interests || [],
-            profilePhoto: null // Default null
+            bio: '',
+            interests: [],
+            profilePhoto: null
         });
 
         await newUser.save();
 
-        // Issue JWT
+        // Issue JWT for immediate login
         const token = jwt.sign(
             { id: newUser._id },
             process.env.JWT_SECRET,
@@ -75,7 +58,7 @@ router.post('/register', async (req, res) => {
                 interests: newUser.interests,
                 location: newUser.location,
                 profilePhoto: null,
-                initials: initials
+                initials: getInitials(newUser.displayName)
             }
         });
 
@@ -115,14 +98,6 @@ router.post('/login', async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        // Calculate initials for login response too
-        const getInitials = (name) => {
-            const parts = (name || '').split(' ').filter(Boolean);
-            if (parts.length === 0) return '?';
-            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-        };
-
         res.json({
             token,
             user: {
@@ -142,5 +117,43 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ error: 'Server error during login', details: err.message });
     }
 });
+
+// Forgot Password (Returns raw temporary password for display)
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'Email required' });
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            // For security, generic message? User requested "give the user a strong temporary password".
+            // If user not found, we probably shouldn't show a password.
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Generate strong random password
+        const tempPassword = crypto.randomBytes(8).toString('hex'); // 16 chars
+
+        // Hash and Save
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(tempPassword, salt);
+        await user.save();
+
+        // Return raw password for frontend display
+        res.json({ message: 'Temporary password generated', tempPassword });
+
+    } catch (err) {
+        console.error('Forgot Password Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Helper
+const getInitials = (name) => {
+    const parts = (name || '').split(' ').filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
 module.exports = router;
