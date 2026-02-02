@@ -60,6 +60,18 @@ export const updateLocation = createAsyncThunk(
     }
 );
 
+export const forgotPassword = createAsyncThunk(
+    'auth/forgotPassword',
+    async (email, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/api/auth/forgot-password', { email });
+            return response.data; // { message, tempPassword }
+        } catch (err) {
+            return rejectWithValue(err.response?.data || { error: 'Request failed' });
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState: {
