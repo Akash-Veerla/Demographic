@@ -20,10 +20,18 @@ export const ColorModeContext = createContext({
 });
 
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated } = useSelector(state => state.auth);
+    const { isAuthenticated, user } = useSelector(state => state.auth);
+
     if (!isAuthenticated) {
         return <Navigate to="/welcome" replace />;
     }
+
+    // Enforce Setup if interests are empty (and not currently on setup page)
+    const isSetupPage = window.location.pathname === '/setup';
+    if (isAuthenticated && user && (!user.interests || user.interests.length === 0) && !isSetupPage) {
+        return <Navigate to="/setup" replace />;
+    }
+
     return children;
 };
 
