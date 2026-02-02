@@ -23,13 +23,17 @@ const Login = () => {
     };
 
     const handleSubmit = async (e) => {
+        // Prevent default form submission (reload)
         e.preventDefault();
+        e.stopPropagation();
+
         try {
             await dispatch(loginUser(formData)).unwrap();
             navigate('/', { replace: true });
         } catch (err) {
             console.error("Login failed:", err);
         }
+        return false;
     };
 
     const handleForgotPassword = async () => {

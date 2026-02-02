@@ -20,6 +20,7 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        e.stopPropagation();
 
         try {
             await dispatch(registerUser(formData)).unwrap();
@@ -27,6 +28,7 @@ const Register = () => {
         } catch (err) {
             console.error("Registration failed:", err);
         }
+        return false;
     };
 
     return (
