@@ -30,9 +30,7 @@ const Register = () => {
         const { confirmPassword, ...dataToSend } = formData;
 
         try {
-            console.log("Dispatching registerUser...");
             await dispatch(registerUser(dataToSend)).unwrap();
-            console.log("Registration success. Navigating to /setup...");
             navigate('/setup', { replace: true });
         } catch (err) {
             console.error("Registration failed:", err);

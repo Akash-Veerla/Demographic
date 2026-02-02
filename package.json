@@ -20,10 +20,12 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "mongoose": "^9.1.5",
-    "playwright": "^1.58.1",
     "socket.io": "^4.8.3"
   },
   "engines": {
     "node": ">=18.x"
+  },
+  "devDependencies": {
+    "playwright": "^1.58.1"
   }
 }
