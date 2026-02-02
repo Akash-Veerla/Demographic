@@ -124,8 +124,11 @@ const authSlice = createSlice({
             })
             .addCase(fetchCurrentUser.rejected, (state, action) => {
                 state.loading = false;
-                state.isAuthenticated = false;
-                state.user = null;
+                // Only reset auth if we don't have a user (meaning no parallel login success happened)
+                if (!state.user) {
+                    state.isAuthenticated = false;
+                    state.user = null;
+                }
                 // Don't set error here to avoid flashing error on initial load if not logged in
             })
             // Update Interests

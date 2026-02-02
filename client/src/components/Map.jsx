@@ -82,7 +82,7 @@ const MapComponent = () => {
         const [myLng, myLat] = center;
         const [targetLng, targetLat] = targetUser.location.coordinates;
 
-        const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${myLng},${myLat};${targetLng},${targetLat}?overview=full&geometries=geojson&steps=true`;
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${myLng},${myLat};${targetLng},${targetLat}?overview=full&geometries=geojson&steps=true`;
 
         try {
             const response = await fetch(osrmUrl);
