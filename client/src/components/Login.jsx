@@ -21,7 +21,13 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await dispatch(loginUser(formData)).unwrap();
+            // 1. Wait for the API response
+            const result = await dispatch(loginUser(formData)).unwrap();
+
+            // 2. FORCE a synchronous token write (Safety Net)
+            if (result.token) localStorage.setItem('token', result.token);
+
+            // 3. Navigate only after we are sure
             navigate('/', { replace: true });
         } catch (err) {
             console.error("Login failed:", err);

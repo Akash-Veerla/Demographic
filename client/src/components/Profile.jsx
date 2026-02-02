@@ -17,20 +17,7 @@ const Profile = () => {
 
     return (
         <div className="bg-background-light dark:bg-background-dark text-on-surface dark:text-on-surface-dark font-sans transition-colors duration-300 min-h-screen flex flex-col">
-            {/* Navbar */}
-            <nav className="sticky top-0 z-50 bg-background-light/95 dark:bg-surface-dark/95 backdrop-blur-sm border-b border-surface-container-light dark:border-surface-container-dark px-6 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="font-display font-bold text-2xl text-primary tracking-tight">KON-NECT</span>
-                    </div>
-                    <div className="hidden md:flex items-center gap-8">
-                        <Link to="/" className="text-sm font-medium text-secondary dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">Map</Link>
-                        <Link to="/chat" className="text-sm font-medium text-secondary dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">Chat</Link>
-                        <Link to="/profile" className="text-sm font-bold text-primary border-b-2 border-primary pb-1">Profile</Link>
-                        <button onClick={handleLogout} className="text-sm font-medium text-error hover:text-red-700 transition-colors">Logout</button>
-                    </div>
-                </div>
-            </nav>
+            {/* Navbar Removed (Handled by Layout.jsx) */}
 
             <main className="flex-grow p-4 md:p-8 lg:p-12">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">

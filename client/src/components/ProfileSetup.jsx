@@ -76,18 +76,7 @@ const ProfileSetup = () => {
                 <div className="absolute inset-0 bg-background-light/40 dark:bg-background-dark/60 backdrop-blur-[2px]"></div>
             </div>
 
-            {/* Nav */}
-            <nav className="relative z-10 w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto">
-                <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-primary tracking-tight">KON-NECT</span>
-                </div>
-                <div className="flex items-center gap-4">
-                    <button className="p-2 rounded-full bg-white/50 dark:bg-black/30 hover:bg-white dark:hover:bg-black/50 transition-colors">
-                        <span className="material-symbols-outlined text-gray-600 dark:text-gray-300">brightness_4</span>
-                    </button>
-                    <span className="text-sm font-medium opacity-70">Step 2 of 3</span>
-                </div>
-            </nav>
+            {/* Nav Removed (Handled by Layout.jsx) */}
 
             {/* Main Content */}
             <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-4">

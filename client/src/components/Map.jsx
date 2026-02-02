@@ -108,7 +108,7 @@ const MapComponent = () => {
         });
 
         initialMap.on('moveend', () => {
-             fetchNearbyUsers();
+            fetchNearbyUsers();
         });
 
         return () => initialMap.setTarget(null);
@@ -135,8 +135,8 @@ const MapComponent = () => {
 
     // Polling
     useEffect(() => {
-        if(map) fetchNearbyUsers();
-        const interval = setInterval(() => { if(map) fetchNearbyUsers(); }, 15000);
+        if (map) fetchNearbyUsers();
+        const interval = setInterval(() => { if (map) fetchNearbyUsers(); }, 15000);
         return () => clearInterval(interval);
     }, [fetchNearbyUsers, map]);
 
@@ -158,42 +158,7 @@ const MapComponent = () => {
 
     return (
         <div className="relative flex h-screen w-full flex-col group/design-root overflow-hidden bg-background-light dark:bg-background-dark text-[#1c110d] dark:text-[#fcf9f8]">
-            {/* Header */}
-            <header className="z-30 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#f4eae7] dark:border-[#3a2822] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-6 py-3 shadow-sm">
-                <div className="flex items-center gap-8">
-                    <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="size-8 flex items-center justify-center text-primary">
-                            <span className="material-symbols-outlined text-3xl">hub</span>
-                        </div>
-                        <h2 className="text-[#1c110d] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">KON-NECT</h2>
-                    </div>
-                    {/* Search Bar */}
-                    <label className="hidden md:flex flex-col min-w-40 !h-10 w-96">
-                        <div className="flex w-full flex-1 items-stretch rounded-lg h-full bg-[#f4eae7] dark:bg-[#3a2822] border border-transparent focus-within:border-primary/50 transition-colors">
-                            <div className="text-[#9c5f49] dark:text-[#ccaca2] flex items-center justify-center pl-4 rounded-l-lg border-r-0">
-                                <span className="material-symbols-outlined">search</span>
-                            </div>
-                            <input
-                                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#1c110d] dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent focus:border-none h-full placeholder:text-[#9c5f49] dark:placeholder:text-[#ccaca2]/70 px-4 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal"
-                                placeholder="Search cities, places..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                    </label>
-                </div>
-                <div className="flex items-center gap-4">
-                    <button className="flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-                        <span className="material-symbols-outlined text-[#1c110d] dark:text-white">notifications</span>
-                    </button>
-                    <div
-                        className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-white dark:border-[#3a2822] shadow-sm cursor-pointer"
-                        onClick={() => navigate('/profile')}
-                        style={{ backgroundImage: `url(${user?.profilePhoto || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBvtLEkQz8ZQ5C517bzKDKmoUeME5dJSh_uM7BnDBA4gH816fM4SXIDJeOw5No2ZqveMPM0sevxKJbDVtDOR70j6fLnnw8ggzY55iHDMc0rLhR9BRT2U15gZVXYOtDuG8fITZSPxsEgRorTfMOJqLSzwJW3iB2f9ljTH64k5nPFtzwZBbvL0MjBdhWkXuyNO5lVIBJtXk9EukU8GsTC6tNnfoPaDsugwMexabKA4tlJJt_VnBNA6W9CWkJFgABkhGPSG_yIqWUVuice'})` }}
-                    ></div>
-                </div>
-            </header>
-
+            {/* Header Removed (Handled by Layout.jsx) */}
             <main className="relative flex-1 w-full h-full overflow-hidden bg-[#e5e7eb] dark:bg-[#1a1a1a]">
                 {/* Map Container - Applied Grayscale Filter */}
                 <div
@@ -325,7 +290,7 @@ const MapComponent = () => {
                 ) : (
                     /* ARRIVAL / SEARCH MODE */
                     <>
-                         {/* Static Ripple Effect (Simulated) */}
+                        {/* Static Ripple Effect (Simulated) */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 translate-x-[180px]">
                             <div className="absolute w-[600px] h-[600px] rounded-full border border-primary/10 bg-primary/5 opacity-40"></div>
                             <div className="absolute w-[350px] h-[350px] rounded-full border border-primary/30 bg-primary/10 opacity-60"></div>
@@ -338,8 +303,8 @@ const MapComponent = () => {
                             </div>
                         </div>
 
-                         {/* Sidebar */}
-                         <div className="absolute top-6 left-6 bottom-6 w-[380px] z-20 flex flex-col">
+                        {/* Sidebar */}
+                        <div className="absolute top-6 left-6 bottom-6 w-[380px] z-20 flex flex-col">
                             <div className="flex flex-col h-full bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md shadow-sidebar border border-white/50 dark:border-white/10 rounded-[28px] overflow-hidden">
                                 {/* Sidebar Header */}
                                 <div className="px-6 pt-8 pb-4">
@@ -378,7 +343,7 @@ const MapComponent = () => {
                                                 <div className="relative shrink-0">
                                                     <div
                                                         className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-14 ring-2 ring-transparent group-hover:ring-primary/20 transition-all"
-                                                        style={{ backgroundImage: `url(${u.profilePhoto || 'https://ui-avatars.com/api/?name='+u.displayName})` }}
+                                                        style={{ backgroundImage: `url(${u.profilePhoto || 'https://ui-avatars.com/api/?name=' + u.displayName})` }}
                                                     ></div>
                                                     <div className="absolute bottom-0 right-0 size-3.5 bg-green-500 border-2 border-white rounded-full"></div>
                                                 </div>
@@ -406,13 +371,13 @@ const MapComponent = () => {
                                     </button>
                                 </div>
                             </div>
-                         </div>
+                        </div>
                     </>
                 )}
             </main>
 
             {/* Chat Overlay */}
-             {chatTarget && socketReady && (
+            {chatTarget && socketReady && (
                 <ChatOverlay
                     socket={socketRef.current}
                     user={user}
