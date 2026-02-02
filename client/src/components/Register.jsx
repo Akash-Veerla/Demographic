@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { registerUser } from '../store/authSlice';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Register = () => {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error } = useSelector(state => state.auth);
+    const { register, loading, error } = useAuth();
 
     const [formData, setFormData] = useState({
         displayName: '',
@@ -20,22 +18,19 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        e.stopPropagation();
-
         try {
-            await dispatch(registerUser(formData)).unwrap();
+            await register(formData);
             navigate('/setup', { replace: true });
         } catch (err) {
             console.error("Registration failed:", err);
         }
-        return false;
     };
 
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden">
             {/* Background Layer */}
             <div className="absolute inset-0 z-0 overflow-hidden">
-                 <div
+                <div
                     className="w-full h-full bg-cover bg-center filter blur-lg scale-110 opacity-40 dark:opacity-20"
                     style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJ8VVsGQsbQ71t7tcICQyIClCf8Uxwz0gCzvDqLmrgOJ9L9bi583sZn0HvniYez3uplEVS_gc97irtF3KtFQzNCk7ipt9E7bpZAWUicWX1Xzf1RW4QIgEtLiBeu5x9hJ4AlAYuObSbFjednl_JFlmNti9E1L97nltPIIy1qCgap2gY3KtlIMpy5wI0qdywUI30ttquQBFTUCgYzf4GtZJ-IGLB4SgtSHQGZDdyigDUYed9hPTfDJQX_KFfOYcHuiSt4NaH7CMvTCZe')" }}
                 >

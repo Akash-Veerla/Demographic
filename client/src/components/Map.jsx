@@ -10,7 +10,7 @@ import { Feature } from 'ol';
 import { Point, LineString } from 'ol/geom';
 import { Style, Circle as StyleCircle, Fill, Stroke } from 'ol/style';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { useSelector } from 'react-redux';
+import { useAuth } from '../context/AuthContext';
 import io from 'socket.io-client';
 import api from '../utils/api';
 import ChatOverlay from './ChatOverlay';
@@ -23,15 +23,50 @@ const MapComponent = () => {
     const [viewState, setViewState] = useState({ center: fromLonLat([80.6480, 16.5062]), zoom: 9 });
 
     const [radius, setRadius] = useState(15);
-    const [nearbyUsersList, setNearbyUsersList] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [chatTarget, setChatTarget] = useState(null);
-    const [isArrivalMode, setIsArrivalMode] = useState(false);
-    const [routeInstructions, setRouteInstructions] = useState([]);
+    const [filterMode, setFilterMode] = useState('global'); // 'global' or 'relevant'
 
-    const { user } = useSelector(state => state.auth);
-    const socketRef = useRef(null);
-    const [socketReady, setSocketReady] = useState(false);
+    // ... existing state ...
+
+    // Helper to check match
+    const checkInterestMatch = (uInterests) => {
+        if (!user?.interests || !uInterests) return false;
+        const mySet = new Set(user.interests.map(i => typeof i === 'string' ? i.toLowerCase() : i.name.toLowerCase()));
+        return uInterests.some(i => mySet.has(typeof i === 'string' ? i.toLowerCase() : i.name.toLowerCase()));
+    };
+
+    const getFilteredUsers = useCallback(() => {
+        if (filterMode === 'global') return nearbyUsersList;
+        return nearbyUsersList.filter(u => checkInterestMatch(u.interests));
+    }, [nearbyUsersList, filterMode, user]);
+
+    // Update Map Markers when list or mode changes
+    useEffect(() => {
+        if (!map) return;
+        userSource.clear();
+        const filtered = getFilteredUsers();
+
+        filtered.forEach(u => {
+            if (!u.location?.coordinates) return;
+            const [uLng, uLat] = u.location.coordinates;
+            // Highlight match in Relevant mode or just always? 
+            // Maybe different color for match?
+            const isMatch = checkInterestMatch(u.interests);
+
+            const feature = new Feature({
+                geometry: new Point(fromLonLat([uLng, uLat])),
+                type: 'user',
+                data: u
+            });
+            feature.setStyle(new Style({
+                image: new StyleCircle({
+                    radius: 8,
+                    fill: new Fill({ color: isMatch ? '#3b82f6' : '#f46734' }), // Blue for match, Orange for others
+                    stroke: new Stroke({ color: '#fff', width: 2 })
+                })
+            }));
+            userSource.addFeature(feature);
+        });
+    }, [nearbyUsersList, filterMode, map, userSource, getFilteredUsers]);
 
     // Fetch Nearby Users
     const fetchNearbyUsers = useCallback(async () => {
@@ -44,71 +79,32 @@ const MapComponent = () => {
                 params: { lat, lng, radius, interests: 'all' }
             });
             const users = res.data || [];
-
             setNearbyUsersList(users);
-
-            // Update Map Markers
-            userSource.clear();
-            users.forEach(u => {
-                if (!u.location?.coordinates) return;
-                const [uLng, uLat] = u.location.coordinates;
-                const feature = new Feature({
-                    geometry: new Point(fromLonLat([uLng, uLat])),
-                    type: 'user',
-                    data: u
-                });
-                feature.setStyle(new Style({
-                    image: new StyleCircle({
-                        radius: 8,
-                        fill: new Fill({ color: '#f46734' }),
-                        stroke: new Stroke({ color: '#fff', width: 2 })
-                    })
-                }));
-                userSource.addFeature(feature);
-            });
-
         } catch (err) {
             console.error("Fetch error:", err);
         }
-    }, [user, map, radius, userSource]);
+    }, [user, map, radius]);
 
     // OSRM Routing
     const getDirections = async (targetUser) => {
         if (!map || !targetUser.location?.coordinates) return;
-
-        // Get my location (assuming map center for now, or user location if available)
-        // Ideally we use navigator.geolocation, but falling back to map center context
         const center = toLonLat(map.getView().getCenter());
         const [myLng, myLat] = center;
         const [targetLng, targetLat] = targetUser.location.coordinates;
-
         const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${myLng},${myLat};${targetLng},${targetLat}?overview=full&geometries=geojson&steps=true`;
 
         try {
             const response = await fetch(osrmUrl);
             const data = await response.json();
-
             if (data.routes && data.routes.length > 0) {
                 const route = data.routes[0];
                 const coordinates = route.geometry.coordinates;
                 const instructions = route.legs[0].steps.map(step => step.maneuver.instruction);
-
                 setRouteInstructions(instructions);
-
-                // Draw Route
                 routeSource.clear();
-                const routeFeature = new Feature({
-                    geometry: new LineString(coordinates.map(coord => fromLonLat(coord)))
-                });
-                routeFeature.setStyle(new Style({
-                    stroke: new Stroke({
-                        color: '#f46734',
-                        width: 4
-                    })
-                }));
+                const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
+                routeFeature.setStyle(new Style({ stroke: new Stroke({ color: '#f46734', width: 4 }) }));
                 routeSource.addFeature(routeFeature);
-
-                // Zoom to fit route
                 const extent = routeFeature.getGeometry().getExtent();
                 map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 1000 });
             }
@@ -142,8 +138,6 @@ const MapComponent = () => {
                 const u = feature.get('data');
                 setSelectedUser(u);
                 setIsArrivalMode(true);
-                // Optionally auto-fetch directions?
-                // getDirections(u);
             } else {
                 setSelectedUser(null);
                 setRouteInstructions([]);
@@ -178,6 +172,7 @@ const MapComponent = () => {
         return () => socketRef.current.disconnect();
     }, [user]);
 
+
     const toggleMode = () => {
         setIsArrivalMode(!isArrivalMode);
         if (!isArrivalMode) {
@@ -187,7 +182,7 @@ const MapComponent = () => {
     };
 
     return (
-        <div className="relative flex h-screen w-full flex-col group/design-root overflow-hidden bg-background-light dark:bg-background-dark text-[#1c110d] dark:text-[#fcf9f8]">
+        <div className="relative flex h-full w-full flex-col group/design-root overflow-hidden bg-background-light dark:bg-background-dark text-[#1c110d] dark:text-[#fcf9f8]">
             {/* Header Removed (Handled by Layout.jsx) */}
             <main className="relative flex-1 w-full h-full overflow-hidden bg-[#e5e7eb] dark:bg-[#1a1a1a]">
                 {/* Map Container - Applied Grayscale Filter */}
@@ -227,6 +222,23 @@ const MapComponent = () => {
                                             <h3 className="text-[#1c110d] dark:text-white text-lg font-bold leading-tight">Search Zone</h3>
                                             <div className="px-2 py-1 bg-primary/10 rounded text-primary text-xs font-bold uppercase tracking-wider">Active</div>
                                         </div>
+
+                                        {/* Global / Relevant Toggle */}
+                                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                            <button
+                                                onClick={() => setFilterMode('global')}
+                                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${filterMode === 'global' ? 'bg-white dark:bg-gray-700 shadow text-primary' : 'text-gray-500'}`}
+                                            >
+                                                Global
+                                            </button>
+                                            <button
+                                                onClick={() => setFilterMode('relevant')}
+                                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${filterMode === 'relevant' ? 'bg-white dark:bg-gray-700 shadow text-primary' : 'text-gray-500'}`}
+                                            >
+                                                Relevant
+                                            </button>
+                                        </div>
+
                                         <div className="flex items-start gap-4">
                                             <div className="relative flex-shrink-0 size-10 flex items-center justify-center">
                                                 <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>

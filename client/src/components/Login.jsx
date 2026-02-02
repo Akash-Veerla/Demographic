@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, forgotPassword } from '../store/authSlice';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Modal, Box, Typography, Button, TextField } from '@mui/material';
 
 const Login = () => {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error } = useSelector(state => state.auth);
+    const { login, loading, error, forgotPassword } = useAuth();
 
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
@@ -23,23 +21,13 @@ const Login = () => {
     };
 
     const handleSubmit = async (e) => {
-        // Prevent default form submission (reload)
         e.preventDefault();
-        e.stopPropagation();
-
         try {
-            // 1. Wait for the API response
-            const result = await dispatch(loginUser(formData)).unwrap();
-
-            // 2. FORCE a synchronous token write (Safety Net)
-            if (result.token) localStorage.setItem('token', result.token);
-
-            // 3. Navigate only after we are sure
+            await login(formData);
             navigate('/', { replace: true });
         } catch (err) {
             console.error("Login failed:", err);
         }
-        return false;
     };
 
     const handleForgotPassword = async () => {
@@ -48,7 +36,7 @@ const Login = () => {
             return;
         }
         try {
-            const result = await dispatch(forgotPassword(forgotEmail)).unwrap();
+            const result = await forgotPassword(forgotEmail);
             setTempPassword(result.tempPassword);
             setForgotError('');
         } catch (err) {

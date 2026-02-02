@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useMemo, createContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchCurrentUser } from './store/authSlice';
-import MapComponent from './components/Map';
+import { AuthProvider, useAuth } from './context/AuthContext'; // Import AuthProvider
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -10,6 +8,7 @@ import Profile from './components/Profile';
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
 import Social from './components/Social';
+import Home from './components/Home'; // New Home Component
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from './theme';
 
@@ -20,7 +19,15 @@ export const ColorModeContext = createContext({
 });
 
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, user } = useSelector(state => state.auth);
+    const { isAuthenticated, loading, user } = useAuth(); // Use Context
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            </div>
+        );
+    }
 
     if (!isAuthenticated) {
         return <Navigate to="/welcome" replace />;
@@ -35,9 +42,8 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-const App = () => {
-    const dispatch = useDispatch();
-    const { loading } = useSelector(state => state.auth);
+const AppContent = () => {
+    const { loading } = useAuth();
 
     // Theme State
     const [mode, setMode] = useState('dark');
@@ -51,7 +57,6 @@ const App = () => {
 
     const theme = useMemo(() => getTheme(mode, 'blue'), [mode]);
 
-    // Apply Tailwind Dark Mode
     useEffect(() => {
         if (mode === 'dark') {
             document.documentElement.classList.add('dark');
@@ -59,14 +64,6 @@ const App = () => {
             document.documentElement.classList.remove('dark');
         }
     }, [mode]);
-
-    // Initial Auth Check override
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            dispatch(fetchCurrentUser());
-        }
-    }, [dispatch]);
 
     if (loading) {
         return (
@@ -91,7 +88,7 @@ const App = () => {
                                 <ProtectedRoute>
                                     <Layout>
                                         <Routes>
-                                            <Route path="/" element={<Profile />} />
+                                            <Route path="/" element={<Home />} />
                                             <Route path="/social" element={<Social />} />
                                             <Route path="/profile" element={<Profile />} />
                                             <Route path="/setup" element={<ProfileSetup />} />
@@ -106,6 +103,14 @@ const App = () => {
                 </BrowserRouter>
             </ThemeProvider>
         </ColorModeContext.Provider>
+    );
+};
+
+const App = () => {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 };
 

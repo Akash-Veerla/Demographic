@@ -1,17 +1,13 @@
 import React, { useContext } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { logout } from '../store/authSlice';
 
 const Profile = () => {
-    const { user } = useSelector(state => state.auth);
-    const dispatch = useDispatch();
+    const { user } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        dispatch(logout());
-        navigate('/login');
-    };
+    // Logout handled in Layout
+
 
     if (!user) return null;
 
