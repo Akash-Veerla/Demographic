@@ -26,64 +26,54 @@ const Layout = ({ children }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'transparent', color: 'text.primary', overflow: 'hidden' }}>
 
-            {/* Desktop / Tablet Floating Navbar */}
-            {!isMobile && user && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl h-16 bg-white/80 dark:bg-[#1e293b]/80 backdrop-blur-xl rounded-full shadow-lg z-[1000] flex items-center px-6 justify-between border border-white/20 dark:border-white/5 animate-in slide-in-from-top-4 fade-in duration-500">
-                    {/* Brand */}
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                            <Home size={20} className="text-primary" />
-                        </div>
-                        <span className="font-display font-bold text-xl tracking-tight text-slate-800 dark:text-white">KON-NECT</span>
-                    </div>
+            <Box sx={{ flexGrow: 1, position: 'relative', overflowY: 'auto', overflowX: 'hidden', height: '100%' }} className="custom-scrollbar">
 
-                    {/* Center Toggles */}
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-full p-1 border border-slate-200 dark:border-slate-700/50">
-                        <button
-                            onClick={() => navigate('/')}
-                            className={`px - 4 py - 1.5 rounded - full text - sm font - medium transition - all ${location.pathname === '/' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
-                        >
-                            Home
-                        </button>
-                        <button
-                            onClick={() => navigate('/social')}
-                            className={`px - 4 py - 1.5 rounded - full text - sm font - medium transition - all ${location.pathname.startsWith('/social') ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
-                        >
-                            Social
-                        </button>
-                    </div>
-
-                    {/* Right Profile */}
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/profile')}>
-                            <div className="text-right hidden lg:block">
-                                <p className="text-sm font-bold text-slate-800 dark:text-white leading-none">{user.displayName?.split(' ')[0]}</p>
+                {/* Desktop / Tablet Navbar (In Flow) */}
+                {!isMobile && user && (
+                    <div className="w-[90%] max-w-2xl mx-auto mt-6 mb-6 h-16 bg-white/80 dark:bg-[#1e293b]/80 backdrop-blur-xl rounded-full shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0">
+                        {/* Brand */}
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <Home size={20} className="text-primary" />
                             </div>
-                            <Avatar user={user} sx={{ width: 40, height: 40, border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                            <span className="font-display font-bold text-xl tracking-tight text-slate-800 dark:text-white">KON-NECT</span>
                         </div>
-                        <IconButton onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors">
-                            <LogOut size={20} />
-                        </IconButton>
+
+                        {/* Center Toggles */}
+                        <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-full p-1 border border-slate-200 dark:border-slate-700/50">
+                            <button
+                                onClick={() => navigate('/')}
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname === '/' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                            >
+                                Home
+                            </button>
+                            <button
+                                onClick={() => navigate('/social')}
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                            >
+                                Social
+                            </button>
+                        </div>
+
+                        {/* Right Profile */}
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/profile')}>
+                                <div className="text-right hidden lg:block">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-white leading-none">{user.displayName?.split(' ')[0]}</p>
+                                </div>
+                                <Avatar user={user} sx={{ width: 40, height: 40, border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                            </div>
+                            <IconButton onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors">
+                                <LogOut size={20} />
+                            </IconButton>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Mobile Header */}
-            {isMobile && user && (
-                <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur-md z-[1000] flex items-center justify-between px-4 border-b border-slate-200 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                        <Home className="text-primary" size={24} />
-                        <span className="font-bold text-lg">KON-NECT</span>
-                    </div>
-                    <IconButton onClick={() => navigate('/profile')}>
-                        <Avatar user={user} sx={{ width: 32, height: 32 }} />
-                    </IconButton>
-                </div>
-            )}
-
-
-            <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden', height: '100%' }}>
-                {children}
+                {/* Page Content */}
+                <Box sx={{ minHeight: 'calc(100% - 140px)' }}>
+                    {children}
+                </Box>
             </Box>
 
             {/* Mobile Bottom Nav */}

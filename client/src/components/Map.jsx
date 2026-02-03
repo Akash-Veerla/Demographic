@@ -25,7 +25,16 @@ const MapComponent = () => {
     const [radius, setRadius] = useState(15);
     const [filterMode, setFilterMode] = useState('global'); // 'global' or 'relevant'
 
-    // ... existing state ...
+    // Missing States
+    const [nearbyUsersList, setNearbyUsersList] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [isArrivalMode, setIsArrivalMode] = useState(false);
+    const [routeInstructions, setRouteInstructions] = useState([]);
+    const [chatTarget, setChatTarget] = useState(null);
+    const [socketReady, setSocketReady] = useState(false);
+
+    const { user } = useAuth();
+    const socketRef = useRef();
 
     // Helper to check match
     const checkInterestMatch = (uInterests) => {

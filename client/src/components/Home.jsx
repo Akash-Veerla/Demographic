@@ -1,84 +1,84 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Map, Shield, Users } from 'lucide-react';
 
 const Home = () => {
     const { user } = useAuth();
-
-    // Mock data for UI structure (replace with real data fetching later)
-    const pendingRequests = [];
-    const friends = [];
+    const navigate = useNavigate();
 
     return (
-        <div className="h-full w-full bg-background-light dark:bg-background-dark p-6 overflow-y-auto font-display">
-            <div className="max-w-4xl mx-auto space-y-8">
+        <div className="min-h-full w-full bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display">
 
-                {/* Welcome Section */}
-                <div className="bg-surface-light dark:bg-card-dark rounded-3xl p-8 shadow-sm border border-white/50 dark:border-white/5 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-primary/5 to-transparent pointer-events-none"></div>
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-on-surface dark:text-white mb-2">
-                                Welcome back, {user?.displayName?.split(' ')[0]}! 👋
-                            </h1>
-                            <p className="text-secondary dark:text-gray-400 max-w-md">
-                                Explore the map to find people with similar interests or check your connection requests below.
-                            </p>
-                        </div>
-                        <div className="hidden sm:block">
-                            <Link to="/map" className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-full font-bold transition-all shadow-lg flex items-center gap-2">
-                                <span className="material-symbols-outlined">map</span>
-                                Explore Map
-                            </Link>
-                        </div>
+            {/* Hero Section */}
+            <div className="max-w-4xl mx-auto text-center mt-8 mb-16 animate-fade-in-up">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-[#1c110d] dark:text-white leading-tight mb-6">
+                    Connect <span className="text-primary">Meaningfully.</span>
+                </h1>
+                <p className="text-lg md:text-xl text-secondary dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                    A privacy-first platform to discover and connect with people who share your true interests. No algorithms, just real connections nearby.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                        onClick={() => navigate('/social')}
+                        className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2"
+                    >
+                        <Map size={20} />
+                        Start Exploring
+                    </button>
+                    <button
+                        onClick={() => navigate('/profile')}
+                        className="bg-white dark:bg-[#2c1b19] border border-gray-200 dark:border-gray-700 text-[#1c110d] dark:text-white font-bold py-4 px-8 rounded-full shadow-sm hover:bg-gray-50 dark:hover:bg-[#3a2523] transition-all flex items-center justify-center gap-2"
+                    >
+                        <Users size={20} />
+                        Your Profile
+                    </button>
+                </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+
+                {/* Card 1 */}
+                <div className="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary">
+                        <Users size={24} />
                     </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Interest Based</h3>
+                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                        Find your tribe based on what you love, not just who you know. Connect through shared passions.
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Friend Requests */}
-                    <div className="bg-white dark:bg-card-dark rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 h-96 flex flex-col">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-orange-100 dark:bg-orange-500/20 rounded-xl text-orange-600 dark:text-orange-400">
-                                    <span className="material-symbols-outlined">person_add</span>
-                                </div>
-                                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Friend Requests</h2>
-                            </div>
-                            <span className="text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-500 px-3 py-1 rounded-full">{pendingRequests.length}</span>
-                        </div>
-
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
-                            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
-                                <span className="material-symbols-outlined text-gray-400 text-2xl">inbox</span>
-                            </div>
-                            <p className="text-gray-500 dark:text-gray-400 font-medium">No pending requests</p>
-                            <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
-                        </div>
+                {/* Card 2 */}
+                <div className="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 text-green-600 dark:text-green-400">
+                        <Shield size={24} />
                     </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Privacy First</h3>
+                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                        No tracking, no face scanning, no invasive ads. You control exactly what you share and when.
+                    </p>
+                </div>
 
-                    {/* My Connections */}
-                    <div className="bg-white dark:bg-card-dark rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 h-96 flex flex-col">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-xl text-blue-600 dark:text-blue-400">
-                                    <span className="material-symbols-outlined">group</span>
-                                </div>
-                                <h2 className="text-xl font-bold text-gray-800 dark:text-white">My Connections</h2>
-                            </div>
-                            <span className="text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-500 px-3 py-1 rounded-full">{friends.length}</span>
-                        </div>
-
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
-                            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
-                                <span className="material-symbols-outlined text-gray-400 text-2xl">diversity_3</span>
-                            </div>
-                            <p className="text-gray-500 dark:text-gray-400 font-medium">No connections yet</p>
-                            <Link to="/social" className="mt-4 text-primary text-sm font-bold hover:underline">Find people nearby →</Link>
-                        </div>
+                {/* Card 3 */}
+                <div className="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
+                        <Map size={24} />
                     </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Real Connections</h3>
+                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                        Map-based discovery leading to real-world meetups or meaningful digital conversations.
+                    </p>
                 </div>
 
             </div>
+
+            <footer className="mt-auto py-8 text-center text-sm text-gray-400">
+                <p>&copy; 2023 KON-NECT. Redefining social discovery.</p>
+            </footer>
+
         </div>
     );
 };
