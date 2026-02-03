@@ -63,7 +63,7 @@ const Login = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background-light/80 dark:to-background-dark/90"></div>
             </div>
 
-            <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white dark:bg-[#2c1b19] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up" style={{ borderRadius: '28px' }}>
+            <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white dark:bg-[#2c1b19] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up max-h-[90vh] overflow-y-auto custom-scrollbar" style={{ borderRadius: '28px' }}>
 
                 <div className="flex flex-col items-center gap-3 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-1">

@@ -131,6 +131,18 @@ const ProfileSetup = () => {
                                 </div>
                             </div>
                             <p className="text-sm text-gray-500">Upload a profile photo</p>
+
+                            {/* URL Input Toggle */}
+                            <div className="w-full max-w-sm mt-2">
+                                <div className="flex gap-2 mb-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Or paste an image URL..."
+                                        className="flex-1 rounded-input border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2"
+                                        onChange={(e) => setPreviewUrl(e.target.value)}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Bio */}

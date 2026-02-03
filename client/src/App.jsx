@@ -113,6 +113,7 @@ const AppContent = () => {
                                             <Route path="/profile" element={<Profile />} />
                                             <Route path="/setup" element={<ProfileSetup />} />
                                             <Route path="/chat" element={<Chat />} />
+                                            <Route path="/map" element={<Social />} />
                                             <Route path="*" element={<Navigate to="/" />} />
                                         </Routes>
                                     </Layout>

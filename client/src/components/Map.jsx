@@ -213,8 +213,46 @@ const MapComponent = () => {
 
                         {/* Controls Container */}
                         <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6">
+
+                            {/* Top Place Search Bar (Floating) */}
+                            <div className="pointer-events-auto absolute top-6 left-1/2 -translate-x-1/2 w-[400px] z-50">
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span className="material-symbols-outlined text-gray-400">search</span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="block w-full pl-10 pr-3 py-3 border border-transparent rounded-full leading-5 bg-white dark:bg-[#1e293b] text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary shadow-lg sm:text-sm transition-all"
+                                        placeholder="Search for a city or place..."
+                                        onKeyDown={async (e) => {
+                                            if (e.key === 'Enter') {
+                                                const query = e.target.value;
+                                                if (!query) return;
+                                                // Nominatim Search
+                                                try {
+                                                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                                                    const data = await res.json();
+                                                    if (data && data.length > 0) {
+                                                        const { lat, lon } = data[0];
+                                                        map.getView().animate({
+                                                            center: fromLonLat([parseFloat(lon), parseFloat(lat)]),
+                                                            zoom: 12,
+                                                            duration: 2000
+                                                        });
+                                                    } else {
+                                                        alert('Place not found');
+                                                    }
+                                                } catch (err) {
+                                                    console.error("Search error", err);
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
                             {/* Top Sidebar & Zoom */}
-                            <div className="flex justify-between items-start">
+                            <div className="flex justify-between items-start mt-16">
                                 {/* Search Zone Sidebar */}
                                 <div className="pointer-events-auto w-80 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md shadow-lg rounded-xl overflow-hidden border border-white/20 dark:border-white/5 animate-in slide-in-from-left-4 fade-in duration-500">
                                     <div className="p-5 flex flex-col gap-4">
@@ -368,11 +406,18 @@ const MapComponent = () => {
                                 {/* Local Search or Action Buttons */}
                                 <div className="px-6 pb-4">
                                     {!selectedUser ? (
-                                        <div className="flex w-full items-center rounded-xl bg-white dark:bg-[#2f151b] h-12 shadow-sm border border-gray-100 dark:border-none">
-                                            <div className="text-[#9c4957] pl-4 flex items-center">
-                                                <span className="material-symbols-outlined">person_search</span>
+                                        <div className="flex flex-col gap-2">
+                                            {/* User Search (Existing) */}
+                                            <div className="flex w-full items-center rounded-xl bg-white dark:bg-[#2f151b] h-12 shadow-sm border border-gray-100 dark:border-none">
+                                                <div className="text-[#9c4957] pl-4 flex items-center">
+                                                    <span className="material-symbols-outlined">person_search</span>
+                                                </div>
+                                                <input
+                                                    className="w-full bg-transparent border-none focus:ring-0 text-[#1c0d10] dark:text-white placeholder:text-[#9c4957]/70 text-sm h-full px-3"
+                                                    placeholder="Filter users..."
+                                                // Add filtering logic here if needed
+                                                />
                                             </div>
-                                            <input className="w-full bg-transparent border-none focus:ring-0 text-[#1c0d10] dark:text-white placeholder:text-[#9c4957]/70 text-sm h-full px-3" placeholder="Find people nearby..." />
                                         </div>
                                     ) : (
                                         <div className="flex gap-2">
