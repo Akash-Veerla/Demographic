@@ -7,10 +7,14 @@ const path = require('path');
 const csv = require('csv-parser');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const passport = require('passport'); // Import Passport
+require('./auth/google'); // Import Google Strategy Config
+
 const User = require('./models/User');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
+
 
 // --- Global Error Handling to Prevent Crash on Auth Fail ---
 process.on('unhandledRejection', (reason, promise) => {
@@ -100,8 +104,10 @@ app.options('*path', cors());
 
 app.use(express.json());
 app.set('trust proxy', 1); // Required for Render to handle secure cookies correctly
+app.use(passport.initialize());
 
 // --- Auth Routes ---
+
 // Explicitly exempt from any global auth middleware (mounted at root level)
 app.use('/api/auth', authRoutes);
 

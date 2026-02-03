@@ -3,11 +3,36 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const passport = require('passport'); // Import Passport
 const User = require('../models/User');
 const { validateInterests } = require('../utils/moderation');
 
+// --- Google Auth Routes ---
+
+// 1. Initiate Google Login
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// 2. Callback
+router.get('/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login', session: false }),
+    (req, res) => {
+        // Successful authentication, issue JWT
+        const token = jwt.sign(
+            { id: req.user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // Redirect to Frontend with token
+        // Fallback to localhost if env not set, but ensure CLIENT_URL is set in prod
+        const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+        res.redirect(`${clientUrl}?token=${token}`);
+    }
+);
+
 // Register
 router.post('/register', async (req, res) => {
+
     try {
         const { displayName, email, password } = req.body; // Simplified: Bio/Interests move to step 2
 

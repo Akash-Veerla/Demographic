@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, createContext } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext'; // Import AuthProvider
 import Layout from './components/Layout';
 import Login from './components/Login';
@@ -17,6 +17,25 @@ export const ColorModeContext = createContext({
     toggleColorMode: () => { },
     mode: 'dark',
 });
+
+const GoogleAuthHandler = () => {
+    const { fetchCurrentUser } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        if (token) {
+            localStorage.setItem('token', token);
+            window.history.replaceState(null, '', window.location.pathname);
+            fetchCurrentUser().then(() => {
+                navigate('/social', { replace: true });
+            });
+        }
+    }, [fetchCurrentUser, navigate]);
+
+    return null;
+};
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, loading, user } = useAuth(); // Use Context
@@ -78,6 +97,7 @@ const AppContent = () => {
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 <BrowserRouter>
+                    <GoogleAuthHandler />
                     <Routes>
                         <Route path="/welcome" element={<Login />} />
                         <Route path="/login" element={<Login />} />
