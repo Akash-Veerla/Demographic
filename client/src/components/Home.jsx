@@ -1,84 +1,166 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Map, Shield, Users } from 'lucide-react';
+import { Map, MessageSquare, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
+import api from '../utils/api';
 
 const Home = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [stats, setStats] = useState({ activeNearby: 0, matchedInterestsNearby: 0 });
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/api/stats/local');
+                setStats(res.data);
+            } catch (err) {
+                console.error("Failed to load stats", err);
+            } finally {
+                setLoadingStats(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
+    // Card Component for consistency
+    const DashboardCard = ({ title, description, icon: Icon, onClick, className = "" }) => (
+        <div
+            onClick={onClick}
+            className={`bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all duration-200 hover:shadow-md hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group ${className}`}
+        >
+            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <Icon size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{description}</p>
+        </div>
+    );
+
+    const StatCard = ({ label, count, description, icon: Icon }) => (
+        <div className="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center justify-center h-full">
+            <span className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-4 flex items-center gap-2">
+                <Icon size={14} /> {label}
+            </span>
+            <div className="text-6xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">
+                {loadingStats ? '-' : count}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        </div>
+    );
 
     return (
-        <div className="min-h-full w-full bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display">
+        <div className="min-h-full w-full bg-background-light dark:bg-background-dark p-4 md:p-8 font-display">
+            <div className="max-w-7xl mx-auto space-y-6">
 
-            {/* Hero Section */}
-            <div className="max-w-4xl mx-auto text-center mt-8 mb-16 animate-fade-in-up">
-                <h1 className="text-4xl md:text-6xl font-extrabold text-[#1c110d] dark:text-white leading-tight mb-6">
-                    Connect <span className="text-primary">Meaningfully.</span>
-                </h1>
-                <p className="text-lg md:text-xl text-secondary dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-                    A privacy-first platform to discover and connect with people who share your true interests. No algorithms, just real connections nearby.
-                </p>
+                {/* 1. Header / Greeting */}
+                <div className="mb-2">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Welcome back, <span className="text-primary">{user?.displayName?.split(' ')[0]}</span>
+                    </h1>
+                </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button
-                        onClick={() => navigate('/social')}
-                        className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2"
-                    >
-                        <Map size={20} />
-                        Start Exploring
-                    </button>
-                    <button
+                {/* 2. Navigation Cards (Row 1) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <DashboardCard
+                        title="Explore Map"
+                        description="Discover people and places matching your vibe nearby."
+                        icon={Map}
+                        onClick={() => navigate('/map')}
+                    />
+                    <DashboardCard
+                        title="Conversations"
+                        description="Chat with your connections and plan meetups."
+                        icon={MessageSquare}
+                        onClick={() => navigate('/chat')}
+                    />
+                    <DashboardCard
+                        title="My Profile"
+                        description="Update your interests to find better matches."
+                        icon={User}
                         onClick={() => navigate('/profile')}
-                        className="bg-white dark:bg-[#2c1b19] border border-gray-200 dark:border-gray-700 text-[#1c110d] dark:text-white font-bold py-4 px-8 rounded-full shadow-sm hover:bg-gray-50 dark:hover:bg-[#3a2523] transition-all flex items-center justify-center gap-2"
-                    >
-                        <Users size={20} />
-                        Your Profile
-                    </button>
+                    />
                 </div>
+
+                {/* 3. Stats (Row 2) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <StatCard
+                        label="Active Nearby"
+                        count={stats.activeNearby}
+                        description="Users active within 10km in the last 24h"
+                        icon={Radio}
+                    />
+                    <StatCard
+                        label="Matched Interests"
+                        count={stats.matchedInterestsNearby}
+                        description="Users nearby sharing at least one interest"
+                        icon={Heart}
+                    />
+                </div>
+
+                {/* 4. Info / Welcome Section (Row 3 - Tinted Blur) */}
+                <div
+                    className="rounded-3xl p-8 md:p-12 border border-[var(--glass-border)] shadow-sm"
+                    style={{ backgroundColor: 'var(--blur-tint)', backdropFilter: 'blur(20px)' }}
+                >
+                    <div className="max-w-4xl mx-auto">
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Welcome to KON-NECT</h2>
+                            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                                Connecting People by Interest. This platform is designed to help you find meaningful connections based on what you truly care about. Unlike traditional social networks, we prioritize privacy and intentionality.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
+                            <div>
+                                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <CheckCircle size={20} className="text-primary" /> How it Works
+                                </h3>
+                                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                                    <li className="flex gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2"></span>
+                                        Navigate to the Map to see who is around you.
+                                    </li>
+                                    <li className="flex gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2"></span>
+                                        Use Discovery Mode to find people with shared interests.
+                                    </li>
+                                    <li className="flex gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2"></span>
+                                        Send a Friend Request if you'd like to connect.
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Shield size={20} className="text-primary" /> Safe & Private
+                                </h3>
+                                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                                    <li className="flex gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2"></span>
+                                        Your exact location is protected (fuzzed).
+                                    </li>
+                                    <li className="flex gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2"></span>
+                                        Chat is only enabled after mutual acceptance.
+                                    </li>
+                                    <li className="flex gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2"></span>
+                                        You are in control of your visibility settings.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <footer className="text-center py-6">
+                    <p className="text-sm text-gray-400 font-medium">© 2026 KON-NECT. All rights reserved.</p>
+                </footer>
+
             </div>
-
-            {/* Feature Cards */}
-            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-
-                {/* Card 1 */}
-                <div className="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
-                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary">
-                        <Users size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Interest Based</h3>
-                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
-                        Find your tribe based on what you love, not just who you know. Connect through shared passions.
-                    </p>
-                </div>
-
-                {/* Card 2 */}
-                <div className="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
-                    <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 text-green-600 dark:text-green-400">
-                        <Shield size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Privacy First</h3>
-                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
-                        No tracking, no face scanning, no invasive ads. You control exactly what you share and when.
-                    </p>
-                </div>
-
-                {/* Card 3 */}
-                <div className="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
-                    <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
-                        <Map size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Real Connections</h3>
-                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
-                        Map-based discovery leading to real-world meetups or meaningful digital conversations.
-                    </p>
-                </div>
-
-            </div>
-
-            <footer className="mt-auto py-8 text-center text-sm text-gray-400">
-                <p>&copy; 2023 KON-NECT. Redefining social discovery.</p>
-            </footer>
-
         </div>
     );
 };

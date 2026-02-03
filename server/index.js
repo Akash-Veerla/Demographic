@@ -444,5 +444,65 @@ app.get('/api/interests', requireAuth, (req, res) => {
     res.json(interests);
 });
 
+// --- Stats Route ---
+app.get('/api/stats/local', requireAuth, async (req, res) => {
+    try {
+        let { lat, lng } = req.query;
+        const userId = req.user.id;
+
+        // If no coords provided, try to use user's stored location
+        if (!lat || !lng) {
+            const currentUser = await User.findById(userId);
+            if (currentUser && currentUser.location && currentUser.location.coordinates) {
+                lng = currentUser.location.coordinates[0];
+                lat = currentUser.location.coordinates[1];
+            }
+        }
+
+        // If still no coords (db 0,0 and no query), return 0s
+        if (!lat || !lng || (lat == 0 && lng == 0)) {
+            return res.json({ activeNearby: 0, matchedInterestsNearby: 0 });
+        }
+
+        const maxDistance = 10000; // 10km
+
+        // 1. Active Nearby Count (Last 24h)
+        const activeNearby = await User.countDocuments({
+            location: {
+                $near: {
+                    $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+                    $maxDistance: maxDistance
+                }
+            },
+            lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            _id: { $ne: userId }
+        });
+
+        // 2. Matched Interests Count (Active or Inactive)
+        const currentUser = await User.findById(userId).select('interests');
+        const userInterests = currentUser.interests || [];
+
+        let matchedInterestsNearby = 0;
+        if (userInterests.length > 0) {
+            matchedInterestsNearby = await User.countDocuments({
+                location: {
+                    $near: {
+                        $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+                        $maxDistance: maxDistance
+                    }
+                },
+                interests: { $in: userInterests },
+                _id: { $ne: userId }
+            });
+        }
+
+        res.json({ activeNearby, matchedInterestsNearby });
+
+    } catch (err) {
+        console.error('Stats error:', err);
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

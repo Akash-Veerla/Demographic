@@ -56,24 +56,45 @@ const tonalPalettes = {
 };
 
 const getPaletteRaw = (color, mode) => {
-    const base = tonalPalettes[color] || tonalPalettes.blue;
-
+    // Strict requirements: Light = Red, Dark = Purple
     if (mode === 'dark') {
-        // ... (keep dark mode logic)
+        return {
+            primary: {
+                main: '#D0BCFF', // Purple 80
+                contrastText: '#381E72', // Purple 10
+            },
+            secondary: {
+                main: '#CCC2DC',
+                contrastText: '#332D41',
+            },
+            background: {
+                default: '#141218',
+                paper: '#141218', // Consistent Dark
+                surfaceContainer: '#211F26',
+            },
+            text: {
+                primary: '#E6E1E5',
+                secondary: '#CAC4D0',
+            }
+        };
     } else {
         return {
             primary: {
-                main: base.primary,
-                contrastText: base.onPrimary,
+                main: '#DC2626', // Red 600
+                contrastText: '#FFFFFF',
+            },
+            secondary: {
+                main: '#7F1D1D', // Deep Red
+                contrastText: '#FFFFFF',
             },
             background: {
-                default: '#f8fafc',
-                paper: '#ffffff',
-                surfaceContainer: '#f1f5f9',
+                default: '#FFFBFE', // Very Light
+                paper: '#FFFBFE',
+                surfaceContainer: '#FDF2F2', // Reddish Tint
             },
             text: {
-                primary: '#0f172a',
-                secondary: '#475569',
+                primary: '#1C1B1F', // Black/Dark Grey
+                secondary: '#450A0A', // Dark Red/Brown
             }
         };
     }
