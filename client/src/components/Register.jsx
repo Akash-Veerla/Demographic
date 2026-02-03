@@ -28,27 +28,26 @@ const Register = () => {
 
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden">
-            {/* Background Layer */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
+            {/* Background Layer (From Reference) */}
+            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 <div
-                    className="w-full h-full bg-cover bg-center filter blur-lg scale-110 opacity-40 dark:opacity-20"
-                    style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJ8VVsGQsbQ71t7tcICQyIClCf8Uxwz0gCzvDqLmrgOJ9L9bi583sZn0HvniYez3uplEVS_gc97irtF3KtFQzNCk7ipt9E7bpZAWUicWX1Xzf1RW4QIgEtLiBeu5x9hJ4AlAYuObSbFjednl_JFlmNti9E1L97nltPIIy1qCgap2gY3KtlIMpy5wI0qdywUI30ttquQBFTUCgYzf4GtZJ-IGLB4SgtSHQGZDdyigDUYed9hPTfDJQX_KFfOYcHuiSt4NaH7CMvTCZe')" }}
-                >
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background-light/80 dark:to-background-dark/90"></div>
+                    className="w-full h-full bg-cover bg-center filter blur-xl scale-110 opacity-40 dark:opacity-30 transition-opacity duration-700"
+                    style={{ backgroundImage: 'var(--bg-map-url)' }}
+                ></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/95 dark:via-background-dark/60 dark:to-background-dark/95"></div>
             </div>
 
-            <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white dark:bg-[#2c1b19] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up max-h-[90vh] overflow-y-auto custom-scrollbar" style={{ borderRadius: '28px' }}>
+            <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up max-h-[90vh] overflow-y-auto custom-scrollbar border dark:border-white/10" style={{ borderRadius: '28px' }}>
                 <div className="flex flex-col items-center gap-3 mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-container flex items-center justify-center text-primary mb-1">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-1">
                         <span className="material-symbols-outlined text-[32px]">share_location</span>
                     </div>
                     <h1 className="text-2xl font-bold text-primary tracking-tight">KON-NECT</h1>
                 </div>
 
                 <div className="text-center mb-6">
-                    <h2 className="text-[#1a100f] dark:text-white text-[28px] font-bold leading-tight tracking-tight">Create Account</h2>
-                    <p className="text-[#5e413d] dark:text-[#d0c0be] text-base font-normal mt-2 leading-relaxed">
+                    <h2 className="text-[#1a100f] dark:text-[#E6E1E5] text-[28px] font-bold leading-tight tracking-tight">Create Account</h2>
+                    <p className="text-[#5e413d] dark:text-[#CAC4D0] text-base font-normal mt-2 leading-relaxed">
                         Join the community to connect and explore.
                     </p>
                 </div>
@@ -61,7 +60,7 @@ const Register = () => {
 
                 <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
                     <div className="flex flex-col gap-1.5">
-                        <label htmlFor="displayName" className="text-[#1a100f] dark:text-white text-sm font-semibold ml-1">Full Name</label>
+                        <label htmlFor="displayName" className="text-[#1a100f] dark:text-[#E6E1E5] text-sm font-semibold ml-1">Full Name</label>
                         <div className="relative group">
                             <input
                                 id="displayName"
@@ -71,16 +70,16 @@ const Register = () => {
                                 onChange={handleChange}
                                 required
                                 autoComplete="name"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#4a2e2b] text-[#1a100f] dark:text-white border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#3a2523] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#a88a87] transition-all duration-200 ease-in-out"
+                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
                                 placeholder="John Doe"
                                 style={{ borderRadius: '12px' }}
                             />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] group-focus-within:text-primary transition-colors text-[20px]">person</span>
+                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">person</span>
                         </div>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                        <label htmlFor="email" className="text-[#1a100f] dark:text-white text-sm font-semibold ml-1">Email Address</label>
+                        <label htmlFor="email" className="text-[#1a100f] dark:text-[#E6E1E5] text-sm font-semibold ml-1">Email Address</label>
                         <div className="relative group">
                             <input
                                 id="email"
@@ -90,16 +89,16 @@ const Register = () => {
                                 onChange={handleChange}
                                 required
                                 autoComplete="email"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#4a2e2b] text-[#1a100f] dark:text-white border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#3a2523] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#a88a87] transition-all duration-200 ease-in-out"
+                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
                                 placeholder="user@example.com"
                                 style={{ borderRadius: '12px' }}
                             />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] group-focus-within:text-primary transition-colors text-[20px]">mail</span>
+                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">mail</span>
                         </div>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                        <label htmlFor="password" className="text-[#1a100f] dark:text-white text-sm font-semibold ml-1">Password (Min 8 chars)</label>
+                        <label htmlFor="password" className="text-[#1a100f] dark:text-[#E6E1E5] text-sm font-semibold ml-1">Password (Min 8 chars)</label>
                         <div className="relative group">
                             <input
                                 id="password"
@@ -110,11 +109,11 @@ const Register = () => {
                                 required
                                 minLength={8}
                                 autoComplete="new-password"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#4a2e2b] text-[#1a100f] dark:text-white border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#3a2523] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#a88a87] transition-all duration-200 ease-in-out"
+                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
                                 placeholder="••••••••"
                                 style={{ borderRadius: '12px' }}
                             />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] group-focus-within:text-primary transition-colors text-[20px]">lock</span>
+                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">lock</span>
                         </div>
                     </div>
 

@@ -69,7 +69,7 @@ const MapComponent = () => {
             feature.setStyle(new Style({
                 image: new StyleCircle({
                     radius: 8,
-                    fill: new Fill({ color: isMatch ? '#3b82f6' : '#f46734' }), // Blue for match, Orange for others
+                    fill: new Fill({ color: isMatch ? '#be3627' : '#5e413d' }), // Red for match, Dark for others (Light Mode logic mostly)
                     stroke: new Stroke({ color: '#fff', width: 2 })
                 })
             }));
@@ -112,7 +112,7 @@ const MapComponent = () => {
                 setRouteInstructions(instructions);
                 routeSource.clear();
                 const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
-                routeFeature.setStyle(new Style({ stroke: new Stroke({ color: '#f46734', width: 4 }) }));
+                routeFeature.setStyle(new Style({ stroke: new Stroke({ color: '#be3627', width: 4 }) }));
                 routeSource.addFeature(routeFeature);
                 const extent = routeFeature.getGeometry().getExtent();
                 map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 1000 });
@@ -231,7 +231,7 @@ const MapComponent = () => {
                                     </div>
                                     <input
                                         type="text"
-                                        className="block w-full pl-10 pr-3 py-3 border border-transparent rounded-full leading-5 bg-white dark:bg-[#1e293b] text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary shadow-lg sm:text-sm transition-all"
+                                        className="block w-full pl-10 pr-3 py-3 border border-transparent rounded-full leading-5 bg-white/90 dark:bg-[#141218]/90 text-[#1a100f] dark:text-[#E6E1E5] placeholder-[#915b55]/50 focus:outline-none focus:bg-white dark:focus:bg-[#231f29] focus:ring-2 focus:ring-primary shadow-xl sm:text-sm transition-all font-bold"
                                         placeholder="Search for a city or place..."
                                         onKeyDown={async (e) => {
                                             if (e.key === 'Enter') {
@@ -263,24 +263,24 @@ const MapComponent = () => {
                             {/* Top Sidebar & Zoom */}
                             <div className="flex justify-between items-start mt-16">
                                 {/* Search Zone Sidebar */}
-                                <div className="pointer-events-auto w-80 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md shadow-lg rounded-xl overflow-hidden border border-white/20 dark:border-white/5 animate-in slide-in-from-left-4 fade-in duration-500">
-                                    <div className="p-5 flex flex-col gap-4">
-                                        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-                                            <h3 className="text-[#1c110d] dark:text-white text-lg font-bold leading-tight">Search Zone</h3>
-                                            <div className="px-2 py-1 bg-primary/10 rounded text-primary text-xs font-bold uppercase tracking-wider">Active</div>
+                                <div className="pointer-events-auto w-80 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden border border-white/20 dark:border-white/5 animate-in slide-in-from-left-4 fade-in duration-500">
+                                    <div className="p-6 flex flex-col gap-5">
+                                        <div className="flex items-center justify-between border-b border-[#be3627]/10 dark:border-white/5 pb-3">
+                                            <h3 className="text-[#1a100f] dark:text-[#E6E1E5] text-lg font-bold leading-tight">Search Zone</h3>
+                                            <div className="px-3 py-1 bg-primary/10 rounded-full text-primary text-[10px] font-black uppercase tracking-widest">Active</div>
                                         </div>
 
                                         {/* Global / Relevant Toggle */}
-                                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                        <div className="flex bg-[#f2e9e9] dark:bg-[#231f29] p-1 rounded-xl">
                                             <button
                                                 onClick={() => setFilterMode('global')}
-                                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${filterMode === 'global' ? 'bg-white dark:bg-gray-700 shadow text-primary' : 'text-gray-500'}`}
+                                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${filterMode === 'global' ? 'bg-white dark:bg-[#2D2835] shadow-sm text-primary' : 'text-[#915b55] dark:text-[#938F99]'}`}
                                             >
                                                 Global
                                             </button>
                                             <button
                                                 onClick={() => setFilterMode('relevant')}
-                                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${filterMode === 'relevant' ? 'bg-white dark:bg-gray-700 shadow text-primary' : 'text-gray-500'}`}
+                                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${filterMode === 'relevant' ? 'bg-white dark:bg-[#2D2835] shadow-sm text-primary' : 'text-[#915b55] dark:text-[#938F99]'}`}
                                             >
                                                 Relevant
                                             </button>
@@ -291,20 +291,20 @@ const MapComponent = () => {
                                                 <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
                                             </div>
                                             <div className="flex flex-col gap-1">
-                                                <p className="text-primary font-semibold text-sm">Calculating...</p>
-                                                <p className="text-[#9c5f49] dark:text-[#ccaca2] text-sm leading-snug">
+                                                <p className="text-primary font-bold text-sm">Calculating...</p>
+                                                <p className="text-[#5e413d] dark:text-[#CAC4D0] text-sm leading-snug font-medium">
                                                     Scanning for active users and venues within the selected range.
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-2 mt-2">
-                                            <div className="bg-[#f4eae7]/50 dark:bg-[#3a2822]/50 p-3 rounded-lg">
-                                                <p className="text-xs text-[#9c5f49] dark:text-[#ccaca2]">Est. Users</p>
-                                                <p className="text-lg font-bold text-[#1c110d] dark:text-white">{nearbyUsersList.length}</p>
+                                        <div className="grid grid-cols-2 gap-3 mt-1">
+                                            <div className="bg-[#f2e9e9] dark:bg-[#231f29] p-3 rounded-2xl">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#915b55] dark:text-[#938F99]">Est. Users</p>
+                                                <p className="text-xl font-black text-[#1a100f] dark:text-white">{nearbyUsersList.length}</p>
                                             </div>
-                                            <div className="bg-[#f4eae7]/50 dark:bg-[#3a2822]/50 p-3 rounded-lg">
-                                                <p className="text-xs text-[#9c5f49] dark:text-[#ccaca2]">Density</p>
-                                                <p className="text-lg font-bold text-[#1c110d] dark:text-white">{nearbyUsersList.length > 10 ? 'High' : 'Low'}</p>
+                                            <div className="bg-[#f2e9e9] dark:bg-[#231f29] p-3 rounded-2xl">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#915b55] dark:text-[#938F99]">Density</p>
+                                                <p className="text-xl font-black text-[#1a100f] dark:text-white">{nearbyUsersList.length > 10 ? 'High' : 'Low'}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -334,39 +334,39 @@ const MapComponent = () => {
 
                             {/* Bottom Radius Slider */}
                             <div className="flex justify-center w-full pb-4">
-                                <div className="pointer-events-auto w-full max-w-2xl bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-6 border border-white/20 dark:border-white/5 animate-in slide-in-from-bottom-8 fade-in duration-500">
+                                <div className="pointer-events-auto w-full max-w-2xl bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl shadow-2xl rounded-[28px] p-8 border border-white/20 dark:border-white/5 animate-in slide-in-from-bottom-8 fade-in duration-500">
                                     <div className="flex flex-col gap-6">
                                         <div className="flex items-center justify-between">
                                             <div className="flex flex-col">
-                                                <p className="text-[#1c110d] dark:text-white text-lg font-bold">Adjust Range</p>
-                                                <p className="text-sm text-[#9c5f49] dark:text-[#ccaca2]">Define the radius for your connection search.</p>
+                                                <p className="text-[#1a100f] dark:text-white text-xl font-bold tracking-tight">Adjust Range</p>
+                                                <p className="text-sm font-medium text-[#5e413d] dark:text-[#CAC4D0]">Define the radius for your connection search.</p>
                                             </div>
-                                            <div className="flex items-center gap-2 bg-[#f4eae7] dark:bg-[#3a2822] px-3 py-1.5 rounded-lg border border-primary/20">
-                                                <span className="material-symbols-outlined text-primary text-sm">radar</span>
-                                                <span className="text-primary font-mono font-bold text-lg">{radius} km</span>
+                                            <div className="flex items-center gap-3 bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-2xl border border-primary/20">
+                                                <span className="material-symbols-outlined text-primary text-xl">radar</span>
+                                                <span className="text-primary font-mono font-black text-xl">{radius} km</span>
                                             </div>
                                         </div>
                                     </div>
                                     {/* Slider */}
-                                    <div className="relative w-full h-8 flex items-center">
+                                    <div className="relative w-full h-10 flex items-center mt-2">
                                         <input
                                             type="range"
                                             min="1"
                                             max="50"
                                             value={radius}
                                             onChange={(e) => setRadius(parseInt(e.target.value))}
-                                            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                                            className="w-full h-2.5 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full appearance-none cursor-pointer accent-primary"
                                         />
                                     </div>
-                                    <div className="flex justify-between text-xs font-medium text-[#9c5f49] dark:text-[#ccaca2] -mt-2">
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-[#915b55] dark:text-[#938F99] -mt-2">
                                         <span>1 km</span>
                                         <span>25 km</span>
                                         <span>50 km</span>
                                     </div>
-                                    <div className="flex justify-end pt-2">
+                                    <div className="flex justify-end pt-4">
                                         <button
                                             onClick={toggleMode}
-                                            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 group"
+                                            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 rounded-full shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 group"
                                         >
                                             <span>Confirm Selection</span>
                                             <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform text-xl">arrow_forward</span>
@@ -393,53 +393,53 @@ const MapComponent = () => {
                         </div>
 
                         {/* Sidebar */}
-                        <div className="absolute top-6 left-6 bottom-6 w-[380px] z-20 flex flex-col pointer-events-none">
-                            <div className="pointer-events-auto flex flex-col h-full bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md shadow-sidebar border border-white/50 dark:border-white/10 rounded-[28px] overflow-hidden">
+                        <div className="absolute top-6 left-6 bottom-6 w-[400px] z-20 flex flex-col pointer-events-none">
+                            <div className="pointer-events-auto flex flex-col h-full bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 rounded-[32px] overflow-hidden">
                                 {/* Sidebar Header */}
-                                <div className="px-6 pt-8 pb-4">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex items-center gap-2 text-primary/80 bg-primary/10 px-3 py-1 rounded-full w-fit">
-                                            <span className="material-symbols-outlined text-sm">flight_land</span>
-                                            <span className="text-xs font-bold uppercase tracking-wider">Arrival Complete</span>
+                                <div className="px-8 pt-10 pb-6">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div className="flex items-center gap-2.5 text-primary bg-primary/10 px-4 py-1.5 rounded-full w-fit">
+                                            <span className="material-symbols-outlined text-sm font-black">flight_land</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Arrival Active</span>
                                         </div>
-                                        <button onClick={toggleMode} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                                            <span className="material-symbols-outlined">close</span>
+                                        <button onClick={toggleMode} className="text-[#915b55] dark:text-[#938F99] hover:text-primary transition-colors">
+                                            <span className="material-symbols-outlined font-bold">close</span>
                                         </button>
                                     </div>
-                                    <h2 className="text-[#1c0d10] dark:text-white text-[28px] font-bold leading-tight tracking-tight mb-2">
-                                        {selectedUser ? selectedUser.displayName : 'Arrived'}
+                                    <h2 className="text-[#1a100f] dark:text-white text-[32px] font-black leading-tight tracking-tight mb-2">
+                                        {selectedUser ? selectedUser.displayName : 'Local Area'}
                                     </h2>
-                                    <p className="text-[#9c4957] text-sm font-medium">Explore local connections</p>
+                                    <p className="text-[#5e413d] dark:text-[#CAC4D0] text-sm font-bold tracking-tight">Explore connections around you</p>
                                 </div>
 
                                 {/* Local Search or Action Buttons */}
-                                <div className="px-6 pb-4">
+                                <div className="px-8 pb-6">
                                     {!selectedUser ? (
                                         <div className="flex flex-col gap-2">
                                             {/* User Search (Existing) */}
-                                            <div className="flex w-full items-center rounded-xl bg-white dark:bg-[#2f151b] h-12 shadow-sm border border-gray-100 dark:border-none">
-                                                <div className="text-[#9c4957] pl-4 flex items-center">
-                                                    <span className="material-symbols-outlined">person_search</span>
+                                            <div className="flex w-full items-center rounded-2xl bg-[#f2e9e9] dark:bg-[#231f29] h-12 shadow-sm border border-[#be3627]/5 dark:border-white/5">
+                                                <div className="text-primary pl-4 flex items-center">
+                                                    <span className="material-symbols-outlined text-xl">person_search</span>
                                                 </div>
                                                 <input
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-[#1c0d10] dark:text-white placeholder:text-[#9c4957]/70 text-sm h-full px-3"
+                                                    className="w-full bg-transparent border-none focus:ring-0 text-[#1a100f] dark:text-[#E6E1E5] placeholder-[#915b55]/50 text-sm h-full px-3 font-bold"
                                                     placeholder="Filter users..."
                                                 // Add filtering logic here if needed
                                                 />
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-3">
                                             <button
                                                 onClick={() => getDirections(selectedUser)}
-                                                className="flex-1 bg-primary text-white h-10 rounded-lg font-bold text-sm shadow-md hover:bg-primary/90 flex items-center justify-center gap-2"
+                                                className="flex-1 bg-primary text-white h-12 rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 hover:brightness-110 flex items-center justify-center gap-2 transition-all active:scale-95"
                                             >
                                                 <span className="material-symbols-outlined text-[18px]">directions</span>
                                                 Get Directions
                                             </button>
                                             <button
                                                 onClick={() => setChatTarget(selectedUser)}
-                                                className="flex-1 bg-white dark:bg-white/10 text-primary h-10 rounded-lg font-bold text-sm shadow-sm border border-primary/20 hover:bg-gray-50 flex items-center justify-center gap-2"
+                                                className="flex-1 bg-white dark:bg-[#231f29] text-primary h-12 rounded-2xl font-bold text-sm shadow-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-[#2D2835] flex items-center justify-center gap-2 transition-all active:scale-95"
                                             >
                                                 <span className="material-symbols-outlined text-[18px]">chat</span>
                                                 Chat
@@ -449,39 +449,39 @@ const MapComponent = () => {
                                 </div>
 
                                 {/* Directions or Users List */}
-                                <div className="flex-1 overflow-y-auto px-4 pb-6 custom-scrollbar">
+                                <div className="flex-1 overflow-y-auto px-6 pb-8 custom-scrollbar">
                                     {routeInstructions.length > 0 && selectedUser ? (
-                                        <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col gap-3">
                                             <div className="flex justify-between items-center px-2 mt-2 mb-1">
-                                                <div className="text-xs font-bold text-[#9c4957] uppercase tracking-wider">Directions</div>
-                                                <button onClick={() => { setRouteInstructions([]); routeSource.clear(); }} className="text-xs text-primary hover:underline">Clear</button>
+                                                <div className="text-[10px] font-black text-primary uppercase tracking-widest">Route Instructions</div>
+                                                <button onClick={() => { setRouteInstructions([]); routeSource.clear(); }} className="text-xs font-bold text-primary hover:underline">Clear</button>
                                             </div>
                                             {routeInstructions.map((step, i) => (
-                                                <div key={i} className="flex gap-3 bg-white dark:bg-[#2f151b] p-3 rounded-xl text-sm border-l-4 border-primary">
-                                                    <span className="font-bold text-gray-400">{i + 1}.</span>
-                                                    <span className="text-[#1c0d10] dark:text-white">{step}</span>
+                                                <div key={i} className="flex gap-4 bg-[#f2e9e9] dark:bg-[#231f29] p-4 rounded-2xl text-sm border-l-4 border-primary shadow-sm">
+                                                    <span className="font-black text-primary/40">{i + 1}</span>
+                                                    <span className="text-[#1a100f] dark:text-[#E6E1E5] font-bold leading-snug">{step}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col gap-3">
-                                            <div className="text-xs font-bold text-[#9c4957] uppercase tracking-wider px-2 mt-2 mb-1">Nearby Locals</div>
+                                        <div className="flex flex-col gap-4">
+                                            <div className="text-[10px] font-black text-[#915b55] dark:text-[#938F99] uppercase tracking-widest px-2 mt-2 mb-1">Nearby Professionals</div>
 
                                             {nearbyUsersList.map(u => (
-                                                <div key={u._id} onClick={() => { setSelectedUser(u); setRouteInstructions([]); routeSource.clear(); }} className={`flex items-center gap-4 bg-white dark:bg-[#2f151b] p-3 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group ${selectedUser?._id === u._id ? 'ring-2 ring-primary' : ''}`}>
+                                                <div key={u._id} onClick={() => { setSelectedUser(u); setRouteInstructions([]); routeSource.clear(); }} className={`flex items-center gap-4 bg-white dark:bg-[#141218]/40 p-3.5 rounded-[24px] shadow-sm hover:shadow-md transition-all cursor-pointer group border border-transparent ${selectedUser?._id === u._id ? 'border-primary/30 bg-primary/5 ring-1 ring-primary/20' : 'hover:border-[#be3627]/10'}`}>
                                                     <div className="relative shrink-0">
                                                         <div
-                                                            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-14 ring-2 ring-transparent group-hover:ring-primary/20 transition-all"
+                                                            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-14 ring-2 ring-white dark:ring-[#231f29] shadow-md group-hover:scale-105 transition-transform"
                                                             style={{ backgroundImage: `url(${u.profilePhoto || 'https://ui-avatars.com/api/?name=' + u.displayName})` }}
                                                         ></div>
-                                                        <div className="absolute bottom-0 right-0 size-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+                                                        <div className="absolute bottom-0 right-0 size-4 bg-green-500 border-2 border-white dark:border-[#141218] rounded-full shadow-sm"></div>
                                                     </div>
                                                     <div className="flex flex-col justify-center flex-1 min-w-0">
-                                                        <p className="text-[#1c0d10] dark:text-white text-base font-bold leading-snug truncate">{u.displayName}</p>
-                                                        <p className="text-[#9c4957] text-sm font-normal truncate">{u.bio || 'Kon-nect User'}</p>
-                                                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                                        <p className="text-[#1a100f] dark:text-white text-base font-black leading-tight truncate">{u.displayName}</p>
+                                                        <p className="text-[#5e413d] dark:text-[#CAC4D0] text-xs font-bold truncate mt-0.5">{u.bio || 'Kon-nect Explorer'}</p>
+                                                        <div className="flex items-center gap-1.5 mt-2 text-[10px] font-black uppercase tracking-wider text-primary">
                                                             <span className="material-symbols-outlined text-[14px]">near_me</span>
-                                                            <span>~ km away</span>
+                                                            <span>Connect Now</span>
                                                         </div>
                                                     </div>
                                                 </div>

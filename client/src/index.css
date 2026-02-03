@@ -4,51 +4,46 @@
 
 @layer base {
   :root {
-    /* Light Theme (Red Tone) */
-    --color-primary: #DC2626;
-    /* Red-600 */
-    --color-primary-container: #FEE2E2;
-    /* Red-100 */
+    /* Light Theme (Red Tone - from secure_login_1) */
+    --color-primary: #be3627;
+    --color-primary-container: #fee2e2;
     --color-on-primary: #FFFFFF;
     --color-on-primary-container: #450A0A;
-    /* Red-950 */
 
-    --color-secondary: #7F1D1D;
-    /* Deep Red */
-    --color-tertiary: #9F1239;
-    /* Rose */
-    --color-error: #B3261E;
+    --color-secondary: #5e413d;
+    --color-tertiary: #915b55;
+    --color-error: #be3627;
 
-    --color-background-light: #FFFBFE;
-    --color-background-dark: #1C1B1F;
+    --color-background-light: #f8f6f6;
+    --color-background-dark: #141218;
 
-    --color-surface: #FFFBFE;
-    --color-surface-light: #FFFBFE;
+    --color-surface: #ffffff;
+    --color-surface-light: #ffffff;
     --color-surface-dark: #141218;
 
-    --color-surface-container: #F3EDF7;
-    --color-surface-container-light: #FDF2F2;
-    /* Reddish tint surface */
-    --color-surface-container-dark: #211F26;
+    --color-surface-container: #f2e9e9;
+    --color-surface-container-light: #f2e9e9;
+    --color-surface-container-dark: #231f29;
 
-    --color-on-surface: #1C1B1F;
-    --color-on-surface-light: #1C1B1F;
+    --color-on-surface: #1a100f;
+    --color-on-surface-light: #1a100f;
     --color-on-surface-dark: #E6E1E5;
 
     --color-outline: #79747E;
     --color-outline-light: #79747E;
     --color-outline-dark: #938F99;
 
-    /* Visual Effects */
-    --blur-tint: rgba(220, 38, 38, 0.05);
+    /* Background Effects */
+    --bg-map-url: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJ8VVsGQsbQ71t7tcICQyIClCf8Uxwz0gCzvDqLmrgOJ9L9bi583sZn0HvniYez3uplEVS_gc97irtF3KtFQzNCk7ipt9E7bpZAWUicWX1Xzf1RW4QIgEtLiBeu5x9hJ4AlAYuObSbFjednl_JFlmNti9E1L97nltPIIy1qCgap2gY3KtlIMpy5wI0qdywUI30ttquQBFTUCgYzf4GtZJ-IGLB4SgtSHQGZDdyigDUYed9hPTfDJQX_KFfOYcHuiSt4NaH7CMvTCZe');
+    --blur-tint: rgba(190, 54, 39, 0.05);
     /* Light Red Tint */
-    --glass-border: rgba(220, 38, 38, 0.1);
+    --glass-border: rgba(190, 54, 39, 0.1);
   }
 
   .dark {
-    /* Dark Theme (Purple Tone - Existing) */
+    /* Dark Theme (Purple Tone - from secure_login_4) */
     --color-primary: #D0BCFF;
-    --color-primary-container: #4F378B;
+    --color-primary-container: #4A0080;
     --color-on-primary: #381E72;
     --color-on-primary-container: #EADDFF;
 
@@ -59,14 +54,14 @@
     --color-surface: #141218;
     --color-on-surface: #E6E1E5;
 
-    --color-surface-container: #211F26;
+    --color-surface-container: #231f29;
 
     --color-outline: #938F99;
 
     /* Visual Effects */
     --blur-tint: rgba(208, 188, 255, 0.05);
     /* Light Purple Tint */
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
   }
 }
 

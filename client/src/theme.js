@@ -70,7 +70,7 @@ const getPaletteRaw = (color, mode) => {
             background: {
                 default: '#141218',
                 paper: '#141218', // Consistent Dark
-                surfaceContainer: '#211F26',
+                surfaceContainer: '#231f29',
             },
             text: {
                 primary: '#E6E1E5',
@@ -80,21 +80,21 @@ const getPaletteRaw = (color, mode) => {
     } else {
         return {
             primary: {
-                main: '#DC2626', // Red 600
+                main: '#be3627', // Red from secure_login_1
                 contrastText: '#FFFFFF',
             },
             secondary: {
-                main: '#7F1D1D', // Deep Red
+                main: '#5e413d', // Dark Red/Brown
                 contrastText: '#FFFFFF',
             },
             background: {
-                default: '#FFFBFE', // Very Light
-                paper: '#FFFBFE',
-                surfaceContainer: '#FDF2F2', // Reddish Tint
+                default: '#f8f6f6', // Light Grey from secure_login_1
+                paper: '#ffffff',
+                surfaceContainer: '#f2e9e9',
             },
             text: {
-                primary: '#1C1B1F', // Black/Dark Grey
-                secondary: '#450A0A', // Dark Red/Brown
+                primary: '#1a100f', // Dark from secure_login_1
+                secondary: '#5e413d',
             }
         };
     }

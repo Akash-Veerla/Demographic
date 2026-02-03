@@ -98,66 +98,57 @@ const ProfileSetup = () => {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark text-on-surface dark:text-on-surface-dark min-h-screen relative overflow-hidden transition-colors duration-300 font-display">
-            {/* Background */}
-            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                <img
-                    alt="Blurred map background"
-                    className="w-full h-full object-cover opacity-30 dark:opacity-20 blur-sm scale-105"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCS6GoskmyxK8SP6pZ3Wtx0NktvgHQhO_ZVdtwy--qKkYx-tovexcnp2EHy5vG0Lb8Akyc0citr1OoO4P2vs86_JBOC9Re6mw23vZ-qO-IJr4Nw83W_8r_rpIgy7OGvD88hrfvp8j3AWr16IBxXwRf03ugnhT-q6EwalUsxO7egqQoSyPmNmdVgvaaDlHOk-9CWB1NndI1GjaJo2B4Jvkg74YcnXDQv8Ge7tHaVXRgZ45dnF3oTJTDFmvgYz9U4pvGaq47-COga1mDq"
-                />
-                <div className="absolute inset-0 bg-background-light/40 dark:bg-background-dark/60 backdrop-blur-[2px]"></div>
-            </div>
-
-            <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-4">
-                <div className="w-full max-w-2xl bg-white dark:bg-card-dark rounded-card shadow-2xl p-8 md:p-10 border border-white/20 dark:border-gray-700/50 transition-all duration-300">
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl md:text-3xl font-bold mb-2">Edit Profile</h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">Update your details and interests.</p>
+        <div className="bg-transparent text-[#1a100f] dark:text-[#E6E1E5] min-h-full relative overflow-hidden transition-colors duration-300 font-display">
+            <main className="relative z-10 flex flex-col items-center justify-center py-12 p-4">
+                <div className="w-full max-w-2xl bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] shadow-2xl p-8 md:p-10 border border-white/20 dark:border-white/5 transition-all duration-300">
+                    <div className="text-center mb-10">
+                        <div className="w-16 h-16 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4">
+                            <span className="material-symbols-outlined text-3xl">edit_square</span>
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">Edit Profile</h1>
+                        <p className="text-[#5e413d] dark:text-[#CAC4D0] mt-2 font-medium">Update your bio and interests to connect better.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-8">
                         {/* Avatar */}
                         <div className="flex flex-col items-center gap-4">
-                            <div className="h-28 w-28 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center border-4 border-white dark:border-gray-600 shadow-lg overflow-hidden relative group cursor-pointer">
+                            <div className="h-32 w-32 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center border-4 border-white dark:border-[#141218] shadow-lg overflow-hidden relative group cursor-pointer transition-transform hover:scale-105">
                                 {previewUrl ? (
                                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                                 ) : (
-                                    <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-5xl">person</span>
+                                    <span className="material-symbols-outlined text-[#915b55] dark:text-[#CAC4D0] text-5xl">person</span>
                                 )}
                                 <input className="absolute inset-0 opacity-0 cursor-pointer" type="file" accept="image/*" onChange={handleFileChange} />
-                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <span className="material-symbols-outlined text-white">edit</span>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <span className="material-symbols-outlined text-white text-3xl">add_a_photo</span>
                                 </div>
                             </div>
-                            <p className="text-sm text-gray-500">Upload a profile photo</p>
+                            <p className="text-sm font-bold text-[#5e413d] dark:text-[#CAC4D0]">Update Profile Photo</p>
 
-                            {/* URL Input Toggle */}
-                            <div className="w-full max-w-sm mt-2">
-                                <div className="flex gap-2 mb-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Or paste an image URL..."
-                                        className="flex-1 rounded-input border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2"
-                                        onChange={(e) => setPreviewUrl(e.target.value)}
-                                    />
-                                </div>
+                            {/* URL Input */}
+                            <div className="w-full max-w-sm">
+                                <input
+                                    type="text"
+                                    placeholder="Or paste an image URL..."
+                                    className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-2.5 text-sm text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary placeholder:text-[#915b55]/50 transition-all font-medium"
+                                    onChange={(e) => setPreviewUrl(e.target.value)}
+                                />
                             </div>
                         </div>
 
                         {/* Bio */}
                         <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200" htmlFor="bio">
-                                    Bio <span className="text-primary text-xs ml-1">(Required, Text & Emojis)</span>
+                            <div className="flex justify-between items-center ml-1">
+                                <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5]" htmlFor="bio">
+                                    Bio <span className="text-primary text-xs ml-1 font-medium">(Required)</span>
                                 </label>
-                                <span className="text-xs text-gray-400">{bio.length}/150</span>
+                                <span className="text-xs font-bold text-[#915b55] dark:text-[#938F99]">{bio.length}/150</span>
                             </div>
                             <textarea
                                 id="bio"
                                 rows="3"
-                                className="w-full rounded-input border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-20 placeholder-gray-400 dark:placeholder-gray-500 resize-none transition-colors p-3"
-                                placeholder="I love hiking and coding... ⛰️💻"
+                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-4 text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] placeholder:text-[#915b55]/50 resize-none transition-all font-medium"
+                                placeholder="Tell us about yourself... ⛰️💻"
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value.slice(0, 150))}
                                 required
@@ -165,9 +156,9 @@ const ProfileSetup = () => {
                         </div>
 
                         {/* Interests */}
-                        <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                Select Interests
+                        <div className="space-y-4">
+                            <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] ml-1">
+                                Your Interests
                             </label>
 
                             {/* Custom Interest Input */}
@@ -176,36 +167,33 @@ const ProfileSetup = () => {
                                     type="text"
                                     value={customInterest}
                                     onChange={(e) => setCustomInterest(e.target.value)}
-                                    placeholder="Add custom interest (e.g. Pottery)"
-                                    className="flex-1 rounded-input border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                                    placeholder="Add custom (e.g. Design)"
+                                    className="flex-1 bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-3 text-sm text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary placeholder:text-[#915b55]/50 font-medium"
                                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomInterest(); } }}
                                 />
-                                <button type="button" onClick={addCustomInterest} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Add</button>
+                                <button type="button" onClick={addCustomInterest} className="px-6 py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-2xl text-sm font-bold hover:bg-primary hover:text-white transition-all">Add</button>
                             </div>
 
-                            <div className="flex flex-wrap gap-3 justify-center bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-                                {/* Only show options that aren't already selected to avoid duplicates in view, or just show all options + selected ones */}
+                            <div className="flex flex-wrap gap-2.5 justify-center bg-[#f2e9e9]/50 dark:bg-[#231f29]/30 p-6 rounded-[24px] border border-dashed border-[#be3627]/20 dark:border-white/10">
                                 {INTEREST_OPTIONS.map((interest) => (
                                     <button
                                         key={interest}
                                         type="button"
                                         onClick={() => toggleInterest(interest)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all transform hover:scale-105 ${selectedInterests.includes(interest)
-                                            ? 'bg-primary text-white shadow-md shadow-primary/30'
-                                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-primary dark:hover:border-primary'
+                                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all transform active:scale-95 ${selectedInterests.includes(interest)
+                                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                            : 'bg-white dark:bg-[#231f29] text-[#5e413d] dark:text-[#CAC4D0] border border-[#be3627]/10 dark:border-white/5 hover:border-primary'
                                             }`}
                                     >
                                         {interest}
                                     </button>
                                 ))}
-                                {/* Show selected custom interests that are NOT in options */}
                                 {selectedInterests.filter(i => !INTEREST_OPTIONS.includes(i)).map(interest => (
                                     <button
                                         key={interest}
                                         type="button"
                                         onClick={() => toggleInterest(interest)}
-                                        className="px-4 py-2 rounded-full text-sm font-medium transition-all transform hover:scale-105 bg-primary text-white shadow-md shadow-primary/30"
-                                        title="Click to remove"
+                                        className="px-5 py-2.5 rounded-full text-sm font-bold transition-all transform active:scale-95 bg-primary text-white shadow-lg shadow-primary/30"
                                     >
                                         {interest} <span className="ml-1 opacity-70">×</span>
                                     </button>
@@ -214,13 +202,13 @@ const ProfileSetup = () => {
                         </div>
 
                         {/* Submit */}
-                        <div className="pt-4">
+                        <div className="pt-6">
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-full shadow-lg text-base font-bold text-white bg-primary hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
+                                className="w-full flex justify-center py-4 px-4 rounded-full shadow-lg shadow-primary/30 text-base font-bold text-white bg-primary hover:brightness-110 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70"
                             >
-                                {loading ? 'Saving...' : 'Save Profile'}
+                                {loading ? 'Saving Profile...' : 'Save Profile Details'}
                             </button>
                         </div>
                     </form>

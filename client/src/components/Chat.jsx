@@ -7,29 +7,45 @@ const Chat = () => {
     const navigate = useNavigate();
 
     return (
-        <Container maxWidth="md" sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+        <Container maxWidth="md" sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <Paper
-                elevation={10}
+                elevation={0}
                 sx={{
-                    p: 6,
+                    p: { xs: 4, md: 8 },
                     textAlign: 'center',
-                    borderRadius: 4,
+                    borderRadius: '28px',
                     maxWidth: 500,
                     width: '100%',
-                    background: 'rgba(30, 41, 59, 0.7)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'white'
+                    background: theme => theme.palette.mode === 'dark' ? 'rgba(20, 18, 24, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(20px)',
+                    border: theme => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(190, 54, 39, 0.1)'}`,
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.15)'
                 }}
             >
-                <Box sx={{ display: 'inline-flex', p: 2, borderRadius: '50%', bgcolor: 'rgba(56, 189, 248, 0.1)', mb: 3 }}>
-                    <MessageCircle size={48} color="#38bdf8" />
+                <Box sx={{
+                    display: 'inline-flex',
+                    p: 2.5,
+                    borderRadius: '24px',
+                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(208, 188, 255, 0.1)' : 'rgba(190, 54, 39, 0.1)',
+                    mb: 4,
+                    color: 'primary.main'
+                }}>
+                    <MessageCircle size={48} strokeWidth={2.5} />
                 </Box>
 
-                <Typography variant="h4" fontWeight="800" gutterBottom sx={{ color: 'white' }}>
+                <Typography variant="h4" fontWeight="900" gutterBottom sx={{
+                    fontFamily: 'Outfit, sans-serif',
+                    color: theme => theme.palette.mode === 'dark' ? '#E6E1E5' : '#1a100f',
+                    letterSpacing: '-0.02em'
+                }}>
                     Messages
                 </Typography>
-                <Typography variant="body1" paragraph sx={{ color: 'rgba(255,255,255,0.6)', mb: 4 }}>
+                <Typography variant="body1" sx={{
+                    color: theme => theme.palette.mode === 'dark' ? '#CAC4D0' : '#5e413d',
+                    mb: 5,
+                    lineHeight: 1.6,
+                    fontWeight: 500
+                }}>
                     Connect with people nearby! Select a user on the Map to start a conversation.
                 </Typography>
 
@@ -39,12 +55,21 @@ const Chat = () => {
                     startIcon={<MapIcon />}
                     onClick={() => navigate('/')}
                     sx={{
-                        bgcolor: '#38bdf8',
-                        color: '#0f172a',
-                        fontWeight: 'bold',
-                        px: 4,
-                        py: 1.5,
-                        '&:hover': { bgcolor: '#7dd3fc' }
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                        fontWeight: '900',
+                        px: 5,
+                        py: 2,
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        fontSize: '1.1rem',
+                        boxShadow: '0 8px 25px rgba(190, 54, 39, 0.3)',
+                        '&:hover': {
+                            bgcolor: 'primary.main',
+                            filter: 'brightness(1.1)',
+                            transform: 'translateY(-2px)'
+                        },
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                     }}
                 >
                     Find People on Map
