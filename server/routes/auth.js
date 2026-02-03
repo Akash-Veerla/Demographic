@@ -12,23 +12,36 @@ const { validateInterests } = require('../utils/moderation');
 // 1. Initiate Google Login
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// 2. Callback
-router.get('/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login', session: false }),
-    (req, res) => {
-        // Successful authentication, issue JWT
-        const token = jwt.sign(
-            { id: req.user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+// 2. Callback with Verbose Error Handling
+router.get('/google/callback', (req, res, next) => {
+    passport.authenticate('google', { session: false }, (err, user, info) => {
+        if (err) {
+            console.error("Google OAuth Error (Passport):", err);
+            // Redirect to login with error details for user visibility if needed, or simple error page
+            return res.redirect(`${(process.env.CLIENT_URL || "").replace(/\/$/, "")}/login?error=auth_failed&details=${encodeURIComponent(err.message)}`);
+        }
+        if (!user) {
+            console.error("Google OAuth Failed: No user returned");
+            return res.redirect('/login?error=no_user');
+        }
 
-        // Redirect to Frontend with token
-        // Fallback to localhost if env not set, but ensure CLIENT_URL is set in prod
-        const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
-        res.redirect(`${clientUrl}?token=${token}`);
-    }
-);
+        // Successful authentication
+        try {
+            const token = jwt.sign(
+                { id: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            // Redirect to Frontend with token
+            const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+            res.redirect(`${clientUrl}?token=${token}`);
+        } catch (jwtError) {
+            console.error("JWT Generation Error:", jwtError);
+            res.status(500).send("Internal Authentication Error");
+        }
+    })(req, res, next);
+});
 
 // Register
 router.post('/register', async (req, res) => {
