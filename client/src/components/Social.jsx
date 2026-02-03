@@ -8,8 +8,6 @@ import { MessageSquare } from 'lucide-react';
 const ConnectView = () => {
     const [users, setUsers] = useState([]);
     const { user } = useAuth();
-
-    // Mock Data (Replace with real API calls later)
     const pendingRequests = [];
     const friends = [];
 
@@ -31,10 +29,13 @@ const ConnectView = () => {
         return uInterests.some(i => mySet.has(typeof i === 'string' ? i.toLowerCase() : i.name.toLowerCase()));
     };
 
+    const handleConnectClick = (targetUser) => {
+        window.dispatchEvent(new CustomEvent('map_connect_user', { detail: targetUser }));
+    };
+
     return (
         <div className="h-full w-full p-6 space-y-8 animate-fade-in">
             <div className="max-w-7xl mx-auto space-y-8">
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Friend Requests */}
                     <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
@@ -110,27 +111,35 @@ const ConnectView = () => {
                                             <span
                                                 key={i}
                                                 className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${isMatch && (typeof int === 'string' ? user.interests.some(mi => (typeof mi === 'string' ? mi.toLowerCase() : mi.name.toLowerCase()) === int.toLowerCase()) : true)
-                                                        ? 'bg-primary/10 border-primary/20 text-primary'
-                                                        : 'bg-[#f2e9e9] dark:bg-[#231f29] border-transparent text-[#915b55] dark:text-[#938F99]'
+                                                    ? 'bg-primary/10 border-primary/20 text-primary'
+                                                    : 'bg-[#f2e9e9] dark:bg-[#231f29] border-transparent text-[#915b55] dark:text-[#938F99]'
                                                     }`}
                                             >
                                                 {typeof int === 'string' ? int : int.name}
                                             </span>
                                         ))}
                                     </div>
-                                    <button
-                                        onClick={() => alert('Connect via Map to see live location!')}
-                                        className="w-full mt-2 bg-primary hover:bg-primary/90 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                    >
-                                        <MessageSquare size={18} strokeWidth={2.5} />
-                                        Connect
-                                    </button>
+
+                                    <div className="flex gap-2 w-full mt-2">
+                                        <button
+                                            onClick={() => handleConnectClick(u)}
+                                            className="flex-1 bg-primary hover:bg-primary/90 text-white font-black py-3 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">share_location</span>
+                                            Connect
+                                        </button>
+                                        <button
+                                            onClick={() => alert(`Connect via Map to chat with ${u.displayName}!`)}
+                                            className="w-14 bg-white dark:bg-[#231f29] text-primary rounded-2xl flex items-center justify-center border border-primary/20 shadow-sm hover:brightness-110 transition-all active:scale-95"
+                                        >
+                                            <span className="material-symbols-outlined">chat</span>
+                                        </button>
+                                    </div>
                                 </div>
                             )
                         })}
                     </div>
                 </div>
-
             </div>
         </div>
     );
@@ -139,29 +148,32 @@ const ConnectView = () => {
 const Social = () => {
     const [activeTab, setActiveTab] = useState('map');
 
+    useEffect(() => {
+        const handleMapConnect = (e) => {
+            setActiveTab('map');
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('select_map_user', { detail: e.detail }));
+            }, 500);
+        };
+        window.addEventListener('map_connect_user', handleMapConnect);
+        return () => window.removeEventListener('map_connect_user', handleMapConnect);
+    }, []);
+
     return (
         <div className="flex flex-col h-full w-full relative transition-colors duration-300">
             {/* Tab Navigation Bar - Sticky */}
-            <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl border-b border-[#be3627]/10 dark:border-white/5 px-6 sticky top-0 z-30 flex justify-center">
-                <div className="max-w-7xl w-full flex gap-10">
+            <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl border-b border-[#be3627]/10 dark:border-white/5 px-6 sticky top-0 z-30 flex justify-center h-16 items-center">
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-full p-1 border border-slate-200 dark:border-slate-700/50">
                     <button
                         onClick={() => setActiveTab('map')}
-                        className={`py-4 px-2 text-sm font-black uppercase tracking-widest border-b-[3px] transition-all duration-300 flex items-center gap-3 ${activeTab === 'map'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-[#915b55] dark:text-[#938F99] hover:text-primary'
-                            }`}
+                        className={`px-8 py-2 rounded-full text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'map' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
                     >
-                        <span className="material-symbols-outlined text-[22px]">map</span>
                         Map View
                     </button>
                     <button
                         onClick={() => setActiveTab('connect')}
-                        className={`py-4 px-2 text-sm font-black uppercase tracking-widest border-b-[3px] transition-all duration-300 flex items-center gap-3 ${activeTab === 'connect'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-[#915b55] dark:text-[#938F99] hover:text-primary'
-                            }`}
+                        className={`px-8 py-2 rounded-full text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'connect' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
                     >
-                        <span className="material-symbols-outlined text-[22px]">grid_view</span>
                         Connect
                     </button>
                 </div>
@@ -170,7 +182,6 @@ const Social = () => {
             {/* Content Area */}
             <div className="flex-1 relative w-full">
                 {activeTab === 'map' ? (
-                    // Force fixed height for Map to work in scrollable layout
                     <div className="w-full h-[85vh] relative overflow-hidden shadow-inner">
                         <MapComponent />
                     </div>

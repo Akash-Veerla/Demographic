@@ -120,7 +120,7 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
             </Box>
 
             {/* Input */}
-            <Box sx={{ p: 1, display: 'flex', gap: 1, bgcolor: 'white', borderTop: '1px solid #ddd' }}>
+            <Box sx={{ p: 2, display: 'flex', gap: 1, bgcolor: theme.palette.background.paper, borderTop: `1px solid ${theme.palette.divider}` }}>
                 <TextField
                     fullWidth
                     size="small"
@@ -128,9 +128,25 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : theme.palette.background.default,
+                            borderRadius: '16px'
+                        }
+                    }}
                 />
-                <IconButton color="primary" onClick={handleSend} disabled={!roomId}>
-                    <Send size={20} />
+                <IconButton
+                    color="primary"
+                    onClick={handleSend}
+                    disabled={!roomId}
+                    sx={{
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' },
+                        '&.Mui-disabled': { bgcolor: 'action.disabledBackground' }
+                    }}
+                >
+                    <Send size={18} />
                 </IconButton>
             </Box>
         </Paper>

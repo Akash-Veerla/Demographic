@@ -75,7 +75,7 @@ const Profile = () => {
                                     <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-2">Availability Status</label>
                                     <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] mb-3">Controls your visibility on the map.</p>
                                     <div className="relative">
-                                        <select className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-3 appearance-none focus:ring-2 focus:ring-primary text-[#1a100f] dark:text-[#E6E1E5] font-medium">
+                                        <select className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-3 [appearance:none] [-webkit-appearance:none] [-moz-appearance:none] focus:ring-2 focus:ring-primary text-[#1a100f] dark:text-[#E6E1E5] font-medium cursor-pointer">
                                             <option>Chat Only</option>
                                             <option>Available for Meetup</option>
                                             <option>Invisible</option>
