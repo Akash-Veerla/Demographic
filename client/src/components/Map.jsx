@@ -32,6 +32,8 @@ const MapComponent = () => {
     const [chatTarget, setChatTarget] = useState(null);
     const [socketReady, setSocketReady] = useState(false);
     const [discoveryMode, setDiscoveryMode] = useState(false);
+    const [isGlobalMode, setIsGlobalMode] = useState(false);
+    const [alertMessage, setAlertMessage] = useState(null);
 
     // Search State
     const [searchQuery, setSearchQuery] = useState('');
@@ -59,31 +61,39 @@ const MapComponent = () => {
         return () => clearTimeout(timer);
     }, [searchQuery, showSuggestions]);
 
-    // Fetch Nearby Users
+    // Fetch Nearby or Global Users
     const fetchNearbyUsers = useCallback(async () => {
         if (!user || !map) return;
         try {
-            // Use User Location if available (Fixated on User), otherwise Map Center
-            let center;
-            if (userLocation) {
-                center = toLonLat(userLocation);
+            if (isGlobalMode) {
+                const res = await api.get('/api/users/global', { params: { interests: 'all' } });
+                setNearbyUsersList(res.data || []);
             } else {
-                center = toLonLat(map.getView().getCenter());
-            }
-            const [lng, lat] = center;
+                // Local / Discovery Mode
+                let center;
+                if (userLocation) {
+                    center = toLonLat(userLocation);
+                } else {
+                    center = toLonLat(map.getView().getCenter());
+                }
+                const [lng, lat] = center;
 
-            const res = await api.get('/api/users/nearby', {
-                params: { lat, lng, radius: discoveryMode ? 10 : 1, interests: 'all' }
-            });
-            setNearbyUsersList(res.data || []);
+                // Discovery Mode = 10km, Normal = 20km (or similar default)
+                // User said: "in discover mode all users who are in the radius should be visible"
+                const radius = discoveryMode ? 10 : 20;
+
+                const res = await api.get('/api/users/nearby', {
+                    params: { lat, lng, radius, interests: 'all' }
+                });
+                setNearbyUsersList(res.data || []);
+            }
         } catch (err) {
             console.error("Fetch error:", err);
         }
-    }, [user, map, discoveryMode, userLocation]);
+    }, [user, map, discoveryMode, isGlobalMode, userLocation]);
 
     // OSRM Routing
     const getDirections = async (targetUser) => {
-        if (!map || !targetUser.location?.coordinates) return;
         if (!map || !targetUser.location?.coordinates) return;
 
         let startCoords;
@@ -96,6 +106,11 @@ const MapComponent = () => {
         const [myLng, myLat] = startCoords;
         const [targetLng, targetLat] = targetUser.location.coordinates;
         const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${myLng},${myLat};${targetLng},${targetLat}?overview=full&geometries=geojson&steps=true`;
+
+        // Notify Target User
+        if (socketRef.current) {
+            socketRef.current.emit('getting_directions', { targetUserId: targetUser._id });
+        }
 
         try {
             const response = await fetch(osrmUrl);
@@ -223,10 +238,21 @@ const MapComponent = () => {
                 data: u
             });
             const isSelected = selectedUser?._id === u._id;
+            const isOnline = u.isOnline; // From API
+
+            // Marker Color Logic
+            // Online: Red/Purple (Theme), Offline: Black
+            let markerColor;
+            if (isOnline) {
+                markerColor = isDark ? '#D0BCFF' : theme.palette.primary.main;
+            } else {
+                markerColor = '#000000';
+            }
+
             feature.setStyle(new Style({
                 image: new StyleCircle({
                     radius: isSelected ? 12 : 8,
-                    fill: new Fill({ color: isSelected ? (isDark ? '#D0BCFF' : theme.palette.primary.main) : '#915b55' }),
+                    fill: new Fill({ color: isSelected ? markerColor : markerColor }), // Solid color
                     stroke: new Stroke({ color: '#fff', width: isSelected ? 3 : 2 })
                 }),
                 text: isSelected ? new Text({
@@ -240,10 +266,9 @@ const MapComponent = () => {
             userSource.addFeature(feature);
         });
 
-        // 3. Radius Circle (Centered on User)
+        // 3. Radius Circle (Only in Discovery Mode)
         radiusSource.clear();
-        if (discoveryMode && userLocation) {
-            // 10km circle based on User Location
+        if (discoveryMode && !isGlobalMode && userLocation) { // Only show radius if in discovery and not global
             const circleFeature = new Feature({
                 geometry: new GeomCircle(userLocation, 10000)
             });
@@ -252,15 +277,9 @@ const MapComponent = () => {
                 fill: new Fill({ color: isDark ? 'rgba(208, 188, 255, 0.1)' : 'rgba(190, 54, 39, 0.05)' })
             }));
             radiusSource.addFeature(circleFeature);
-
-            // Re-fetch with new mode (API call handles the logic, here we just visualize)
-            // Note: fetchNearbyUsers uses map center, which is usually synced with user at start, 
-            // but if user pans, we might want to fetch based on userLocation if Discovery Mode strictly implies "around me".
-            // The user implies "users in MongoDB should be visible for the current user in the radius circle only".
-            // So we should probably ensure the API call uses `userLocation` if available.
         }
 
-    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, map, userLocation, theme.palette.primary.main]);
+    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, isGlobalMode, map, userLocation, theme.palette.primary.main]);
 
     // Socket
     useEffect(() => {
@@ -272,6 +291,13 @@ const MapComponent = () => {
             setChatTarget({ _id: from, displayName: fromName || 'User', roomId: roomId });
             socketRef.current.emit('accept_chat', { roomId });
         });
+
+        socketRef.current.on('directions_alert', ({ message }) => {
+            setAlertMessage(message);
+            // Auto hide after 5s
+            setTimeout(() => setAlertMessage(null), 5000);
+        });
+
         return () => socketRef.current.disconnect();
     }, [user]);
 
@@ -338,6 +364,19 @@ const MapComponent = () => {
                 </div>
             </div>
 
+            {/* Alert Message Toast */}
+            {alertMessage && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20">
+                        <span className="material-symbols-outlined fill-current">directions_car</span>
+                        <span className="font-bold text-sm">{alertMessage}</span>
+                        <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80">
+                            <span className="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* User Card */}
             {selectedUser && (
                 <div className="absolute top-24 left-6 z-20 w-80 animate-in fade-in slide-in-from-left-4 duration-500">
@@ -401,20 +440,39 @@ const MapComponent = () => {
                 </div>
             )}
 
-            {/* Discovery Mode Toggle */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
-                <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-6 py-3 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-4">
+            {/* Bottom Controls: Discovery & Global View */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-4 w-full max-w-2xl justify-center px-4">
+
+                {/* Discovery Mode Toggle */}
+                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-all ${isGlobalMode ? 'opacity-50 pointer-events-none' : ''}`}>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input
                             type="checkbox"
                             className="sr-only peer"
                             checked={discoveryMode}
+                            disabled={isGlobalMode}
                             onChange={() => setDiscoveryMode(!discoveryMode)}
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </label>
-                    <span className="text-[#1a100f] dark:text-white font-black text-sm">Discovery Mode (10km)</span>
+                    <span className="text-[#1a100f] dark:text-white font-black text-xs md:text-sm whitespace-nowrap">Discovery Mode (10km)</span>
                 </div>
+
+                {/* Global View Toggle */}
+                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 ${discoveryMode ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={isGlobalMode}
+                            disabled={discoveryMode}
+                            onChange={() => setIsGlobalMode(!isGlobalMode)}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4a7c7c]"></div>
+                    </label>
+                    <span className="text-[#1a100f] dark:text-white font-black text-xs md:text-sm whitespace-nowrap">Global View</span>
+                </div>
+
             </div>
 
             {/* Chat Overlay */}

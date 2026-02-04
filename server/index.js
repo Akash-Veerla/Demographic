@@ -207,6 +207,21 @@ io.on('connection', (socket) => {
         socketToUser.delete(socket.id);
         console.log('Client disconnected', socket.id);
     });
+
+    socket.on('getting_directions', async ({ targetUserId }) => {
+        const currentUserId = socketToUser.get(socket.id);
+        if (!currentUserId) return;
+        try {
+            const currentUser = await User.findById(currentUserId);
+            const fromName = currentUser ? currentUser.displayName : 'Someone';
+            io.to(targetUserId).emit('directions_alert', {
+                fromName,
+                message: `${fromName} is getting directions to your location!`
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    });
 });
 
 // --- New API Routes for Dynamic Discovery ---
@@ -223,8 +238,8 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
 
         const maxDistance = (radius ? Math.min(parseFloat(radius), 10) : 10) * 1000; // Max 10km, convert to meters
 
-        // Find users within radius
-        // Note: $near requires geospatial index (added in User model)
+        // Find users within radius (exclude self)
+        // Removed lastLogin filter to show offline users as requested
         const nearbyUsers = await User.find({
             location: {
                 $near: {
@@ -235,15 +250,20 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                     $maxDistance: maxDistance
                 }
             },
-            lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Active within last 24h
-            _id: { $ne: userId } // Exclude self
-        }).select('displayName interests location profilePhoto bio');
+            _id: { $ne: userId }
+        }).select('displayName interests location profilePhoto bio lastLogin');
+
+        // Map with Online Status
+        const usersWithStatus = nearbyUsers.map(u => ({
+            ...u.toObject(),
+            isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0
+        }));
 
         // Optional Interest Filtering
-        let filteredUsers = nearbyUsers;
+        let filteredUsers = usersWithStatus;
         if (interests && interests !== 'all') {
             const userInterests = interests.split(',');
-            filteredUsers = nearbyUsers.filter(u =>
+            filteredUsers = usersWithStatus.filter(u =>
                 u.interests.some(i => userInterests.includes(typeof i === 'string' ? i : i.name))
             );
         }
@@ -336,23 +356,27 @@ app.get('/api/users/global', requireAuth, async (req, res) => {
         const userId = req.user.id;
         const { interests } = req.query;
 
-        // Fetch recent 100 users globally, excluding self
-        // Increased limit to allow for filtering
+        // Fetch users globally (exclude self)
+        // No limits for Global View as per request "All the users in the database should be shown"
+        // But let's keep a reasonable safety limit if DB is huge (e.g. 500) or just return all?
+        // User said "All the users". I will use a high limit.
         let query = { _id: { $ne: userId } };
 
-        // Optimize: If interests filter is active, we might want to query it at DB level
-        // But for now, let's fetch active users and filter in memory to ensure "freshness" priority
-        // unless the set is too large. 
-
         const globalUsers = await User.find(query)
-            .sort({ lastLogin: -1 }) // active users first
-            .limit(100)
-            .select('displayName interests location profilePhoto bio');
+            .sort({ lastLogin: -1 })
+            .limit(500)
+            .select('displayName interests location profilePhoto bio lastLogin');
 
-        let filteredUsers = globalUsers;
+        // Map with Online Status
+        const usersWithStatus = globalUsers.map(u => ({
+            ...u.toObject(),
+            isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0
+        }));
+
+        let filteredUsers = usersWithStatus;
         if (interests && interests !== 'all') {
             const userInterests = interests.split(',');
-            filteredUsers = globalUsers.filter(u =>
+            filteredUsers = usersWithStatus.filter(u =>
                 u.interests && u.interests.some(i => userInterests.includes(typeof i === 'string' ? i : i.name))
             );
         }
