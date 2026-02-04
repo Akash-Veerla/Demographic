@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Modal, Box, Typography, Button, TextField } from '@mui/material';
+import { Modal, Box, Typography, Button, TextField, IconButton } from '@mui/material';
+import { useContext } from 'react';
+import { ColorModeContext } from '../App';
+import { Sun, Moon, Copy, Check } from 'lucide-react';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -15,6 +18,9 @@ const Login = () => {
     const [forgotEmail, setForgotEmail] = useState('');
     const [tempPassword, setTempPassword] = useState(null);
     const [forgotError, setForgotError] = useState('');
+    const [copied, setCopied] = useState(false);
+
+    const { toggleColorMode, mode } = useContext(ColorModeContext);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -60,6 +66,16 @@ const Login = () => {
                     style={{ backgroundImage: 'var(--bg-map-url)' }}
                 ></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/95 dark:via-background-dark/60 dark:to-background-dark/95"></div>
+            </div>
+
+            {/* Theme Toggle */}
+            <div className="absolute top-6 right-6 z-50">
+                <button
+                    onClick={toggleColorMode}
+                    className="p-2 rounded-full bg-white/80 dark:bg-[#141218]/80 backdrop-blur-md shadow-md hover:scale-110 transition-transform text-[#5e413d] dark:text-[#E6E1E5]"
+                >
+                    {mode === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+                </button>
             </div>
 
             <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up max-h-[90vh] overflow-y-auto custom-scrollbar border dark:border-white/10" style={{ borderRadius: '28px' }}>
@@ -183,15 +199,16 @@ const Login = () => {
             <Modal open={isForgotModalOpen} onClose={closeForgotModal}>
                 <Box sx={{
                     position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                    width: 400, bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4
+                    width: 400, bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
+                    border: '1px solid', borderColor: 'divider'
                 }}>
-                    <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
+                    <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold', fontFamily: 'Outfit' }}>
                         Forgot Password
                     </Typography>
 
                     {!tempPassword ? (
                         <>
-                            <Typography sx={{ mb: 2 }}>Enter your email to receive a temporary password.</Typography>
+                            <Typography sx={{ mb: 2, color: 'text.secondary' }}>Enter your email to receive a temporary password.</Typography>
                             <TextField
                                 fullWidth
                                 label="Email Address"
@@ -202,22 +219,36 @@ const Login = () => {
                             />
                             {forgotError && <Typography color="error" variant="caption" display="block" sx={{ mb: 2 }}>{forgotError}</Typography>}
                             <div className="flex justify-end gap-2">
-                                <Button onClick={closeForgotModal}>Cancel</Button>
-                                <Button variant="contained" onClick={handleForgotPassword}>Generate Password</Button>
+                                <Button onClick={closeForgotModal} color="inherit">Cancel</Button>
+                                <Button variant="contained" onClick={handleForgotPassword} sx={{ bgcolor: 'primary.main', fontWeight: 'bold' }}>Generate Password</Button>
                             </div>
                         </>
                     ) : (
                         <>
-                            <Typography sx={{ mb: 2, color: 'success.main' }}>
+                            <Typography sx={{ mb: 2, color: 'success.main', fontWeight: 'bold' }}>
                                 Temporary password generated successfully!
                             </Typography>
-                            <div className="bg-gray-100 p-4 rounded text-center font-mono text-lg font-bold mb-4 select-all">
-                                {tempPassword}
+                            <div className="bg-gray-100 dark:bg-[#2D2835] p-4 rounded-xl text-center font-mono text-lg font-bold mb-4 select-all flex items-center justify-between border border-gray-200 dark:border-gray-700">
+                                <span className="text-gray-800 dark:text-white">{tempPassword}</span>
+                                <IconButton onClick={() => {
+                                    navigator.clipboard.writeText(tempPassword);
+                                    setCopied(true);
+                                    setTimeout(() => setCopied(false), 2000);
+                                }}>
+                                    {copied ? <Check size={20} className="text-green-500" /> : <Copy size={20} className="text-gray-500 hover:text-primary" />}
+                                </IconButton>
                             </div>
-                            <Typography variant="caption" display="block" sx={{ mb: 2, color: 'text.secondary' }}>
+                            <Typography variant="caption" display="block" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.5 }}>
                                 Please copy this password and login. You can change it later in your profile.
                             </Typography>
-                            <Button fullWidth variant="contained" onClick={closeForgotModal}>Close</Button>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                onClick={closeForgotModal}
+                                sx={{ bgcolor: 'primary.main', fontWeight: 'bold', borderRadius: '12px', py: 1.5 }}
+                            >
+                                Close & Login
+                            </Button>
                         </>
                     )}
                 </Box>

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { useContext } from 'react';
+import { ColorModeContext } from '../App';
+import { Sun, Moon } from 'lucide-react';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -11,6 +14,8 @@ const Register = () => {
         email: '',
         password: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const { toggleColorMode, mode } = useContext(ColorModeContext);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,6 +40,16 @@ const Register = () => {
                     style={{ backgroundImage: 'var(--bg-map-url)' }}
                 ></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/95 dark:via-background-dark/60 dark:to-background-dark/95"></div>
+            </div>
+
+            {/* Theme Toggle */}
+            <div className="absolute top-6 right-6 z-50">
+                <button
+                    onClick={toggleColorMode}
+                    className="p-2 rounded-full bg-white/80 dark:bg-[#141218]/80 backdrop-blur-md shadow-md hover:scale-110 transition-transform text-[#5e413d] dark:text-[#E6E1E5]"
+                >
+                    {mode === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+                </button>
             </div>
 
             <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up max-h-[90vh] overflow-y-auto custom-scrollbar border dark:border-white/10" style={{ borderRadius: '28px' }}>
@@ -103,7 +118,7 @@ const Register = () => {
                             <input
                                 id="password"
                                 name="password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
@@ -114,6 +129,15 @@ const Register = () => {
                                 style={{ borderRadius: '12px' }}
                             />
                             <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">lock</span>
+                            <button
+                                type="button"
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] hover:text-primary dark:hover:text-primary transition-colors focus:outline-none"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                <span className="material-symbols-outlined text-[20px]">
+                                    {showPassword ? 'visibility' : 'visibility_off'}
+                                </span>
+                            </button>
                         </div>
                     </div>
 
@@ -134,7 +158,7 @@ const Register = () => {
 
                 <div className="flex justify-center gap-5 w-full">
                     {/* Only Google as requested */}
-                    {/* Only Google as requested */}
+
                     <button
                         type="button"
                         onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/google`}

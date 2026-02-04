@@ -18,24 +18,7 @@ export const ColorModeContext = createContext({
     mode: 'dark',
 });
 
-const GoogleAuthHandler = () => {
-    const { fetchCurrentUser } = useAuth();
-    const navigate = useNavigate();
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get('token');
-        if (token) {
-            localStorage.setItem('token', token);
-            window.history.replaceState(null, '', window.location.pathname);
-            fetchCurrentUser().then(() => {
-                navigate('/social', { replace: true });
-            });
-        }
-    }, [fetchCurrentUser, navigate]);
-
-    return null;
-};
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated, loading, user } = useAuth(); // Use Context
@@ -65,7 +48,7 @@ const AppContent = () => {
     const { loading } = useAuth();
 
     // Theme State
-    const [mode, setMode] = useState('dark');
+    const [mode, setMode] = useState('light');
 
     const colorMode = useMemo(() => ({
         toggleColorMode: () => {
@@ -97,7 +80,6 @@ const AppContent = () => {
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 <BrowserRouter>
-                    <GoogleAuthHandler />
                     <Routes>
                         <Route path="/welcome" element={<Login />} />
                         <Route path="/login" element={<Login />} />

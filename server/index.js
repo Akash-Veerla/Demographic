@@ -221,7 +221,7 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'Latitude and Longitude required' });
         }
 
-        const maxDistance = (radius ? parseFloat(radius) : 10) * 1000; // Default 10km, convert to meters
+        const maxDistance = (radius ? Math.min(parseFloat(radius), 10) : 10) * 1000; // Max 10km, convert to meters
 
         // Find users within radius
         // Note: $near requires geospatial index (added in User model)
@@ -442,6 +442,35 @@ fs.createReadStream(path.join(__dirname, 'Interests.csv'))
 // Interests - Protected
 app.get('/api/interests', requireAuth, (req, res) => {
     res.json(interests);
+});
+
+// Change Password
+app.post('/api/user/change-password', requireAuth, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Please provide both current and new passwords' });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Verify current password
+        const isMatch = await require('bcryptjs').compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Incorrect current password' });
+        }
+
+        // Hash new password
+        const salt = await require('bcryptjs').genSalt(10);
+        user.password = await require('bcryptjs').hash(newPassword, salt);
+        await user.save();
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (err) {
+        console.error("Password update error:", err);
+        res.status(500).json({ error: 'Failed to update password' });
+    }
 });
 
 // --- Stats Route ---

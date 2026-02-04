@@ -7,7 +7,7 @@ import OSM from 'ol/source/OSM';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Feature } from 'ol';
-import { Point, LineString } from 'ol/geom';
+import { Point, LineString, Circle as GeomCircle } from 'ol/geom';
 import { Style, Circle as StyleCircle, Fill, Stroke, Text } from 'ol/style';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { useAuth } from '../context/AuthContext';
@@ -23,8 +23,8 @@ const MapComponent = () => {
     const [map, setMap] = useState(null);
     const [userSource] = useState(new VectorSource());
     const [routeSource] = useState(new VectorSource());
+    const [radiusSource] = useState(new VectorSource()); // For Discovery Circle
 
-    const [radius, setRadius] = useState(15);
     const [nearbyUsersList, setNearbyUsersList] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [routeInstructions, setRouteInstructions] = useState([]);
@@ -32,8 +32,31 @@ const MapComponent = () => {
     const [socketReady, setSocketReady] = useState(false);
     const [discoveryMode, setDiscoveryMode] = useState(false);
 
+    // Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
     const { user } = useAuth();
     const socketRef = useRef();
+
+    // Debounce for search
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchQuery.length > 2 && showSuggestions) {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`);
+                    const data = await res.json();
+                    setSearchResults(data);
+                } catch (err) {
+                    console.error("Search error", err);
+                }
+            } else if (searchQuery.length === 0) {
+                setSearchResults([]);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery, showSuggestions]);
 
     // Fetch Nearby Users
     const fetchNearbyUsers = useCallback(async () => {
@@ -42,7 +65,7 @@ const MapComponent = () => {
             const center = toLonLat(map.getView().getCenter());
             const [lng, lat] = center;
             const res = await api.get('/api/users/nearby', {
-                params: { lat, lng, radius: discoveryMode ? 50 : 15, interests: 'all' }
+                params: { lat, lng, radius: discoveryMode ? 10 : 1, interests: 'all' }
             });
             setNearbyUsersList(res.data || []);
         } catch (err) {
@@ -69,7 +92,7 @@ const MapComponent = () => {
                 routeSource.clear();
                 const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
                 routeFeature.setStyle(new Style({
-                    stroke: new Stroke({ color: isDark ? '#D0BCFF' : '#be3627', width: 5 })
+                    stroke: new Stroke({ color: isDark ? '#D0BCFF' : theme.palette.primary.main, width: 5 })
                 }));
                 routeSource.addFeature(routeFeature);
                 map.getView().fit(routeFeature.getGeometry().getExtent(), { padding: [100, 100, 100, 100], duration: 1000 });
@@ -79,23 +102,43 @@ const MapComponent = () => {
         }
     };
 
-    // Initial Map Setup
+    // Initial Map Setup & Geolocation
     useEffect(() => {
         const initialMap = new Map({
             target: mapRef.current,
             layers: [
                 new TileLayer({ source: new OSM(), className: 'map-tile-layer' }),
+                new VectorLayer({ source: radiusSource, zIndex: 5 }),
                 new VectorLayer({ source: routeSource, zIndex: 7 }),
                 new VectorLayer({ source: userSource, zIndex: 10 })
             ],
             view: new View({
-                center: fromLonLat([80.6480, 16.5062]),
+                center: fromLonLat([80.6480, 16.5062]), // Default fallback
                 zoom: 12
             }),
             controls: []
         });
 
         setMap(initialMap);
+
+        // Get User Location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const center = fromLonLat([longitude, latitude]);
+                    initialMap.getView().animate({ center, zoom: 14 });
+
+                    // Add Self Marker logic here if needed, but primary user is center
+                    // Typically filter out 'self' from nearby list, but visually showing 'me' is good.
+                    // For now, center is implied 'me'.
+                },
+                (error) => {
+                    console.error("Geolocation error:", error);
+                },
+                { enableHighAccuracy: true }
+            );
+        }
 
         initialMap.on('click', (e) => {
             const feature = initialMap.forEachFeatureAtPixel(e.pixel, f => f);
@@ -117,10 +160,11 @@ const MapComponent = () => {
         const handleSelect = (e) => {
             const u = e.detail;
             setSelectedUser(u);
-            if (u.location?.coordinates && map) {
+            const coords = u.location?.coordinates;
+            if (coords && map) {
                 map.getView().animate({
-                    center: fromLonLat(u.location.coordinates),
-                    zoom: 14,
+                    center: fromLonLat(coords),
+                    zoom: 16,
                     duration: 1500
                 });
             }
@@ -129,9 +173,10 @@ const MapComponent = () => {
         return () => window.removeEventListener('select_map_user', handleSelect);
     }, [map]);
 
-    // Update Markers
+    // Update Markers & Discovery Circle
     useEffect(() => {
         if (!map) return;
+
         userSource.clear();
         nearbyUsersList.forEach(u => {
             if (!u.location?.coordinates) return;
@@ -144,7 +189,7 @@ const MapComponent = () => {
             feature.setStyle(new Style({
                 image: new StyleCircle({
                     radius: isSelected ? 12 : 8,
-                    fill: new Fill({ color: isSelected ? (isDark ? '#D0BCFF' : '#be3627') : '#915b55' }),
+                    fill: new Fill({ color: isSelected ? (isDark ? '#D0BCFF' : theme.palette.primary.main) : '#915b55' }),
                     stroke: new Stroke({ color: '#fff', width: isSelected ? 3 : 2 })
                 }),
                 text: isSelected ? new Text({
@@ -157,7 +202,30 @@ const MapComponent = () => {
             }));
             userSource.addFeature(feature);
         });
-    }, [nearbyUsersList, selectedUser, isDark]);
+
+        // Radius Circle
+        radiusSource.clear();
+        if (discoveryMode) {
+            const center = map.getView().getCenter();
+            // 10km circle. Note: Projection distortion exists but for visual approx it's okay. 
+            // Better to use Tissot or circular polygon, but GeomCircle in web mercator is simplest.
+            // 10km in meters ~ 10000. In Web Mercator meters roughly matches at equator.
+            const circleFeature = new Feature({
+                geometry: new GeomCircle(center, 10000) // Radius in projection units (meters-ish)
+            });
+            circleFeature.setStyle(new Style({
+                stroke: new Stroke({ color: theme.palette.primary.main, width: 2, lineDash: [10, 10] }),
+                fill: new Fill({ color: isDark ? 'rgba(208, 188, 255, 0.1)' : 'rgba(190, 54, 39, 0.05)' })
+            }));
+            radiusSource.addFeature(circleFeature);
+
+            // Re-fetch with new mode
+            fetchNearbyUsers();
+        } else {
+            fetchNearbyUsers();
+        }
+
+    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, map]);
 
     // Socket
     useEffect(() => {
@@ -172,6 +240,13 @@ const MapComponent = () => {
         return () => socketRef.current.disconnect();
     }, [user]);
 
+    const handleSearchSelect = (place) => {
+        const coords = [parseFloat(place.lon), parseFloat(place.lat)];
+        map.getView().animate({ center: fromLonLat(coords), zoom: 14, duration: 1500 });
+        setSearchQuery(place.display_name.split(',')[0]);
+        setShowSuggestions(false);
+    };
+
     return (
         <div className="relative h-full w-full overflow-hidden bg-[#e5e7eb] dark:bg-[#1a1a1a]">
             {/* Map Container */}
@@ -185,38 +260,55 @@ const MapComponent = () => {
                 }}
             />
 
-            {/* Top Search Bar (Centered like Nav) */}
+            {/* Top Search Bar */}
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4">
-                <div className="flex items-center bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-full p-1 shadow-2xl border border-white/20 dark:border-white/5">
-                    <div className="flex-1 flex items-center pl-4">
-                        <span className="material-symbols-outlined text-gray-400 mr-2">search</span>
-                        <input
-                            type="text"
-                            placeholder="vijayawada"
-                            className="bg-transparent border-none focus:ring-0 text-[#1a100f] dark:text-white font-bold text-sm w-full placeholder-gray-400"
-                            onKeyDown={async (e) => {
-                                if (e.key === 'Enter') {
-                                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(e.target.value)}`);
-                                    const data = await res.json();
-                                    if (data?.[0]) {
-                                        map.getView().animate({ center: fromLonLat([parseFloat(data[0].lon), parseFloat(data[0].lat)]), zoom: 12, duration: 1500 });
-                                    }
-                                }
-                            }}
-                        />
+                <div className="relative">
+                    <div className="flex items-center bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-full p-1 shadow-2xl border border-white/20 dark:border-white/5">
+                        <div className="flex-1 flex items-center pl-4">
+                            <span className="material-symbols-outlined text-gray-400 mr-2">search</span>
+                            <input
+                                type="text"
+                                placeholder="Search for any place"
+                                className="bg-transparent border-none focus:ring-0 text-[#1a100f] dark:text-white font-bold text-sm w-full placeholder-gray-400"
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onFocus={() => setShowSuggestions(true)}
+                            />
+                        </div>
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="p-2 text-gray-400 hover:text-gray-600">
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        )}
                     </div>
-                    <button className="bg-[#4a7c7c] hover:bg-[#3d6666] text-white px-6 py-2 rounded-full font-bold text-sm transition-all shadow-md">
-                        Search
-                    </button>
+
+                    {/* Suggestions Dropdown */}
+                    {showSuggestions && searchResults.length > 0 && (
+                        <div className="absolute top-full text-left mt-2 w-full bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                            {searchResults.map((place) => (
+                                <button
+                                    key={place.place_id}
+                                    onClick={() => handleSearchSelect(place)}
+                                    className="w-full text-left px-4 py-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                >
+                                    <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{place.display_name.split(',')[0]}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{place.display_name}</p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Left: Location Details / User Card */}
+            {/* User Card */}
             {selectedUser && (
                 <div className="absolute top-24 left-6 z-20 w-80 animate-in fade-in slide-in-from-left-4 duration-500">
                     <div className="bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl rounded-[28px] p-6 shadow-2xl border border-white/20 dark:border-white/5">
                         <div className="flex justify-between items-start mb-6">
-                            <h3 className="text-[#4a7c7c] dark:text-[#D0BCFF] text-xl font-black">Location Details</h3>
+                            <h3 className="text-primary text-xl font-black">Location Details</h3>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div className="flex justify-between text-sm">
@@ -251,7 +343,7 @@ const MapComponent = () => {
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={() => getDirections(selectedUser)}
-                                className="w-full bg-[#4a7c7c] hover:bg-[#3d6666] text-white py-3 rounded-2xl font-black text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                                className="w-full bg-primary hover:brightness-110 text-white py-3 rounded-2xl font-black text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-lg">directions</span>
                                 Get Directions
@@ -274,7 +366,7 @@ const MapComponent = () => {
                 </div>
             )}
 
-            {/* Bottom Center: Discovery Mode Toggle */}
+            {/* Discovery Mode Toggle */}
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
                 <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-6 py-3 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-4">
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -284,9 +376,9 @@ const MapComponent = () => {
                             checked={discoveryMode}
                             onChange={() => setDiscoveryMode(!discoveryMode)}
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4a7c7c]"></div>
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </label>
-                    <span className="text-[#1a100f] dark:text-white font-black text-sm">Discovery Mode</span>
+                    <span className="text-[#1a100f] dark:text-white font-black text-sm">Discovery Mode (10km)</span>
                 </div>
             </div>
 

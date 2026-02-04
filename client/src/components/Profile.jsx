@@ -1,13 +1,37 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { Modal, Box, Typography, TextField, Button } from '@mui/material';
+import api from '../utils/api';
 
 const Profile = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    // Logout handled in Layout
+    const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+    const [passData, setPassData] = useState({ currentPassword: '', newPassword: '' });
+    const [passError, setPassError] = useState('');
+    const [passSuccess, setPassSuccess] = useState('');
 
+    const handleChangePassword = async () => {
+        if (!passData.currentPassword || !passData.newPassword) {
+            setPassError('All fields are required');
+            return;
+        }
+        try {
+            await api.post('/api/user/change-password', passData);
+            setPassSuccess('Password updated successfully!');
+            setPassError('');
+            setPassData({ currentPassword: '', newPassword: '' });
+            setTimeout(() => {
+                setIsPassModalOpen(false);
+                setPassSuccess('');
+            }, 2000);
+        } catch (err) {
+            setPassError(err.response?.data?.error || 'Failed to update password');
+            setPassSuccess('');
+        }
+    };
 
     if (!user) return null;
 
@@ -98,11 +122,23 @@ const Profile = () => {
                                         </label>
                                     </div>
                                 </div>
-                                <div className="pt-4">
-                                    <button className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-full shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
-                                        Save Settings
+
+                                <div className="border-t border-[#be3627]/10 dark:border-white/5 pt-6 mt-2">
+                                    <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-3">Account Security</label>
+                                    <button
+                                        onClick={() => setIsPassModalOpen(true)}
+                                        className="w-full py-4 px-4 rounded-2xl border-2 border-primary/20 text-primary font-bold hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 group"
+                                    >
+                                        <span className="material-symbols-outlined group-hover:scale-110 transition-transform">lock_reset</span>
+                                        Change Password
                                     </button>
                                 </div>
+                            </div>
+
+                            <div className="pt-8">
+                                <button className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-full shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                                    Save Settings
+                                </button>
                             </div>
                         </div>
 
@@ -129,6 +165,45 @@ const Profile = () => {
             <footer className="mt-auto py-8 text-center text-xs text-[#5e413d] dark:text-[#CAC4D0] font-medium">
                 <p>© 2026 KON-NECT. All rights reserved.</p>
             </footer>
+
+            {/* Change Password Modal */}
+            <Modal open={isPassModalOpen} onClose={() => setIsPassModalOpen(false)}>
+                <Box sx={{
+                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                    width: 400, bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
+                    border: '1px solid', borderColor: 'divider'
+                }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Change Password</Typography>
+
+                    {passSuccess ? (
+                        <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-center font-bold">
+                            {passSuccess}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            <TextField
+                                label="Current Password"
+                                type="password"
+                                fullWidth
+                                value={passData.currentPassword}
+                                onChange={(e) => setPassData({ ...passData, currentPassword: e.target.value })}
+                            />
+                            <TextField
+                                label="New Password"
+                                type="password"
+                                fullWidth
+                                value={passData.newPassword}
+                                onChange={(e) => setPassData({ ...passData, newPassword: e.target.value })}
+                            />
+                            {passError && <Typography color="error" variant="caption">{passError}</Typography>}
+                            <div className="flex justify-end gap-2 mt-2">
+                                <Button onClick={() => setIsPassModalOpen(false)} color="inherit">Cancel</Button>
+                                <Button onClick={handleChangePassword} variant="contained" sx={{ bgcolor: 'primary.main' }}>Update</Button>
+                            </div>
+                        </div>
+                    )}
+                </Box>
+            </Modal>
         </div>
     );
 };

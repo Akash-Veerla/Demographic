@@ -14,7 +14,9 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loading, setLoading] = useState(!!localStorage.getItem('token'));
+
+    // Check localStorage OR URL query param for token to set initial loading state
+    const [loading, setLoading] = useState(!!localStorage.getItem('token') || window.location.search.includes('token='));
     const [error, setError] = useState(null);
 
     // --- Actions ---
@@ -115,6 +117,16 @@ export const AuthProvider = ({ children }) => {
     // --- Init ---
 
     useEffect(() => {
+        // Check for token in URL (Google Auth Redirect)
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('token');
+
+        if (urlToken) {
+            localStorage.setItem('token', urlToken);
+            // Clear Query Params to clean URL
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+
         const token = localStorage.getItem('token');
         if (token) {
             fetchCurrentUser();
