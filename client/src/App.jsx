@@ -47,12 +47,18 @@ const ProtectedRoute = ({ children }) => {
 const AppContent = () => {
     const { loading } = useAuth();
 
-    // Theme State
-    const [mode, setMode] = useState('light');
+    // Theme State - Persistent
+    const [mode, setMode] = useState(() => {
+        return localStorage.getItem('themeMode') || 'light';
+    });
 
     const colorMode = useMemo(() => ({
         toggleColorMode: () => {
-            setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+            setMode((prevMode) => {
+                const newMode = prevMode === 'light' ? 'dark' : 'light';
+                localStorage.setItem('themeMode', newMode);
+                return newMode;
+            });
         },
         mode
     }), [mode]);

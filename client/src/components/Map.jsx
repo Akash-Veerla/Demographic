@@ -70,12 +70,9 @@ const MapComponent = () => {
                 setNearbyUsersList(res.data || []);
             } else {
                 // Local / Discovery Mode
-                let center;
-                if (userLocation) {
-                    center = toLonLat(userLocation);
-                } else {
-                    center = toLonLat(map.getView().getCenter());
-                }
+                if (!userLocation) return; // Wait for location to avoid 0,0 fetch
+
+                const center = toLonLat(userLocation);
                 const [lng, lat] = center;
 
                 // Discovery Mode = 10km, Normal = 20km (or similar default)
@@ -160,6 +157,11 @@ const MapComponent = () => {
                     const center = fromLonLat([longitude, latitude]);
                     setUserLocation(center);
                     initialMap.getView().animate({ center, zoom: 14 });
+
+                    // Update backend immediately
+                    if (socketRef.current) {
+                        socketRef.current.emit('update_location', { lat: latitude, lng: longitude });
+                    }
                 },
                 (error) => {
                     console.error("Geolocation error:", error);
@@ -232,6 +234,9 @@ const MapComponent = () => {
         // 2. Add Nearby Users
         nearbyUsersList.forEach(u => {
             if (!u.location?.coordinates) return;
+            // Filter out 0,0 (Null Island) unless it's genuinely intended (unlikely for demographic app)
+            if (u.location.coordinates[0] === 0 && u.location.coordinates[1] === 0) return;
+
             const feature = new Feature({
                 geometry: new Point(fromLonLat(u.location.coordinates)),
                 type: 'user',
