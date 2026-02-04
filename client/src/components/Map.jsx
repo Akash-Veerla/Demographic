@@ -24,6 +24,7 @@ const MapComponent = () => {
     const [userSource] = useState(new VectorSource());
     const [routeSource] = useState(new VectorSource());
     const [radiusSource] = useState(new VectorSource()); // For Discovery Circle
+    const [userLocation, setUserLocation] = useState(null); // Stores projection coords of current user
 
     const [nearbyUsersList, setNearbyUsersList] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -62,8 +63,15 @@ const MapComponent = () => {
     const fetchNearbyUsers = useCallback(async () => {
         if (!user || !map) return;
         try {
-            const center = toLonLat(map.getView().getCenter());
+            // Use User Location if available (Fixated on User), otherwise Map Center
+            let center;
+            if (userLocation) {
+                center = toLonLat(userLocation);
+            } else {
+                center = toLonLat(map.getView().getCenter());
+            }
             const [lng, lat] = center;
+
             const res = await api.get('/api/users/nearby', {
                 params: { lat, lng, radius: discoveryMode ? 10 : 1, interests: 'all' }
             });
@@ -71,13 +79,21 @@ const MapComponent = () => {
         } catch (err) {
             console.error("Fetch error:", err);
         }
-    }, [user, map, discoveryMode]);
+    }, [user, map, discoveryMode, userLocation]);
 
     // OSRM Routing
     const getDirections = async (targetUser) => {
         if (!map || !targetUser.location?.coordinates) return;
-        const center = toLonLat(map.getView().getCenter());
-        const [myLng, myLat] = center;
+        if (!map || !targetUser.location?.coordinates) return;
+
+        let startCoords;
+        if (userLocation) {
+            startCoords = toLonLat(userLocation);
+        } else {
+            startCoords = toLonLat(map.getView().getCenter());
+        }
+
+        const [myLng, myLat] = startCoords;
         const [targetLng, targetLat] = targetUser.location.coordinates;
         const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${myLng},${myLat};${targetLng},${targetLat}?overview=full&geometries=geojson&steps=true`;
 
@@ -127,11 +143,8 @@ const MapComponent = () => {
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const center = fromLonLat([longitude, latitude]);
+                    setUserLocation(center);
                     initialMap.getView().animate({ center, zoom: 14 });
-
-                    // Add Self Marker logic here if needed, but primary user is center
-                    // Typically filter out 'self' from nearby list, but visually showing 'me' is good.
-                    // For now, center is implied 'me'.
                 },
                 (error) => {
                     console.error("Geolocation error:", error);
@@ -173,11 +186,35 @@ const MapComponent = () => {
         return () => window.removeEventListener('select_map_user', handleSelect);
     }, [map]);
 
-    // Update Markers & Discovery Circle
     useEffect(() => {
         if (!map) return;
 
         userSource.clear();
+
+        // 1. Add "Me" Marker
+        if (userLocation) {
+            const meFeature = new Feature({
+                geometry: new Point(userLocation),
+                type: 'me',
+            });
+            meFeature.setStyle(new Style({
+                image: new StyleCircle({
+                    radius: 14,
+                    fill: new Fill({ color: '#ffffff' }), // White fill as requested
+                    stroke: new Stroke({ color: theme.palette.primary.main, width: 4 }), // Primary border
+                }),
+                text: new Text({
+                    text: 'You',
+                    offsetY: -22,
+                    fill: new Fill({ color: isDark ? '#fff' : theme.palette.primary.main }),
+                    font: 'bold 12px Outfit',
+                    stroke: new Stroke({ color: isDark ? theme.palette.primary.main : '#fff', width: 3 })
+                })
+            }));
+            userSource.addFeature(meFeature);
+        }
+
+        // 2. Add Nearby Users
         nearbyUsersList.forEach(u => {
             if (!u.location?.coordinates) return;
             const feature = new Feature({
@@ -203,15 +240,12 @@ const MapComponent = () => {
             userSource.addFeature(feature);
         });
 
-        // Radius Circle
+        // 3. Radius Circle (Centered on User)
         radiusSource.clear();
-        if (discoveryMode) {
-            const center = map.getView().getCenter();
-            // 10km circle. Note: Projection distortion exists but for visual approx it's okay. 
-            // Better to use Tissot or circular polygon, but GeomCircle in web mercator is simplest.
-            // 10km in meters ~ 10000. In Web Mercator meters roughly matches at equator.
+        if (discoveryMode && userLocation) {
+            // 10km circle based on User Location
             const circleFeature = new Feature({
-                geometry: new GeomCircle(center, 10000) // Radius in projection units (meters-ish)
+                geometry: new GeomCircle(userLocation, 10000)
             });
             circleFeature.setStyle(new Style({
                 stroke: new Stroke({ color: theme.palette.primary.main, width: 2, lineDash: [10, 10] }),
@@ -219,13 +253,14 @@ const MapComponent = () => {
             }));
             radiusSource.addFeature(circleFeature);
 
-            // Re-fetch with new mode
-            fetchNearbyUsers();
-        } else {
-            fetchNearbyUsers();
+            // Re-fetch with new mode (API call handles the logic, here we just visualize)
+            // Note: fetchNearbyUsers uses map center, which is usually synced with user at start, 
+            // but if user pans, we might want to fetch based on userLocation if Discovery Mode strictly implies "around me".
+            // The user implies "users in MongoDB should be visible for the current user in the radius circle only".
+            // So we should probably ensure the API call uses `userLocation` if available.
         }
 
-    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, map]);
+    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, map, userLocation, theme.palette.primary.main]);
 
     // Socket
     useEffect(() => {
