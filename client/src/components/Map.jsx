@@ -190,9 +190,23 @@ const MapComponent = () => {
             }
         });
 
-        initialMap.on('moveend', () => { fetchNearbyUsers(); });
+        // Move listener handled in separate effect to avoid stale closures
+
         return () => initialMap.setTarget(null);
     }, []);
+
+    // Handle Map Move & Mode Changes
+    useEffect(() => {
+        if (!map) return;
+
+        const listener = () => fetchNearbyUsers();
+        map.on('moveend', listener);
+
+        // Fetch immediately on mode change or map ready
+        fetchNearbyUsers();
+
+        return () => map.un('moveend', listener);
+    }, [map, fetchNearbyUsers]);
 
     // Selection listener from Social
     useEffect(() => {
@@ -425,8 +439,8 @@ const MapComponent = () => {
                                     const isOnline = selectedUser.isOnline;
                                     return (
                                         <span className={`font-black uppercase text-[10px] tracking-widest px-2 py-0.5 rounded ${isOnline
-                                                ? (isDark ? 'text-[#D0BCFF] bg-purple-500/10' : 'text-primary bg-primary/10')
-                                                : 'text-gray-500 bg-gray-100 dark:bg-white/5'
+                                            ? (isDark ? 'text-[#D0BCFF] bg-purple-500/10' : 'text-primary bg-primary/10')
+                                            : 'text-gray-500 bg-gray-100 dark:bg-white/5'
                                             }`}>
                                             {isOnline ? 'Active' : 'Offline'}
                                         </span>
