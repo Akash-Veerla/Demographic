@@ -225,16 +225,16 @@ const MapComponent = () => {
             });
             meFeature.setStyle(new Style({
                 image: new StyleCircle({
-                    radius: 14,
-                    fill: new Fill({ color: '#ffffff' }), // White fill as requested
-                    stroke: new Stroke({ color: theme.palette.primary.main, width: 4 }), // Primary border
+                    radius: 12,
+                    fill: new Fill({ color: '#ffffff' }), // Always White
+                    stroke: new Stroke({ color: '#000000', width: 3 }), // Neutral border for contrast
                 }),
                 text: new Text({
                     text: 'You',
                     offsetY: -22,
-                    fill: new Fill({ color: isDark ? '#fff' : theme.palette.primary.main }),
-                    font: 'bold 12px Outfit',
-                    stroke: new Stroke({ color: isDark ? theme.palette.primary.main : '#fff', width: 3 })
+                    fill: new Fill({ color: isDark ? '#fff' : '#000' }), // Neutral text
+                    font: 'bold 13px Outfit',
+                    stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 })
                 })
             }));
             userSource.addFeature(meFeature);
@@ -252,8 +252,8 @@ const MapComponent = () => {
                 data: u
             });
             const isSelected = selectedUser?._id === u._id;
-            // Online: Socket active OR Seed User (@konnect.com)
-            const isOnline = u.isOnline || (u.email && u.email.includes('@konnect.com'));
+            // Online: Socket active (strict logic)
+            const isOnline = u.isOnline; // Remove seed user force logic
 
             // Marker Color Logic
             // Online: Red/Purple (Theme), Offline: Black
@@ -421,7 +421,17 @@ const MapComponent = () => {
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-500 font-bold">Status:</span>
-                                <span className="text-primary font-black uppercase text-[10px] tracking-widest bg-primary/10 px-2 py-0.5 rounded">Active</span>
+                                {(() => {
+                                    const isOnline = selectedUser.isOnline;
+                                    return (
+                                        <span className={`font-black uppercase text-[10px] tracking-widest px-2 py-0.5 rounded ${isOnline
+                                                ? (isDark ? 'text-[#D0BCFF] bg-purple-500/10' : 'text-primary bg-primary/10')
+                                                : 'text-gray-500 bg-gray-100 dark:bg-white/5'
+                                            }`}>
+                                            {isOnline ? 'Active' : 'Offline'}
+                                        </span>
+                                    );
+                                })()}
                             </div>
                         </div>
 
@@ -479,7 +489,9 @@ const MapComponent = () => {
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </label>
-                    <span className="text-[#1a100f] dark:text-white font-black text-xs md:text-sm whitespace-nowrap">Discovery Mode (10km)</span>
+                    <span className="text-[#1a100f] dark:text-white font-black text-xs md:text-sm whitespace-nowrap">
+                        {isGlobalMode ? 'Global Search View' : 'Discovery Mode (10km)'}
+                    </span>
                 </div>
 
                 {/* Global View Toggle */}
