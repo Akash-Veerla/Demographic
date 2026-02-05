@@ -250,8 +250,10 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                     $maxDistance: maxDistance
                 }
             },
+            'location.coordinates': { $ne: [0, 0] }, // Null Guard
+            isActive: { $ne: false }, // Availability logic (default to true if undefined)
             _id: { $ne: userId }
-        }).select('displayName interests location profilePhoto bio lastLogin');
+        }).select('displayName email interests location profilePhoto bio lastLogin isActive');
 
         // Map with Online Status
         const usersWithStatus = nearbyUsers.map(u => ({
@@ -360,12 +362,16 @@ app.get('/api/users/global', requireAuth, async (req, res) => {
         // No limits for Global View as per request "All the users in the database should be shown"
         // But let's keep a reasonable safety limit if DB is huge (e.g. 500) or just return all?
         // User said "All the users". I will use a high limit.
-        let query = { _id: { $ne: userId } };
+        let query = {
+            _id: { $ne: userId },
+            'location.coordinates': { $ne: [0, 0] }, // Null Guard
+            isActive: { $ne: false } // Availability logic
+        };
 
         const globalUsers = await User.find(query)
             .sort({ lastLogin: -1 })
             .limit(500)
-            .select('displayName interests location profilePhoto bio lastLogin');
+            .select('displayName email interests location profilePhoto bio lastLogin isActive');
 
         // Map with Online Status
         const usersWithStatus = globalUsers.map(u => ({
@@ -415,11 +421,17 @@ app.get('/api/current_user', requireAuth, async (req, res) => {
 // User Updates - Protected
 app.post('/api/user/profile', requireAuth, async (req, res) => {
     try {
-        const { displayName, bio, profilePhoto } = req.body;
+        const { displayName, bio, profilePhoto, availabilityStatus } = req.body;
         const updateData = {};
         if (displayName) updateData.displayName = displayName;
         if (bio) updateData.bio = bio;
         if (profilePhoto) updateData.profilePhoto = profilePhoto;
+
+        // Map Availability Status to isActive
+        if (availabilityStatus) {
+            updateData.availabilityStatus = availabilityStatus;
+            updateData.isActive = availabilityStatus !== 'Invisible';
+        }
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,

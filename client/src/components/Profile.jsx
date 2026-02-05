@@ -13,6 +13,24 @@ const Profile = () => {
     const [passError, setPassError] = useState('');
     const [passSuccess, setPassSuccess] = useState('');
 
+    // Settings State
+    const [availabilityStatus, setAvailabilityStatus] = useState(user?.availabilityStatus || 'Available for Meetup');
+    const [saveSuccess, setSaveSuccess] = useState('');
+    const [saveError, setSaveError] = useState('');
+
+    const handleSaveSettings = async () => {
+        try {
+            await api.post('/api/user/profile', { availabilityStatus });
+            setSaveSuccess('Settings saved successfully!');
+            setSaveError('');
+            // Persistent notification: No timeout, user must dismiss
+        } catch (err) {
+            console.error(err);
+            setSaveError('Failed to save settings.');
+            setSaveSuccess('');
+        }
+    };
+
     const handleChangePassword = async () => {
         if (!passData.currentPassword || !passData.newPassword) {
             setPassError('All fields are required');
@@ -94,32 +112,42 @@ const Profile = () => {
                                 <span className="material-symbols-outlined text-primary text-2xl">security</span>
                                 <h2 className="text-xl font-display font-bold text-[#1a100f] dark:text-[#E6E1E5]">Privacy & Status</h2>
                             </div>
+
+                            {/* Persistent Notifications */}
+                            {saveSuccess && (
+                                <div className="mb-4 bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-100 px-4 py-3 rounded-xl flex justify-between items-center">
+                                    <span className="font-bold text-sm">{saveSuccess}</span>
+                                    <button onClick={() => setSaveSuccess('')} className="hover:opacity-70">
+                                        <span className="material-symbols-outlined text-lg">close</span>
+                                    </button>
+                                </div>
+                            )}
+                            {saveError && (
+                                <div className="mb-4 bg-red-100 dark:bg-red-900 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-100 px-4 py-3 rounded-xl flex justify-between items-center">
+                                    <span className="font-bold text-sm">{saveError}</span>
+                                    <button onClick={() => setSaveError('')} className="hover:opacity-70">
+                                        <span className="material-symbols-outlined text-lg">close</span>
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-2">Availability Status</label>
-                                    <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] mb-3">Controls your visibility on the map.</p>
+                                    <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] mb-3">Controls your visibility on the map. "Invisible" hides you completely.</p>
                                     <div className="relative">
-                                        <select className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-3 [appearance:none] [-webkit-appearance:none] [-moz-appearance:none] focus:ring-2 focus:ring-primary text-[#1a100f] dark:text-[#E6E1E5] font-medium cursor-pointer">
-                                            <option>Chat Only</option>
-                                            <option>Available for Meetup</option>
-                                            <option>Invisible</option>
+                                        <select
+                                            value={availabilityStatus}
+                                            onChange={(e) => setAvailabilityStatus(e.target.value)}
+                                            className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-3 [appearance:none] [-webkit-appearance:none] [-moz-appearance:none] focus:ring-2 focus:ring-primary text-[#1a100f] dark:text-[#E6E1E5] font-medium cursor-pointer"
+                                        >
+                                            <option value="Chat Only">Chat Only</option>
+                                            <option value="Available for Meetup">Available for Meetup</option>
+                                            <option value="Invisible">Invisible</option>
                                         </select>
                                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#915b55] dark:text-[#CAC4D0]">
                                             <span className="material-symbols-outlined">expand_more</span>
                                         </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-3">Location Precision</label>
-                                    <div className="flex flex-col sm:flex-row gap-4">
-                                        <label className="flex items-center p-4 rounded-2xl border-2 border-primary bg-primary/5 cursor-pointer transition-all">
-                                            <input type="radio" name="location" className="form-radio text-primary focus:ring-primary h-5 w-5" defaultChecked />
-                                            <span className="ml-3 text-sm font-bold text-primary">Exact</span>
-                                        </label>
-                                        <label className="flex items-center p-4 rounded-2xl border-2 border-[#be3627]/10 dark:border-white/5 hover:border-primary/50 cursor-pointer transition-all">
-                                            <input type="radio" name="location" className="form-radio text-primary focus:ring-primary h-5 w-5" />
-                                            <span className="ml-3 text-sm font-bold text-[#5e413d] dark:text-[#CAC4D0]">Approximate (~1km fuzz)</span>
-                                        </label>
                                     </div>
                                 </div>
 
@@ -136,7 +164,10 @@ const Profile = () => {
                             </div>
 
                             <div className="pt-8">
-                                <button className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-full shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                                <button
+                                    onClick={handleSaveSettings}
+                                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-full shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                                >
                                     Save Settings
                                 </button>
                             </div>

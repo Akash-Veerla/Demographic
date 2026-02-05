@@ -24,7 +24,17 @@ const MapComponent = () => {
     const [userSource] = useState(new VectorSource());
     const [routeSource] = useState(new VectorSource());
     const [radiusSource] = useState(new VectorSource()); // For Discovery Circle
-    const [userLocation, setUserLocation] = useState(null); // Stores projection coords of current user
+
+    // Initialize User Location with Fallback (Null Guard)
+    const [userLocation, setUserLocation] = useState(() => {
+        if (user?.location?.coordinates) {
+            const [lng, lat] = user.location.coordinates;
+            if (lng !== 0 || lat !== 0) {
+                return fromLonLat([lng, lat]);
+            }
+        }
+        return null; // Strict Null Guard
+    });
 
     const [nearbyUsersList, setNearbyUsersList] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -243,7 +253,8 @@ const MapComponent = () => {
                 data: u
             });
             const isSelected = selectedUser?._id === u._id;
-            const isOnline = u.isOnline; // From API
+            // Online: Socket active OR Seed User (@konnect.com)
+            const isOnline = u.isOnline || (u.email && u.email.includes('@konnect.com'));
 
             // Marker Color Logic
             // Online: Red/Purple (Theme), Offline: Black
@@ -291,7 +302,17 @@ const MapComponent = () => {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         socketRef.current = io(apiUrl, { withCredentials: true });
         setSocketReady(true);
-        if (user) socketRef.current.emit('register_user', user._id || user.id);
+        if (user) {
+            socketRef.current.emit('register_user', user._id || user.id);
+            // Immediate Location Handshake (Logic Sync)
+            if (user.location?.coordinates && (user.location.coordinates[0] !== 0 || user.location.coordinates[1] !== 0)) {
+                socketRef.current.emit('update_location', {
+                    lng: user.location.coordinates[0],
+                    lat: user.location.coordinates[1]
+                });
+            }
+        }
+
         socketRef.current.on('chat_request', ({ from, fromName, roomId }) => {
             setChatTarget({ _id: from, displayName: fromName || 'User', roomId: roomId });
             socketRef.current.emit('accept_chat', { roomId });
@@ -299,8 +320,7 @@ const MapComponent = () => {
 
         socketRef.current.on('directions_alert', ({ message }) => {
             setAlertMessage(message);
-            // Auto hide after 5s
-            setTimeout(() => setAlertMessage(null), 5000);
+            // Persistent notification: No timeout
         });
 
         return () => socketRef.current.disconnect();

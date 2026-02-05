@@ -123,16 +123,10 @@ const ConnectView = () => {
                                     <div className="flex gap-2 w-full mt-2">
                                         <button
                                             onClick={() => handleConnectClick(u)}
-                                            className="flex-1 bg-primary hover:bg-primary/90 text-white font-black py-3 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                            className="w-full bg-primary hover:bg-primary/90 text-white font-black py-3 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                                         >
                                             <span className="material-symbols-outlined text-lg">share_location</span>
                                             Connect
-                                        </button>
-                                        <button
-                                            onClick={() => alert(`Connect via Map to chat with ${u.displayName}!`)}
-                                            className="w-14 bg-white dark:bg-[#231f29] text-primary rounded-2xl flex items-center justify-center border border-primary/20 shadow-sm hover:brightness-110 transition-all active:scale-95"
-                                        >
-                                            <span className="material-symbols-outlined">chat</span>
                                         </button>
                                     </div>
                                 </div>
