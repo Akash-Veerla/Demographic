@@ -232,14 +232,13 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
         const { lat, lng, radius, interests } = req.query;
         const userId = req.user.id;
 
-        if (!lat || !lng) {
-            return res.status(400).json({ error: 'Latitude and Longitude required' });
+        if (!lat || !lng || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
+            return res.status(400).json({ error: 'Valid Latitude and Longitude required' });
         }
 
-        const maxDistance = (radius ? Math.min(parseFloat(radius), 10) : 10) * 1000; // Max 10km, convert to meters
+        const maxDistance = (radius ? Math.min(parseFloat(radius), 50) : 10) * 1000; // Max 50km, convert to meters
 
         // Find users within radius (exclude self)
-        // Removed lastLogin filter to show offline users as requested
         const nearbyUsers = await User.find({
             location: {
                 $near: {
@@ -251,7 +250,7 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                 }
             },
             'location.coordinates': { $ne: [0, 0] }, // Null Guard
-            isActive: { $ne: false }, // Availability logic (default to true if undefined)
+            isActive: { $ne: false },
             _id: { $ne: userId }
         }).select('displayName email interests location profilePhoto bio lastLogin isActive');
 
@@ -524,21 +523,23 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
             }
         }
 
-        // If still no coords (db 0,0 and no query), return 0s
-        if (!lat || !lng || (lat == 0 && lng == 0)) {
+        // If still no coords or invalid, return zeros early to prevent crash
+        if (!lat || !lng || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng)) || (parseFloat(lat) === 0 && parseFloat(lng) === 0)) {
             return res.json({ activeNearby: 0, matchedInterestsNearby: 0 });
         }
 
+        const centerCoords = [parseFloat(lng), parseFloat(lat)];
         const maxDistance = 10000; // 10km
 
         // 1. Active Nearby Count (Last 24h)
         const activeNearby = await User.countDocuments({
             location: {
                 $near: {
-                    $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+                    $geometry: { type: 'Point', coordinates: centerCoords },
                     $maxDistance: maxDistance
                 }
             },
+            'location.coordinates': { $ne: [0, 0] },
             lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
             _id: { $ne: userId }
         });
@@ -552,10 +553,11 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
             matchedInterestsNearby = await User.countDocuments({
                 location: {
                     $near: {
-                        $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+                        $geometry: { type: 'Point', coordinates: centerCoords },
                         $maxDistance: maxDistance
                     }
                 },
+                'location.coordinates': { $ne: [0, 0] },
                 interests: { $in: userInterests },
                 _id: { $ne: userId }
             });

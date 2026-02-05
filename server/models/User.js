@@ -18,7 +18,7 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: function() { return !this.googleId; } // Required if not a google user
+        required: function () { return !this.googleId; } // Required if not a google user
     },
     profilePhoto: {
         type: String
@@ -45,6 +45,14 @@ const userSchema = new Schema({
     lastLogin: {
         type: Date,
         default: Date.now
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    availabilityStatus: {
+        type: String,
+        default: 'Available for Meetup'
     }
 }, { timestamps: true });
 
