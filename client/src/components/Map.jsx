@@ -17,6 +17,7 @@ import ChatOverlay from './ChatOverlay';
 import { useTheme } from '@mui/material';
 
 const MapComponent = () => {
+    const { user } = useAuth();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const mapRef = useRef();
@@ -50,7 +51,6 @@ const MapComponent = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
-    const { user } = useAuth();
     const socketRef = useRef();
 
     // Debounce for search
@@ -86,7 +86,6 @@ const MapComponent = () => {
                 const [lng, lat] = center;
 
                 // Discovery Mode = 10km, Normal = 20km (or similar default)
-                // User said: "in discover mode all users who are in the radius should be visible"
                 const radius = discoveryMode ? 10 : 20;
 
                 const res = await api.get('/api/users/nearby', {
