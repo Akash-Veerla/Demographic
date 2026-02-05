@@ -139,6 +139,11 @@ const MapComponent = () => {
         }
     };
 
+    const clearRoute = () => {
+        setRouteInstructions([]);
+        routeSource.clear();
+    };
+
     // Initial Map Setup & Geolocation
     useEffect(() => {
         const initialMap = new Map({
@@ -470,6 +475,15 @@ const MapComponent = () => {
                                 <span className="material-symbols-outlined text-lg">directions</span>
                                 Get Directions
                             </button>
+                            {routeInstructions.length > 0 && (
+                                <button
+                                    onClick={clearRoute}
+                                    className="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 py-3 rounded-2xl font-black text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">close</span>
+                                    Remove Route
+                                </button>
+                            )}
                             <button
                                 onClick={() => setChatTarget(selectedUser)}
                                 className="w-full bg-white dark:bg-[#231f29] text-primary py-3 rounded-2xl font-black text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -518,7 +532,7 @@ const MapComponent = () => {
                             disabled={discoveryMode}
                             onChange={() => setIsGlobalMode(!isGlobalMode)}
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4a7c7c]"></div>
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#22c55e]"></div>
                     </label>
                     <span className="text-[#1a100f] dark:text-white font-black text-xs md:text-sm whitespace-nowrap">Global View</span>
                 </div>
