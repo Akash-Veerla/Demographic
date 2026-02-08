@@ -508,6 +508,17 @@ app.post('/api/user/change-password', requireAuth, async (req, res) => {
     }
 });
 
+// Delete Account
+app.delete('/api/user/delete', requireAuth, async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.user.id);
+        res.json({ message: 'User deleted successfully' });
+    } catch (err) {
+        console.error("Delete user error:", err);
+        res.status(500).json({ error: 'Failed to delete account' });
+    }
+});
+
 // --- Stats Route ---
 app.get('/api/stats/local', requireAuth, async (req, res) => {
     try {

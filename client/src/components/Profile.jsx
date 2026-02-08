@@ -5,13 +5,17 @@ import { Modal, Box, Typography, TextField, Button } from '@mui/material';
 import api from '../utils/api';
 
 const Profile = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     const [isPassModalOpen, setIsPassModalOpen] = useState(false);
     const [passData, setPassData] = useState({ currentPassword: '', newPassword: '' });
     const [passError, setPassError] = useState('');
     const [passSuccess, setPassSuccess] = useState('');
+
+    // Delete Account State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
 
     // Settings State
     const [availabilityStatus, setAvailabilityStatus] = useState(user?.availabilityStatus || 'Available for Meetup');
@@ -48,6 +52,17 @@ const Profile = () => {
         } catch (err) {
             setPassError(err.response?.data?.error || 'Failed to update password');
             setPassSuccess('');
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        try {
+            await api.delete('/api/user/delete'); // Assuming endpoint exists
+            logout();
+            navigate('/');
+        } catch (err) {
+            console.error(err);
+            setDeleteError('Failed to delete account. Please try again.');
         }
     };
 
@@ -161,6 +176,17 @@ const Profile = () => {
                                         Change Password
                                     </button>
                                 </div>
+
+                                <div className="border-t border-[#be3627]/10 dark:border-white/5 pt-6 mt-6">
+                                    <label className="block text-sm font-bold text-red-600 dark:text-red-400 mb-3">Danger Zone</label>
+                                    <button
+                                        onClick={() => setIsDeleteModalOpen(true)}
+                                        className="w-full py-4 px-4 rounded-2xl border-2 border-red-500/20 text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2 group"
+                                    >
+                                        <span className="material-symbols-outlined group-hover:scale-110 transition-transform">delete</span>
+                                        Delete Account
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="pt-8">
@@ -233,6 +259,27 @@ const Profile = () => {
                             </div>
                         </div>
                     )}
+                </Box>
+            </Modal>
+
+            {/* Delete Account Modal */}
+            <Modal open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+                <Box sx={{
+                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                    width: 400, bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
+                    border: '1px solid', borderColor: 'divider'
+                }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'error.main' }}>Delete Account</Typography>
+                    <Typography variant="body2" sx={{ mb: 3 }}>
+                        Are you sure you want to delete your account? This action cannot be undone.
+                    </Typography>
+
+                    {deleteError && <Typography color="error" variant="caption" display="block" sx={{ mb: 2 }}>{deleteError}</Typography>}
+
+                    <div className="flex justify-end gap-2 mt-2">
+                        <Button onClick={() => setIsDeleteModalOpen(false)} color="inherit">Cancel</Button>
+                        <Button onClick={handleDeleteAccount} variant="contained" color="error">Delete</Button>
+                    </div>
                 </Box>
             </Modal>
         </div>
