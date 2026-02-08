@@ -1,140 +1,173 @@
-# Demographic - Social Map Application (Production)
+# KON-NECT: Smart Proximity Networking
 
-A real-time location-based social app connecting users via shared interests.
+**KON-NECT** (formerly Demographic) is a real-time social discovery platform designed to connect users based on shared interests within walking distance. It leverages precise geolocation, interest matching clustering, and ephemeral communication to foster explicit, spontaneous real-world interactions.
 
-## Prerequisites
+![Platform Overview](https://placehold.co/1200x600?text=KON-NECT+Map+Interface)
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- MongoDB Atlas Account
+## Key Features
 
-## Project Structure
+### 📍 Dynamic Discovery & Clustering
+- **Leaflet & OpenStreetMap**: Interactive map interface powered by Leaflet.js.
+- **10km Discovery Mode**: Users can explicitly define a discovery radius (default 10km) centered on their real-time location.
+- **Global View**: Toggle to see users worldwide for broader networking.
 
-- **root**: Contains the Backend (Node.js/Express/Socket.io).
-- **client/**: Contains the Frontend (React/Vite).
+### 🎨 Material You Design System (Android 16 Styled)
+- **Glassmorphism UI**: High-end aesthetic with blur effects, animated gradients, and lucid icons.
+- **Theme Support**: Seamless Light/Dark mode switching with persistent user preference.
+- **Responsive**: Fully optimized for mobile, tablet, and desktop viewports.
 
-## Installation
+### 🔐 Hybrid Authentication
+- **Secure JWT**: Stateless session management using JSON Web Tokens.
+- **Google OAuth 2.0**: One-click login/signup via Google Passport strategy.
+- **Account Management**: User profile customization, password resets, and account deletion functionality.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd Demographic
-    ```
+### 💬 Ephemeral Real-Time Chat
+- **Socket.io**: Instant messaging with zero persistence.
+- **Session-Based Privacy**: Chat history is **not stored**. Messages exist only during the active socket session, ensuring complete privacy in transient connections. 
+- **Direct Messaging**: Latency-free peer-to-peer communication upon connection request acceptance.
 
-2.  **Install Backend Dependencies:**
-    ```bash
-    npm install
-    ```
-
-3.  **Install Frontend Dependencies:**
-    ```bash
-    cd client
-    npm install
-    cd ..
-    ```
-
-## Configuration
-
-Create a `.env` file in the root directory:
-
-```env
-# MongoDB & Server Config
-MONGO_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/?appName=Cluster0
-PORT=10000
-JWT_SECRET=your_super_secret_jwt_key
-
-# URLs for CORS
-CLIENT_URL=http://localhost:5173
-VITE_API_URL=http://localhost:10000
-
-# Legacy Google OAuth (Optional/Future Use)
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-CALLBACK_URL=http://localhost:10000/auth/google/callback
-```
-
-## Running Locally
-
-To run both the backend and frontend concurrently:
-
-```bash
-npm run dev
-```
-
-- **Backend:** http://localhost:10000
-- **Frontend:** http://localhost:5173
-
-## Deployment
-
-### Backend (Render)
-
-1.  Create a **Web Service** on Render.
-2.  Set `Build Command`: `npm install`
-3.  Set `Start Command`: `node server/index.js`
-4.  Add Environment Variables from the Ledger below.
-
-### Frontend (Vercel)
-
-1.  Import project.
-2.  **Root Directory:** `.` (Repo Root)
-3.  **Build Command:** `npm install && cd client && npm install && npm run build`
-4.  **Output Directory:** `client/dist`
-5.  **Environment Variables:**
-    - `VITE_API_URL`: Your production backend URL (e.g., https://your-app.onrender.com)
+### 🚗 Intelligent Routing (OSRM)
+- **Turn-by-Turn Directions**: Integrated OSRM (Open Source Routing Machine) to calculate driving/walking paths between users.
+- **Distance Estimation**: Real-time distance and ETA calculation.
 
 ---
 
-## Development Ledger
+## Tech Stack
 
-### Authentication Update (Current)
+### Frontend (Client)
+- **Framework**: React 19 + Vite
+- **Styling**: TailwindCSS + Material UI (MUI) v6
+- **State**: React Context API (`AuthContext`, `ColorModeContext`)
+- **Maps**: `react-leaflet`, `leaflet`
+- **Real-Time**: `socket.io-client`
 
--   **System Pivot**: Replaced Google OAuth with Custom Email/Password Authentication using JWT.
--   **New Features**:
-    -   Registration with Name, Email, Password, Bio.
-    -   Interest selection with Categories and Custom Interest support.
-    -   **Interest Moderation**: Automated flagging of inappropriate custom interests (Explicit, Violence, Hate, etc.).
-    -   **Avatars**: Auto-generated initials avatars for users without profile photos.
--   **Security**:
-    -   `bcryptjs` for password hashing.
-    -   `jsonwebtoken` for stateless authentication.
-    -   Removed `express-session` and `passport`.
--   **Legacy**:
-    -   Google Strategy code moved to `server/auth/legacy/`.
-    -   Login page includes a placeholder for future Google Login integration.
+### Backend (Server)
+- **Runtime**: Node.js + Express
+- **Database**: MongoDB Atlas (Mongoose ODM)
+- **Auth**: Passport.js (Google Strategy), `jsonwebtoken`
+- **Geospatial**: MongoDB `$near` queries with 2dsphere indexing
 
-### Files Modified
+---
 
-1.  **`server/models/User.js`**: Added password, bio; removed strict googleId requirement.
-2.  **`server/routes/auth.js`**: New custom auth endpoints (`/register`, `/login`).
-3.  **`server/utils/moderation.js`**: Content moderation logic.
-4.  **`client/src/components/Register.jsx`**: New registration UI.
-5.  **`client/src/components/Login.jsx`**: Updated for email/password.
-6.  **`client/src/store/authSlice.js`**: Refactored for JWT auth.
+## Prerequisites
 
-### Account Management & UX Update (Latest)
+- **Node.js** (v18 or higher)
+- **MongoDB Atlas Account** (Free Tier is sufficient)
+- **Google Cloud Console Project** (for OAuth Client ID/Secret)
 
--   **Delete Account**:
-    -   Users can permanently delete their account from the Profile "Danger Zone".
-    -   Requires confirmation modal.
-    -   Cascades to immediate logout and data removal.
--   **Welcome Experience**:
-    -   New **Landing Page** (`/welcome`) accessible to public users.
-    -   Premium glassmorphism design with animated background.
-    -   Clear entry points for Login/Register.
-    -   Directs unauthenticated traffic away from the main app.
+---
 
-### Files Modified (Latest)
-1.  **`server/index.js`**: Added DELETE `/api/user/delete` route.
-2.  **`client/src/components/Profile.jsx`**: Added Danger Zone, Delete Button, and Confirmation Modal.
-3.  **`client/src/components/Landing.jsx`**: Complete redesign for premium welcome page.
-4.  **`client/src/App.jsx`**: Updated routing to use Landing page for `/welcome`.
+## Installation & Setup
 
-### Environment Variables Checklist
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Akash-Veerla/KON-NECT.git
+cd KON-NECT
+```
 
-#### Render (Backend)
--   `MONGO_URI`: Connection string for MongoDB Atlas.
--   `PORT`: `10000`.
--   `JWT_SECRET`: Secure key for token signing.
--   `CLIENT_URL`: URL of the frontend (for CORS).
+### 2. Install Dependencies
 
-#### Vercel (Frontend)
--   `VITE_API_URL`: URL of the backend.
+You must install dependencies for **both** the root backend and the client frontend.
+
+**Backend (Root):**
+```bash
+npm install
+```
+
+**Frontend (Client):**
+```bash
+cd client
+npm install
+cd ..
+```
+
+### 3. Environment Configuration
+
+#### Backend (.env)
+Copy the example file in the `server` directory (or root if running mono-repo style, but standard is `server/.env` based on `index.js` config):
+
+**Note**: The server code looks for `.env` in the project root relative to `server/index.js` (i.e., `../.env` or `server/.env`). Place the `.env` file in `server/`.
+
+```bash
+cp server/.env.example server/.env
+```
+
+Edit `server/.env` and fill in your details:
+- `MONGO_URI`: Your MongoDB connection string.
+- `JWT_SECRET`: A long random string.
+- `GOOGLE_CLIENT_ID`: From Google Cloud Console.
+- `GOOGLE_CLIENT_SECRET`: From Google Cloud Console.
+- `CALLBACK_URL`: `http://localhost:5000/api/auth/google/callback`
+
+#### Frontend (.env)
+Copy the client example:
+
+```bash
+cp client/.env.example client/.env
+```
+
+Edit `client/.env`:
+- `VITE_API_URL`: `http://localhost:5000` (for local dev)
+
+### 4. Seed the Database (Optional)
+Populate the map with 80+ dummy users in the Andhra Pradesh region for testing clustering algorithms.
+
+```bash
+# Ensure server can connect to MongoDB first
+npm run seed
+```
+
+This script (`server/scripts/seedIndia.js`) generates users with valid lat/long coordinates and varied interests.
+
+---
+
+## Running the Application
+
+### Development Mode
+Run both backend and frontend concurrently (if configured) or in separate terminals.
+
+**Terminal 1 (Backend):**
+```bash
+# From root
+npm run server
+# OR
+cd server && node index.js
+```
+*Server runs on http://localhost:5000*
+
+**Terminal 2 (Frontend):**
+```bash
+cd client
+npm run dev
+```
+*Client runs on http://localhost:5173*
+
+Open **http://localhost:5173** to view the app.
+
+---
+
+## Usage Guide
+
+1.  **Login/Register**: Use Google Login or create a demo account.
+2.  **Map Interface**:
+    *   **Discovery (10km)**: Toggle to see users within 10km radius.
+    *   **Global View**: See all registered users.
+    *   **Search**: Use the search bar for city/place navigation.
+3.  **Connect**: Click on a user pin -> Click "Chat" or "Connect".
+4.  **Directions**: Click "Get Directions" to draw a route on the map.
+
+---
+
+## Contributing
+
+1.  Fork the repository.
+2.  Create a feature branch (`git checkout -b feature/NewFeature`).
+3.  Commit your changes (`git commit -m 'Add NewFeature'`).
+4.  Push to the branch (`git push origin feature/NewFeature`).
+5.  Open a Pull Request.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
