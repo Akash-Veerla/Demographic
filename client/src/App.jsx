@@ -8,7 +8,8 @@ import Profile from './components/Profile';
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
 import Social from './components/Social';
-import Home from './components/Home'; // New Home Component
+import Landing from './components/Landing'; // Import Landing
+
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from './theme';
 
@@ -87,7 +88,7 @@ const AppContent = () => {
                 <CssBaseline />
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/welcome" element={<Login />} />
+                        <Route path="/welcome" element={<Landing />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route

@@ -110,6 +110,24 @@ npm run dev
 5.  **`client/src/components/Login.jsx`**: Updated for email/password.
 6.  **`client/src/store/authSlice.js`**: Refactored for JWT auth.
 
+### Account Management & UX Update (Latest)
+
+-   **Delete Account**:
+    -   Users can permanently delete their account from the Profile "Danger Zone".
+    -   Requires confirmation modal.
+    -   Cascades to immediate logout and data removal.
+-   **Welcome Experience**:
+    -   New **Landing Page** (`/welcome`) accessible to public users.
+    -   Premium glassmorphism design with animated background.
+    -   Clear entry points for Login/Register.
+    -   Directs unauthenticated traffic away from the main app.
+
+### Files Modified (Latest)
+1.  **`server/index.js`**: Added DELETE `/api/user/delete` route.
+2.  **`client/src/components/Profile.jsx`**: Added Danger Zone, Delete Button, and Confirmation Modal.
+3.  **`client/src/components/Landing.jsx`**: Complete redesign for premium welcome page.
+4.  **`client/src/App.jsx`**: Updated routing to use Landing page for `/welcome`.
+
 ### Environment Variables Checklist
 
 #### Render (Backend)

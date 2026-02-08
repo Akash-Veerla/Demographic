@@ -21,10 +21,9 @@ This project is configured to be deployed as two separate services:
 4.  **Environment Variables**:
     Add the following environment variables in the Render dashboard:
     *   `MONGO_URI`: Your MongoDB connection string (e.g., from MongoDB Atlas).
-    *   `GOOGLE_CLIENT_ID`: Your Google OAuth Client ID.
-    *   `GOOGLE_CLIENT_SECRET`: Your Google OAuth Client Secret.
-    *   `COOKIE_KEY`: A random string for session encryption.
+    *   `JWT_SECRET`: A secure long string for signing session tokens (e.g., generate with `openssl rand -hex 64`).
     *   `CLIENT_URL`: The URL of your future Vercel frontend (e.g., `https://your-app.vercel.app`). *You can add this later after deploying the frontend.*
+    *   `PORT`: `10000` (Optional, Render sets this automatically).
 5.  **Deploy**: Click **Create Web Service**.
 6.  **Copy URL**: Once deployed, copy the service URL (e.g., `https://social-map-backend.onrender.com`).
 
