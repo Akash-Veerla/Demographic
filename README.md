@@ -2,7 +2,8 @@
 
 **KON-NECT** (formerly Demographic) is a real-time social discovery platform designed to connect users based on shared interests within walking distance. It leverages precise geolocation, interest matching clustering, and ephemeral communication to foster explicit, spontaneous real-world interactions.
 
-![Platform Overview](https://placehold.co/1200x600?text=KON-NECT+Map+Interface)
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/792a6f44-959b-44b8-8b6a-1af3107aa91d" />
+
 
 ## Key Features
 
