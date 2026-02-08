@@ -10,6 +10,7 @@ import Chat from './components/Chat';
 import Social from './components/Social';
 import Landing from './components/Landing';
 import Home from './components/Home';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from './theme';
@@ -84,36 +85,38 @@ const AppContent = () => {
     }
 
     return (
-        <ColorModeContext.Provider value={colorMode}>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <BrowserRouter>
-                    <Routes>
-                        <Route path="/welcome" element={<Landing />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route
-                            path="/*"
-                            element={
-                                <ProtectedRoute>
-                                    <Layout>
-                                        <Routes>
-                                            <Route path="/" element={<Home />} />
-                                            <Route path="/social" element={<Social />} />
-                                            <Route path="/profile" element={<Profile />} />
-                                            <Route path="/setup" element={<ProfileSetup />} />
-                                            <Route path="/chat" element={<Chat />} />
-                                            <Route path="/map" element={<Social />} />
-                                            <Route path="*" element={<Navigate to="/" />} />
-                                        </Routes>
-                                    </Layout>
-                                </ProtectedRoute>
-                            }
-                        />
-                    </Routes>
-                </BrowserRouter>
-            </ThemeProvider>
-        </ColorModeContext.Provider>
+        <ErrorBoundary>
+            <ColorModeContext.Provider value={colorMode}>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline />
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/welcome" element={<Landing />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route
+                                path="/*"
+                                element={
+                                    <ProtectedRoute>
+                                        <Layout>
+                                            <Routes>
+                                                <Route path="/" element={<Home />} />
+                                                <Route path="/social" element={<Social />} />
+                                                <Route path="/profile" element={<Profile />} />
+                                                <Route path="/setup" element={<ProfileSetup />} />
+                                                <Route path="/chat" element={<Chat />} />
+                                                <Route path="/map" element={<Social />} />
+                                                <Route path="*" element={<Navigate to="/" />} />
+                                            </Routes>
+                                        </Layout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                        </Routes>
+                    </BrowserRouter>
+                </ThemeProvider>
+            </ColorModeContext.Provider>
+        </ErrorBoundary>
     );
 };
 

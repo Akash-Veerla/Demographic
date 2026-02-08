@@ -23,9 +23,12 @@ const ProfileSetup = () => {
     useEffect(() => {
         if (user) {
             if (user.bio) setBio(user.bio);
-            if (user.interests) {
+            if (user.interests && Array.isArray(user.interests)) {
                 // Normalize interests to strings if they are objects
-                const normalized = user.interests.map(i => typeof i === 'string' ? i : i.name);
+                const normalized = user.interests.map(i => {
+                    if (!i) return '';
+                    return typeof i === 'string' ? i : (i.name || '');
+                }).filter(Boolean);
                 setSelectedInterests(normalized);
             }
             if (user.profilePhoto) setPreviewUrl(user.profilePhoto);
