@@ -8,7 +8,8 @@ import Profile from './components/Profile';
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
 import Social from './components/Social';
-import Landing from './components/Landing'; // Import Landing
+import Landing from './components/Landing';
+import Home from './components/Home';
 
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from './theme';
