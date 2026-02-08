@@ -29,10 +29,9 @@ const Layout = ({ children }) => {
         <Box sx={{
             display: 'flex',
             flexDirection: 'column',
-            height: '100vh',
+            minHeight: '100vh',
             bgcolor: 'background.default',
             color: 'text.primary',
-            overflow: 'hidden',
             position: 'relative'
         }}>
 
@@ -49,12 +48,8 @@ const Layout = ({ children }) => {
             <Box sx={{
                 flexGrow: 1,
                 position: 'relative',
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                height: '100%',
                 zIndex: 1 // Content above background
-            }} className="custom-scrollbar">
-
+            }}>
                 {/* Desktop / Tablet Navbar (In Flow) */}
                 {!isMobile && user && (
                     <div className="w-[90%] max-w-2xl mx-auto mt-6 mb-6 h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-full shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0 transition-all duration-300">

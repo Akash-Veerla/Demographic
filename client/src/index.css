@@ -73,8 +73,7 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  /* Prevent body scroll, let app handle it */
+  /* overflow: hidden; Removed to allow scrolling */
 }
 
 /* Custom Scrollbar */

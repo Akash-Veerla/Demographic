@@ -32,7 +32,7 @@ const Register = () => {
     };
 
     return (
-        <div className="relative min-h-screen w-full flex items-center justify-center bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden">
+        <div className="relative min-h-screen w-full flex items-center justify-center bg-background-light dark:bg-background-dark font-display antialiased py-10">
             {/* Background Layer (From Reference) */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 <div
@@ -52,7 +52,7 @@ const Register = () => {
                 </button>
             </div>
 
-            <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up max-h-[90vh] overflow-y-auto custom-scrollbar border dark:border-white/10" style={{ borderRadius: '28px' }}>
+            <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border dark:border-white/10" style={{ borderRadius: '28px' }}>
                 <div className="flex flex-col items-center gap-3 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-1">
                         <span className="material-symbols-outlined text-[32px]">share_location</span>
