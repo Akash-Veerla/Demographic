@@ -52,7 +52,7 @@ This project is configured to be deployed as two separate services:
 
 1.  **Update Render**: Go back to your Render dashboard, edit the Environment Variables, and set `CLIENT_URL` to your new Vercel App URL (e.g., `https://your-project.vercel.app`). Redeploy the backend.
 2.  **Update Google Cloud Console**:
-    *   Add your Render Backend URL + `/auth/google/callback` to the **Authorized redirect URIs**.
+    *   Add your Render Backend URL + `api/auth/google/callback` to the **Authorized redirect URIs**.
     *   Add your Vercel App URL to **Authorized JavaScript origins**.
 
 ## Local Development
