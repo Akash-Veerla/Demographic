@@ -352,11 +352,11 @@ const MapComponent = () => {
     };
 
     return (
-        <div className="relative h-full w-full overflow-hidden bg-[#e5e7eb] dark:bg-[#1a1a1a]">
+        <div className="relative h-full w-full bg-[#e5e7eb] dark:bg-[#1a1a1a] p-4">
             {/* Map Container */}
             <div
                 ref={mapRef}
-                className="absolute inset-0 w-full h-full"
+                className="absolute inset-4 rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/5"
                 style={{
                     filter: isDark
                         ? 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)'
@@ -407,106 +407,11 @@ const MapComponent = () => {
                 </div>
             </div>
 
-            {/* Alert Message Toast */}
-            {alertMessage && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
-                    <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20">
-                        <span className="material-symbols-outlined fill-current">directions_car</span>
-                        <span className="font-bold text-sm">{alertMessage}</span>
-                        <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80">
-                            <span className="material-symbols-outlined text-sm">close</span>
-                        </button>
-                    </div>
-                </div>
-            )}
 
-            {/* User Card */}
-            {selectedUser && (
-                <div className="absolute top-24 left-6 z-20 w-80 animate-in fade-in slide-in-from-left-4 duration-500">
-                    <div className="bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl rounded-[28px] p-6 shadow-2xl border border-white/20 dark:border-white/5">
-                        <div className="flex justify-between items-start mb-6">
-                            <h3 className="text-primary text-xl font-black">Location Details</h3>
-                        </div>
-                        <div className="space-y-4 mb-6">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500 font-bold">Name:</span>
-                                <span className="text-[#1a100f] dark:text-white font-black">{selectedUser.displayName}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500 font-bold">Lat/Lon:</span>
-                                <span className="text-[#1a100f] dark:text-white font-bold">
-                                    {selectedUser.location?.coordinates?.[1].toFixed(4)}, {selectedUser.location?.coordinates?.[0].toFixed(4)}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500 font-bold">Status:</span>
-                                {(() => {
-                                    const isOnline = selectedUser.isOnline;
-                                    return (
-                                        <span className={`font-black uppercase text-[10px] tracking-widest px-2 py-0.5 rounded ${isOnline
-                                            ? (isDark ? 'text-[#D0BCFF] bg-purple-500/10' : 'text-primary bg-primary/10')
-                                            : 'text-gray-500 bg-gray-100 dark:bg-white/5'
-                                            }`}>
-                                            {isOnline ? 'Active' : 'Offline'}
-                                        </span>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-
-                        {/* Route Instructions */}
-                        {routeInstructions.length > 0 && (
-                            <div className="mb-6 max-h-48 overflow-y-auto custom-scrollbar border-t border-gray-100 dark:border-white/10 pt-4">
-                                <p className="text-[10px] font-black uppercase text-gray-400 mb-2">Directions</p>
-                                {routeInstructions.map((step, i) => (
-                                    <div key={i} className="flex gap-2 mb-2 text-xs font-bold text-[#1a100f] dark:text-white bg-gray-50 dark:bg-white/5 p-2 rounded-lg">
-                                        <span className="text-primary">{i + 1}.</span>
-                                        <span>{step}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="flex flex-col gap-3">
-                            <button
-                                onClick={() => getDirections(selectedUser)}
-                                className="w-full bg-primary hover:brightness-110 text-white py-3 rounded-2xl font-black text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined text-lg">directions</span>
-                                Get Directions
-                            </button>
-                            {routeInstructions.length > 0 && (
-                                <button
-                                    onClick={clearRoute}
-                                    className="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 py-3 rounded-2xl font-black text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">close</span>
-                                    Remove Route
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setChatTarget(selectedUser)}
-                                className="w-full bg-white dark:bg-[#231f29] text-primary py-3 rounded-2xl font-black text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined text-lg">chat</span>
-                                Chat
-                            </button>
-                            <button
-                                onClick={() => setSelectedUser(null)}
-                                className="w-full py-2 text-gray-400 hover:text-gray-600 dark:hover:text-white font-bold text-sm"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Bottom Controls: Discovery & Global View */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-4 w-full max-w-2xl justify-center px-4">
-
+            {/* Top Controls: Moved from Bottom */}
+            <div className="absolute top-6 right-6 z-20 flex gap-4">
                 {/* Discovery Mode Toggle */}
-                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-all ${isGlobalMode ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-all ${isGlobalMode ? 'opacity-50 pointer-events-none' : ''}`}>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input
                             type="checkbox"
@@ -515,15 +420,13 @@ const MapComponent = () => {
                             disabled={isGlobalMode}
                             onChange={() => setDiscoveryMode(!discoveryMode)}
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
-                    <span className="text-[#1a100f] dark:text-white font-black text-xs md:text-sm whitespace-nowrap">
-                        {isGlobalMode ? 'Global Search View' : 'Discovery Mode (10km)'}
-                    </span>
+                    <span className="text-[#1a100f] dark:text-white font-bold text-xs">Discovery (10km)</span>
                 </div>
 
                 {/* Global View Toggle */}
-                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 ${discoveryMode ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 ${discoveryMode ? 'opacity-50 pointer-events-none' : ''}`}>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input
                             type="checkbox"
@@ -532,23 +435,125 @@ const MapComponent = () => {
                             disabled={discoveryMode}
                             onChange={() => setIsGlobalMode(!isGlobalMode)}
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#22c55e]"></div>
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
-                    <span className="text-[#1a100f] dark:text-white font-black text-xs md:text-sm whitespace-nowrap">Global View</span>
+                    <span className="text-[#1a100f] dark:text-white font-bold text-xs">Global View</span>
                 </div>
-
             </div>
 
+            {/* Alert Message Toast */}
+            {
+                alertMessage && (
+                    <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
+                        <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20">
+                            <span className="material-symbols-outlined fill-current">directions_car</span>
+                            <span className="font-bold text-sm">{alertMessage}</span>
+                            <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80">
+                                <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* User Card */}
+            {
+                selectedUser && (
+                    <div className="absolute top-24 left-6 z-20 w-80 animate-in fade-in slide-in-from-left-4 duration-500">
+                        <div className="bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl rounded-[28px] p-6 shadow-2xl border border-white/20 dark:border-white/5">
+                            <div className="flex justify-between items-start mb-6">
+                                <h3 className="text-primary text-xl font-black">Location Details</h3>
+                            </div>
+                            <div className="space-y-4 mb-6">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500 font-bold">Name:</span>
+                                    <span className="text-[#1a100f] dark:text-white font-black">{selectedUser.displayName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500 font-bold">Lat/Lon:</span>
+                                    <span className="text-[#1a100f] dark:text-white font-bold">
+                                        {selectedUser.location?.coordinates?.[1].toFixed(4)}, {selectedUser.location?.coordinates?.[0].toFixed(4)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500 font-bold">Status:</span>
+                                    {(() => {
+                                        const isOnline = selectedUser.isOnline;
+                                        return (
+                                            <span className={`font-black uppercase text-[10px] tracking-widest px-2 py-0.5 rounded ${isOnline
+                                                ? (isDark ? 'text-[#D0BCFF] bg-purple-500/10' : 'text-primary bg-primary/10')
+                                                : 'text-gray-500 bg-gray-100 dark:bg-white/5'
+                                                }`}>
+                                                {isOnline ? 'Active' : 'Offline'}
+                                            </span>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Route Instructions */}
+                            {routeInstructions.length > 0 && (
+                                <div className="mb-6 max-h-48 overflow-y-auto custom-scrollbar border-t border-gray-100 dark:border-white/10 pt-4">
+                                    <p className="text-[10px] font-black uppercase text-gray-400 mb-2">Directions</p>
+                                    {routeInstructions.map((step, i) => (
+                                        <div key={i} className="flex gap-2 mb-2 text-xs font-bold text-[#1a100f] dark:text-white bg-gray-50 dark:bg-white/5 p-2 rounded-lg">
+                                            <span className="text-primary">{i + 1}.</span>
+                                            <span>{step}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => getDirections(selectedUser)}
+                                    className="w-full bg-primary hover:brightness-110 text-white py-3 rounded-2xl font-black text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">directions</span>
+                                    Get Directions
+                                </button>
+                                {routeInstructions.length > 0 && (
+                                    <button
+                                        onClick={clearRoute}
+                                        className="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 py-3 rounded-2xl font-black text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">close</span>
+                                        Remove Route
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setChatTarget(selectedUser)}
+                                    className="w-full bg-white dark:bg-[#231f29] text-primary py-3 rounded-2xl font-black text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">chat</span>
+                                    Chat
+                                </button>
+                                <button
+                                    onClick={() => setSelectedUser(null)}
+                                    className="w-full py-2 text-gray-400 hover:text-gray-600 dark:hover:text-white font-bold text-sm"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+
+
             {/* Chat Overlay */}
-            {chatTarget && socketReady && (
-                <ChatOverlay
-                    socket={socketRef.current}
-                    user={user}
-                    targetUser={chatTarget}
-                    onClose={() => setChatTarget(null)}
-                />
-            )}
-        </div>
+            {
+                chatTarget && socketReady && (
+                    <ChatOverlay
+                        socket={socketRef.current}
+                        user={user}
+                        targetUser={chatTarget}
+                        onClose={() => setChatTarget(null)}
+                    />
+                )
+            }
+        </div >
     );
 };
 

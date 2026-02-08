@@ -53,7 +53,7 @@ const Chat = () => {
                     variant="contained"
                     size="large"
                     startIcon={<MapIcon />}
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/map')}
                     sx={{
                         bgcolor: 'primary.main',
                         color: 'primary.contrastText',

@@ -6,7 +6,7 @@ const Landing = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-[#f8f6f6] dark:bg-[#141218] text-[#1a100f] dark:text-[#E6E1E5] font-display overflow-hidden relative selection:bg-primary/30">
+        <div className="min-h-screen bg-[#f8f6f6] dark:bg-[#141218] text-[#1a100f] dark:text-[#E6E1E5] font-display relative selection:bg-primary/30">
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0 pointer-events-none">
