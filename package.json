@@ -10,6 +10,7 @@
     "dev": "concurrently \"npm start\" \"cd client && npm run dev\"",
     "seed": "node server/seed.js",
     "reset-cluster": "node server/scripts/resetCluster.js",
+    "reset-surgical": "node server/scripts/resetClusterSurgical.js",
     "seed-ghosts": "node server/scripts/seedGhosts.js"
   },
   "dependencies": {

@@ -144,7 +144,9 @@ const seedGhosts = async () => {
                 },
                 isActive: true,
                 lastLogin: new Date(),
-                availabilityStatus: 'Available'
+                availabilityStatus: 'Available',
+                userType: 'ghost',
+                authMethod: 'local'
             });
         }
 
