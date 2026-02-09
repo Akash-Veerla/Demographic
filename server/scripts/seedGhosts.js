@@ -43,9 +43,9 @@ async function seedGhosts() {
 
         // Filter for AP (Latitude roughly 12.5-19.0, Longitude 77.0-84.5)
         const apRecords = records.filter(r => {
-            const lat = parseFloat(r.Latitude);
-            const lng = parseFloat(r.Longitude);
-            return lat >= 12.5 && lat <= 19.0 && lng >= 77.0 && lng <= 84.5;
+            const lat = parseFloat(r.latitude);
+            const lng = parseFloat(r.longitude);
+            return !isNaN(lat) && !isNaN(lng) && lat >= 12.5 && lat <= 19.0 && lng >= 77.0 && lng <= 84.5;
         });
 
         if (apRecords.length === 0) throw new Error("No valid AP addresses found in CSV.");
@@ -58,8 +58,8 @@ async function seedGhosts() {
 
         for (let i = 0; i < GHOST_COUNT; i++) {
             const record = apRecords[Math.floor(Math.random() * apRecords.length)];
-            const lat = parseFloat(record.Latitude);
-            const lng = parseFloat(record.Longitude);
+            const lat = parseFloat(record.latitude);
+            const lng = parseFloat(record.longitude);
 
             // Interest Selection with Clustering Bias
             let selectedInterest;
