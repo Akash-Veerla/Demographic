@@ -42,7 +42,7 @@ const Layout = ({ children }) => {
                     style={{ backgroundImage: 'var(--bg-map-url)' }}
                 ></div>
                 {/* Overlay gradient for contrast */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/90 dark:via-background-dark/60 dark:to-background-dark/95 transition-colors duration-700"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/90 dark:via-background-dark/60 dark:to-background-dark/70 transition-colors duration-700"></div>
             </div>
 
             <Box sx={{
