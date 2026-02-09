@@ -677,8 +677,8 @@ const MapComponent = () => {
             <div className={`
                 absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
                 ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-24 md:left-4 md:w-80 md:rounded-[28px] md:h-auto md:max-h-[calc(100%-7rem)]
-                bottom-0 left-0 right-0 w-full rounded-t-[28px] max-h-[85vh]
+                md:top-28 md:left-6 md:w-[22rem] md:rounded-3xl md:h-auto md:max-h-[calc(100%-9rem)]
+                bottom-0 left-0 right-0 w-full rounded-t-3xl max-h-[85vh]
                 flex flex-col
             `}>
                 {/* Header */}
@@ -755,7 +755,7 @@ const MapComponent = () => {
                 <div className="p-6 pt-4 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-3">
                     <button
                         onClick={startNavigation}
-                        className="w-full bg-primary hover:brightness-110 text-white py-4 rounded-2xl font-black text-sm shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                        className="w-full bg-primary hover:brightness-110 text-white h-12 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group"
                     >
                         <span className="material-symbols-outlined text-xl group-hover:animate-bounce">directions</span>
                         Get Directions
@@ -763,7 +763,7 @@ const MapComponent = () => {
                     {selectedUser && (
                         <button
                             onClick={() => setChatTarget(selectedUser)}
-                            className="w-full bg-white dark:bg-[#231f29] text-primary py-4 rounded-2xl font-black text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full bg-white dark:bg-[#231f29] text-primary h-12 rounded-full font-bold text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                             <span className="material-symbols-outlined text-xl">chat</span>
                             Chat
@@ -777,8 +777,8 @@ const MapComponent = () => {
             <div className={`
                 absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
                 ${isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-4 md:right-4 md:w-72 md:rounded-[28px] h-fit
-                bottom-0 left-0 right-0 w-full rounded-t-[28px]
+                md:top-6 md:right-6 md:w-72 md:rounded-3xl h-fit
+                bottom-0 left-0 right-0 w-full rounded-t-3xl
                 flex flex-col
             `}>
                 {/* Header Only - Directions Removed */}

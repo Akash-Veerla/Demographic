@@ -38,7 +38,7 @@ const ConnectView = () => {
             <div className="max-w-[1600px] mx-auto space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Friend Requests */}
-                    <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
+                    <div className="bg-white dark:bg-[#141218] rounded-3xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-2xl text-primary transition-transform group-hover:scale-110">
@@ -48,7 +48,7 @@ const ConnectView = () => {
                             </div>
                             <span className="text-xs font-black bg-primary/10 text-primary px-4 py-1.5 rounded-full uppercase tracking-wider">{pendingRequests.length}</span>
                         </div>
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-[#be3627]/10 dark:border-white/5 rounded-3xl bg-white/40 dark:bg-white/5">
+                        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-3xl bg-secondary/5 dark:bg-white/5">
                             <div className="w-20 h-20 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99] shadow-inner">
                                 <span className="material-symbols-outlined text-3xl">inbox</span>
                             </div>
@@ -58,7 +58,7 @@ const ConnectView = () => {
                     </div>
 
                     {/* My Connections */}
-                    <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
+                    <div className="bg-white dark:bg-[#141218] rounded-3xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-2xl text-primary transition-transform group-hover:scale-110">
@@ -68,7 +68,7 @@ const ConnectView = () => {
                             </div>
                             <span className="text-xs font-black bg-primary/10 text-primary px-4 py-1.5 rounded-full uppercase tracking-wider">{friends.length}</span>
                         </div>
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-[#be3627]/10 dark:border-white/5 rounded-3xl bg-white/40 dark:bg-white/5">
+                        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-3xl bg-secondary/5 dark:bg-white/5">
                             <div className="w-20 h-20 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99] shadow-inner">
                                 <span className="material-symbols-outlined text-3xl">diversity_3</span>
                             </div>
@@ -93,7 +93,7 @@ const ConnectView = () => {
                         {users.filter(u => u._id !== user?._id).map(u => {
                             const isMatch = checkInterestMatch(u.interests);
                             return (
-                                <div key={u._id} className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-6 shadow-xl border border-white/20 dark:border-white/5 flex flex-col items-center text-center gap-5 transition-transform hover:-translate-y-1 duration-300">
+                                <div key={u._id} className="bg-white dark:bg-[#141218] rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 flex flex-col items-center text-center gap-5 transition-transform hover:-translate-y-1 duration-300">
                                     <div className="relative">
                                         <Avatar src={u.profilePhoto} sx={{ width: 90, height: 90, border: isMatch ? '4px solid #be3627' : '4px solid transparent', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }} />
                                         {isMatch && (
@@ -123,7 +123,7 @@ const ConnectView = () => {
                                     <div className="flex gap-2 w-full mt-2">
                                         <button
                                             onClick={() => handleConnectClick(u)}
-                                            className="w-full bg-primary hover:bg-primary/90 text-white font-black py-3 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                            className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-10 rounded-full shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                                         >
                                             <span className="material-symbols-outlined text-lg">share_location</span>
                                             Connect
