@@ -90,7 +90,7 @@ const ConnectView = () => {
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {users.filter(u => u._id !== user?._id).map(u => {
+                        {users.filter(u => u._id !== user?._id).slice(0, 50).map(u => {
                             const isMatch = checkInterestMatch(u.interests);
                             return (
                                 <div key={u._id} className="bg-white dark:bg-[#141218] rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 flex flex-col items-center text-center gap-5 transition-transform hover:-translate-y-1 duration-300">

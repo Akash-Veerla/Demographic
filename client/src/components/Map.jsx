@@ -677,9 +677,9 @@ const MapComponent = () => {
             <div className={`
                 absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
                 ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-28 md:left-6 md:w-[22rem] md:rounded-3xl md:h-auto md:max-h-[calc(100%-9rem)]
+                md:top-28 md:left-8 md:w-80 md:rounded-3xl md:h-auto md:max-h-[calc(100%-9rem)]
                 bottom-0 left-0 right-0 w-full rounded-t-3xl max-h-[85vh]
-                flex flex-col
+                flex flex-col overflow-hidden ring-1 ring-black/5
             `}>
                 {/* Header */}
                 <div className="p-6 pb-2 shrink-0 flex justify-between items-start">

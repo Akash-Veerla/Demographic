@@ -57,6 +57,11 @@ const Layout = ({ children }) => {
                         <div
                             className="flex items-center gap-3 cursor-pointer select-none"
                             onClick={() => navigate('/')}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                window.dispatchEvent(new Event('show_cluster_centers'));
+                                alert('Secret Found: Clusters Activated!');
+                            }}
                             onMouseDown={() => {
                                 window.logoPressTimer = setTimeout(() => {
                                     window.dispatchEvent(new Event('show_cluster_centers'));
