@@ -675,9 +675,9 @@ const MapComponent = () => {
 
             {/* E. User / Pin Detail Panel */}
             <div className={`
-                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
-                ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-4 md:right-4 md:w-96 md:h-[calc(100vh-2rem)] md:rounded-[28px]
+                absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
+                ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
+                md:top-24 md:left-4 md:w-80 md:rounded-[28px] md:h-auto md:max-h-[calc(100%-7rem)]
                 bottom-0 left-0 right-0 w-full rounded-t-[28px] max-h-[85vh]
                 flex flex-col
             `}>
@@ -775,9 +775,9 @@ const MapComponent = () => {
 
             {/* F. Navigation Panel (Replaces Detail Panel when navigating) */}
             <div className={`
-                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
+                absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
                 ${isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-4 md:right-4 md:w-80 md:rounded-[28px] h-fit
+                md:top-4 md:right-4 md:w-72 md:rounded-[28px] h-fit
                 bottom-0 left-0 right-0 w-full rounded-t-[28px]
                 flex flex-col
             `}>

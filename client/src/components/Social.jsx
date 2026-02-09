@@ -34,9 +34,9 @@ const ConnectView = () => {
     };
 
     return (
-        <div className="h-full w-full p-6 space-y-8 animate-fade-in">
-            <div className="max-w-7xl mx-auto space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="h-full w-full p-4 space-y-4 animate-fade-in relative z-10">
+            <div className="max-w-[1600px] mx-auto space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Friend Requests */}
                     <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
                         <div className="flex items-center justify-between mb-8">
