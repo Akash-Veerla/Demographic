@@ -10,6 +10,22 @@ const User = require('../models/User');
 const ADDRESS_CSV_PATH = path.join(__dirname, '../../Address.csv');
 const GHOST_COUNT = 80;
 
+// Distance Helper (Haversine-like)
+function distance(lat1, lon1, lat2, lon2) {
+    if ((lat1 == lat2) && (lon1 == lon2)) return 0;
+    const radlat1 = Math.PI * lat1 / 180;
+    const radlat2 = Math.PI * lat2 / 180;
+    const theta = lon1 - lon2;
+    const radtheta = Math.PI * theta / 180;
+    let dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    if (dist > 1) dist = 1;
+    dist = Math.acos(dist);
+    dist = dist * 180 / Math.PI;
+    dist = dist * 60 * 1.1515;
+    dist = dist * 1.609344;
+    return dist; // Km
+}
+
 async function seedGhosts() {
     try {
         const uri = process.env.MONGO_URI;
@@ -42,6 +58,26 @@ async function seedGhosts() {
 
         for (let i = 0; i < GHOST_COUNT; i++) {
             const record = apRecords[Math.floor(Math.random() * apRecords.length)];
+            const lat = parseFloat(record.Latitude);
+            const lng = parseFloat(record.Longitude);
+
+            // Interest Selection with Clustering Bias
+            let selectedInterest;
+            const nearbyGhosts = ghosts.filter(g => {
+                // g.location.coordinates is [lng, lat]
+                const d = distance(g.location.coordinates[1], g.location.coordinates[0], lat, lng);
+                return d <= 50; // 50km
+            });
+
+            if (nearbyGhosts.length > 0 && Math.random() < 0.3) {
+                // 30% chance: Adopt interest from a neighbor (Cluster Effect)
+                // This creates realistic pockets of similar interests
+                const neighbor = nearbyGhosts[Math.floor(Math.random() * nearbyGhosts.length)];
+                selectedInterest = neighbor.interests[0];
+            } else {
+                // Random interest
+                selectedInterest = coreInterests[Math.floor(Math.random() * coreInterests.length)];
+            }
 
             ghosts.push({
                 displayName: `Ghost User ${i + 1}`,
@@ -53,15 +89,15 @@ async function seedGhosts() {
                 lastLogin: new Date(),
                 availabilityStatus: 'Available',
                 bio: "Automated test profile for proximity clustering.",
-                interests: [coreInterests[Math.floor(Math.random() * coreInterests.length)]],
+                interests: [selectedInterest],
                 location: {
                     type: "Point",
-                    coordinates: [parseFloat(record.Longitude), parseFloat(record.Latitude)]
+                    coordinates: [lng, lat]
                 }
             });
         }
 
-        console.log(`Generated ${ghosts.length} ghost users. Seeding DB...`);
+        console.log(`Generated ${ghosts.length} ghost users with clustering bias. Seeding DB...`);
         // Use insertMany to ensure we don't hit duplicate key errors if previous ghosts were left behind
         // though the reset script should have handled it.
         await User.insertMany(ghosts);
