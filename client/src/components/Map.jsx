@@ -60,15 +60,20 @@ const MapComponent = () => {
 
     // Tips Carousel State
     const [currentTipIndex, setCurrentTipIndex] = useState(0);
+    const [isTipVisible, setIsTipVisible] = useState(true);
 
     const socketRef = useRef();
 
     // -------------------------------------------------------------------------
-    // 0. Tips Carousel Effect
+    // 0. Tips Carousel Effect (Smooth Transition)
     // -------------------------------------------------------------------------
     useEffect(() => {
         const interval = setInterval(() => {
-            setCurrentTipIndex((prev) => (prev + 1) % TIPS.length);
+            setIsTipVisible(false);
+            setTimeout(() => {
+                setCurrentTipIndex((prev) => (prev + 1) % TIPS.length);
+                setIsTipVisible(true);
+            }, 500); // Wait for fade out
         }, 5000);
         return () => clearInterval(interval);
     }, []);
@@ -549,14 +554,14 @@ const MapComponent = () => {
             />
 
             {/* A. Tips Carousel (Top Left of Search) */}
-            <div className="absolute top-6 left-6 z-20 hidden lg:block">
-                <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-xl border border-white/20 dark:border-white/5 flex items-center gap-3">
+            <div className="absolute top-6 left-6 z-20 hidden lg:block transition-all duration-500 ease-in-out">
+                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-opacity duration-500 ${isTipVisible ? 'opacity-100' : 'opacity-0'}`}>
                     <span className="material-symbols-outlined text-primary text-xl animate-bounce">
                         {TIPS[currentTipIndex].icon}
                     </span>
                     <span
                         key={currentTipIndex}
-                        className="text-xs font-bold text-[#1a100f] dark:text-white animate-in slide-in-from-bottom-2 fade-in duration-500"
+                        className="text-xs font-bold text-[#1a100f] dark:text-white"
                     >
                         {TIPS[currentTipIndex].text}
                     </span>
@@ -665,12 +670,13 @@ const MapComponent = () => {
 
             {/* ----------------------------------------------------------------------- */}
             {/* UI PANELS: Detail View vs Navigation View */}
+            {/* Using explicit hidden/pointer-events-none logic to prevent "ghost" elements */}
             {/* ----------------------------------------------------------------------- */}
 
-            {/* E. User / Pin Detail Panel (Side Sheet on Desktop, Bottom Sheet on Mobile) */}
+            {/* E. User / Pin Detail Panel */}
             <div className={`
-                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-transform duration-300 ease-in-out
-                ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 translate-y-0' : 'translate-y-[110%] md:translate-y-0 md:translate-x-[110%]'}
+                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
+                ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-[120%] opacity-0 pointer-events-none'}
                 md:top-4 md:right-4 md:w-96 md:h-[calc(100vh-2rem)] md:rounded-[28px]
                 bottom-0 left-0 right-0 w-full rounded-t-[28px] max-h-[85vh]
                 flex flex-col
@@ -692,7 +698,6 @@ const MapComponent = () => {
                 <div className="p-6 pt-2 overflow-y-auto custom-scrollbar grow">
                     {selectedUser ? (
                         <div className="space-y-6">
-                            {/* Scale bio text responsive */}
                             <div className="flex flex-col gap-1">
                                 <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Name</span>
                                 <span className="text-3xl font-black text-[#1a100f] dark:text-white">{selectedUser.displayName}</span>
@@ -770,9 +775,9 @@ const MapComponent = () => {
 
             {/* F. Navigation Panel (Replaces Detail Panel when navigating) */}
             <div className={`
-                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-transform duration-300 ease-in-out
-                ${isNavigating ? 'translate-x-0 translate-y-0' : 'translate-y-[110%] md:translate-y-0 md:translate-x-[110%]'}
-                md:top-4 md:right-4 md:w-80 md:rounded-[28px]
+                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
+                ${isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-[120%] opacity-0 pointer-events-none'}
+                md:top-4 md:right-4 md:w-80 md:rounded-[28px] h-fit
                 bottom-0 left-0 right-0 w-full rounded-t-[28px]
                 flex flex-col
             `}>
@@ -787,7 +792,7 @@ const MapComponent = () => {
                             <p className="text-xs font-bold text-gray-400 mt-1">Follow route on map</p>
                         </div>
                     </div>
-                    <button onClick={clearRoute} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full font-bold text-xs hover:bg-red-100 transition-colors">
+                    <button onClick={clearRoute} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full font-bold text-xs hover:bg-red-100 transition-colors cursor-pointer">
                         End Trip
                     </button>
                 </div>
