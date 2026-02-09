@@ -515,7 +515,7 @@ const MapComponent = () => {
 
 
     return (
-        <div className="relative h-full w-full bg-[#e5e7eb] dark:bg-[#1a1a1a] p-4 overflow-hidden">
+        <div className="relative h-full w-full bg-transparent p-4 overflow-hidden">
             {/* Map Container */}
             <div
                 ref={mapRef}
@@ -535,7 +535,7 @@ const MapComponent = () => {
                             <span className="material-symbols-outlined text-gray-400 mr-2">search</span>
                             <input
                                 type="text"
-                                placeholder={searchQuery === 'SHOW-CLUSTER-CENTERS' ? "Activating Easter Egg..." : "Search places / Type secret code"}
+                                placeholder={searchQuery === 'SHOW-CLUSTER-CENTERS' ? "Activating Easter Egg..." : "Search places"}
                                 className="bg-transparent border-none focus:ring-0 text-[#1a100f] dark:text-white font-bold text-sm w-full placeholder-gray-400"
                                 value={searchQuery}
                                 onChange={(e) => {
@@ -703,34 +703,24 @@ const MapComponent = () => {
             <div className={`
                 fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-transform duration-300 ease-in-out
                 ${isNavigating ? 'translate-x-0 translate-y-0' : 'translate-y-[110%] md:translate-y-0 md:translate-x-[110%]'}
-                md:top-4 md:right-4 md:w-96 md:h-[calc(100vh-2rem)] md:rounded-[28px]
-                bottom-0 left-0 right-0 w-full rounded-t-[28px] max-h-[60vh]
+                md:top-4 md:right-4 md:w-80 md:rounded-[28px]
+                bottom-0 left-0 right-0 w-full rounded-t-[28px]
                 flex flex-col
             `}>
-                {/* Header */}
-                <div className="p-6 shrink-0 flex justify-between items-center border-b border-gray-100 dark:border-white/5">
+                {/* Header Only - Directions Removed */}
+                <div className="p-6 shrink-0 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center animate-pulse">
                             <span className="material-symbols-outlined">navigation</span>
                         </div>
                         <div>
                             <h3 className="text-lg font-black text-[#1a100f] dark:text-white leading-none">Navigating</h3>
-                            <p className="text-xs font-bold text-gray-400 mt-1">{routeInstructions.length} Steps</p>
+                            <p className="text-xs font-bold text-gray-400 mt-1">Follow route on map</p>
                         </div>
                     </div>
                     <button onClick={clearRoute} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full font-bold text-xs hover:bg-red-100 transition-colors">
                         End Trip
                     </button>
-                </div>
-
-                {/* Instructions List */}
-                <div className="p-4 overflow-y-auto custom-scrollbar grow space-y-2">
-                    {routeInstructions.map((step, i) => (
-                        <div key={i} className="flex gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 items-start">
-                            <span className="text-primary font-black text-lg opacity-50">{i + 1}</span>
-                            <span className="text-sm font-bold text-[#1a100f] dark:text-white leading-relaxed">{step}</span>
-                        </div>
-                    ))}
                 </div>
             </div>
 

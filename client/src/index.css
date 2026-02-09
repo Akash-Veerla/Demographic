@@ -75,6 +75,8 @@ body,
   margin: 0;
   padding: 0;
   font-size: 16px;
+  font-weight: 500;
+  /* Bolder text for Material 3 Expressive */
   /* Default */
   /* overflow: hidden; Removed to allow scrolling */
 }

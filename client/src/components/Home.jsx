@@ -68,7 +68,7 @@ const Home = () => {
     );
 
     return (
-        <div className="min-h-full w-full bg-transparent p-4 md:p-8 font-display transition-colors duration-300 pb-20">
+        <div className="min-h-full w-full bg-transparent p-4 md:p-8 font-display transition-colors duration-300 pb-8">
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* 1. Header / Greeting */}
