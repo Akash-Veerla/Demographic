@@ -261,16 +261,16 @@ const MapComponent = () => {
                 zIndex: 10
             }));
 
-            // Busy Badge Overlay
+            // Busy Badge Overlay - Updated for Material You
             if (isBusy && isOnline) {
                 styles.push(new Style({
                     text: new Text({
                         text: 'Busy',
                         offsetY: -24, // Float above
                         font: 'bold 10px Outfit',
-                        fill: new Fill({ color: '#fff' }),
-                        backgroundFill: new Fill({ color: 'rgba(0,0,0,0.5)' }),
-                        padding: [2, 4, 2, 4],
+                        fill: new Fill({ color: isDark ? '#E6E1E5' : '#1D1B20' }), // On Surface
+                        backgroundFill: new Fill({ color: isDark ? '#49454F' : '#E7E0EC' }), // Surface Container High
+                        padding: [4, 8, 4, 8],
                     }),
                     zIndex: 11
                 }));
@@ -319,8 +319,12 @@ const MapComponent = () => {
                 const route = data.routes[0];
                 const coordinates = route.geometry.coordinates;
                 const instructions = route.legs[0].steps.map(step => step.maneuver.instruction);
+
+                // Pivot UI State
                 setRouteInstructions(instructions);
                 setIsNavigating(true);
+                setSelectedUser(null);
+                setDestinationPin(null);
 
                 routeSource.clear();
                 const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
@@ -329,8 +333,11 @@ const MapComponent = () => {
                 }));
                 routeSource.addFeature(routeFeature);
 
-                // Fit View
-                map.getView().fit(routeFeature.getGeometry().getExtent(), { padding: [100, 300, 100, 100], duration: 1000 });
+                // Fly To Route Bounds (with padding for side sheet)
+                map.getView().fit(routeFeature.getGeometry().getExtent(), {
+                    padding: [100, 100, 100, 400],
+                    duration: 1500
+                });
             }
         } catch (err) {
             console.error("Routing error:", err);
@@ -508,7 +515,7 @@ const MapComponent = () => {
 
 
     return (
-        <div className="relative h-full w-full bg-[#e5e7eb] dark:bg-[#1a1a1a] p-4">
+        <div className="relative h-full w-full bg-[#e5e7eb] dark:bg-[#1a1a1a] p-4 overflow-hidden">
             {/* Map Container */}
             <div
                 ref={mapRef}
@@ -521,7 +528,7 @@ const MapComponent = () => {
             />
 
             {/* Top Search Bar */}
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4">
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4 transition-all duration-300">
                 <div className="relative">
                     <div className="flex items-center bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-full p-1 shadow-2xl border border-white/20 dark:border-white/5">
                         <div className="flex-1 flex items-center pl-4">
@@ -558,8 +565,8 @@ const MapComponent = () => {
                 </div>
             </div>
 
-            {/* Top Controls */}
-            <div className="absolute top-6 right-6 z-20 flex gap-4">
+            {/* Top Right Controls */}
+            <div className="absolute top-6 right-6 z-20 flex gap-4 hidden md:flex">
                 <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-all ${isGlobalMode ? 'opacity-50 pointer-events-none' : ''}`}>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" checked={discoveryMode} disabled={isGlobalMode} onChange={() => setDiscoveryMode(!discoveryMode)} />
@@ -578,8 +585,8 @@ const MapComponent = () => {
 
             {/* Alert Message Toast */}
             {alertMessage && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
-                    <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20">
+                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 pointer-events-none">
+                    <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20 pointer-events-auto">
                         <span className="material-symbols-outlined fill-current">directions_car</span>
                         <span className="font-bold text-sm">{alertMessage}</span>
                         <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80"><span className="material-symbols-outlined text-sm">close</span></button>
@@ -587,91 +594,145 @@ const MapComponent = () => {
                 </div>
             )}
 
-            {/* Navigation / Info Sidebar */}
-            {(selectedUser || destinationPin) && (
-                <div className="absolute top-24 left-6 z-20 w-80 animate-in fade-in slide-in-from-left-4 duration-500">
-                    <div className="bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl rounded-[28px] p-6 shadow-2xl border border-white/20 dark:border-white/5">
+            {/* ----------------------------------------------------------------------- */}
+            {/* UI PANELS: Detail View vs Navigation View */}
+            {/* ----------------------------------------------------------------------- */}
 
-                        {/* Header */}
-                        <div className="flex justify-between items-start mb-6">
-                            <h3 className="text-primary text-xl font-black">
-                                {destinationPin ? 'Dropped Pin' : 'User Details'}
-                            </h3>
-                            <button onClick={() => { setSelectedUser(null); setDestinationPin(null); }} className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors">
-                                <span className="material-symbols-outlined text-lg opacity-60">close</span>
-                            </button>
-                        </div>
+            {/* A. User / Pin Detail Panel (Side Sheet on Desktop, Bottom Sheet on Mobile) */}
+            <div className={`
+                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-transform duration-300 ease-in-out
+                ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 translate-y-0' : 'translate-y-[110%] md:translate-y-0 md:translate-x-[110%]'}
+                md:top-4 md:right-4 md:w-96 md:h-[calc(100vh-2rem)] md:rounded-[28px]
+                bottom-0 left-0 right-0 w-full rounded-t-[28px] max-h-[85vh]
+                flex flex-col
+            `}>
+                {/* Header */}
+                <div className="p-6 pb-2 shrink-0 flex justify-between items-start">
+                    <h3 className="text-primary text-2xl font-black tracking-tight">
+                        {destinationPin ? 'Dropped Pin' : 'User Details'}
+                    </h3>
+                    <button
+                        onClick={() => { setSelectedUser(null); setDestinationPin(null); }}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-xl opacity-60">close</span>
+                    </button>
+                </div>
 
-                        {/* Details */}
-                        {selectedUser ? (
-                            <div className="space-y-4 mb-6">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-bold">Name:</span>
-                                    <span className="text-[#1a100f] dark:text-white font-black">{selectedUser.displayName}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-bold">Status:</span>
-                                    <span className={`font-black uppercase text-[10px] tracking-widest px-2 py-0.5 rounded ${selectedUser.isOnline ? 'text-green-500 bg-green-500/10' : 'text-gray-500 bg-gray-100'}`}>
+                {/* Content (Scrollable) */}
+                <div className="p-6 pt-2 overflow-y-auto custom-scrollbar grow">
+                    {selectedUser ? (
+                        <div className="space-y-6">
+                            {/* Scale bio text responsive */}
+                            <div className="flex flex-col gap-1">
+                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Name</span>
+                                <span className="text-3xl font-black text-[#1a100f] dark:text-white">{selectedUser.displayName}</span>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Status</span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full ${selectedUser.isOnline ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
                                         {selectedUser.isOnline ? 'Online' : 'Offline'}
                                     </span>
+                                    {selectedUser.availabilityStatus && (
+                                        <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400">
+                                            {selectedUser.availabilityStatus}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-                        ) : (
-                            <div className="space-y-4 mb-6">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-bold">Location:</span>
-                                    <span className="text-[#1a100f] dark:text-white font-black">Custom Destination</span>
-                                </div>
-                                <p className="text-xs text-gray-400">Right-click on map to move pin.</p>
-                            </div>
-                        )}
 
-                        {/* Turn-by-Turn Panel */}
-                        {isNavigating && routeInstructions.length > 0 && (
-                            <div className="mb-6 max-h-64 overflow-y-auto custom-scrollbar border-t border-gray-100 dark:border-white/10 pt-4">
-                                <p className="text-[10px] font-black uppercase text-gray-400 mb-2 sticky top-0 bg-white dark:bg-[#141218] py-1">Route Instructions</p>
-                                {routeInstructions.map((step, i) => (
-                                    <div key={i} className="flex gap-3 mb-2 text-xs font-bold text-[#1a100f] dark:text-white bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5">
-                                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary font-black text-[10px]">{i + 1}</div>
-                                        <span>{step}</span>
+                            {selectedUser.interests && (
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Interests</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedUser.interests.map((int, i) => (
+                                            <span key={i} className="text-xs font-bold px-2 py-1 bg-primary/5 text-primary rounded-md border border-primary/10">
+                                                {typeof int === 'string' ? int : int.name}
+                                            </span>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex flex-col gap-3">
-                            {!isNavigating ? (
-                                <button
-                                    onClick={startNavigation}
-                                    className="w-full bg-primary hover:brightness-110 text-white py-3 rounded-2xl font-black text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">directions</span>
-                                    Start Navigation
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={clearRoute}
-                                    className="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 py-3 rounded-2xl font-black text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">close</span>
-                                    Stop Navigation
-                                </button>
+                                </div>
                             )}
 
-                            {selectedUser && (
-                                <button
-                                    onClick={() => setChatTarget(selectedUser)}
-                                    className="w-full bg-white dark:bg-[#231f29] text-primary py-3 rounded-2xl font-black text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">chat</span>
-                                    Chat
-                                </button>
+                            {selectedUser.bio && (
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Bio</span>
+                                    <p className="tex-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">
+                                        {selectedUser.bio}
+                                    </p>
+                                </div>
                             )}
                         </div>
-                    </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <div className="aspect-video bg-primary/5 rounded-2xl flex items-center justify-center border border-primary/10 border-dashed">
+                                <span className="material-symbols-outlined text-4xl text-primary/40">location_on</span>
+                            </div>
+                            <p className="text-sm font-medium text-gray-500 text-center">
+                                You placed a pin here. Would you like to navigate to this location?
+                            </p>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                {/* Actions Footer */}
+                <div className="p-6 pt-4 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-3">
+                    <button
+                        onClick={startNavigation}
+                        className="w-full bg-primary hover:brightness-110 text-white py-4 rounded-2xl font-black text-sm shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                    >
+                        <span className="material-symbols-outlined text-xl group-hover:animate-bounce">directions</span>
+                        Get Directions
+                    </button>
+                    {selectedUser && (
+                        <button
+                            onClick={() => setChatTarget(selectedUser)}
+                            className="w-full bg-white dark:bg-[#231f29] text-primary py-4 rounded-2xl font-black text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-xl">chat</span>
+                            Chat
+                        </button>
+                    )}
+                </div>
+            </div>
+
+
+            {/* B. Navigation Panel (Replaces Detail Panel when navigating) */}
+            <div className={`
+                fixed z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-transform duration-300 ease-in-out
+                ${isNavigating ? 'translate-x-0 translate-y-0' : 'translate-y-[110%] md:translate-y-0 md:translate-x-[110%]'}
+                md:top-4 md:right-4 md:w-96 md:h-[calc(100vh-2rem)] md:rounded-[28px]
+                bottom-0 left-0 right-0 w-full rounded-t-[28px] max-h-[60vh]
+                flex flex-col
+            `}>
+                {/* Header */}
+                <div className="p-6 shrink-0 flex justify-between items-center border-b border-gray-100 dark:border-white/5">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center animate-pulse">
+                            <span className="material-symbols-outlined">navigation</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-[#1a100f] dark:text-white leading-none">Navigating</h3>
+                            <p className="text-xs font-bold text-gray-400 mt-1">{routeInstructions.length} Steps</p>
+                        </div>
+                    </div>
+                    <button onClick={clearRoute} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full font-bold text-xs hover:bg-red-100 transition-colors">
+                        End Trip
+                    </button>
+                </div>
+
+                {/* Instructions List */}
+                <div className="p-4 overflow-y-auto custom-scrollbar grow space-y-2">
+                    {routeInstructions.map((step, i) => (
+                        <div key={i} className="flex gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 items-start">
+                            <span className="text-primary font-black text-lg opacity-50">{i + 1}</span>
+                            <span className="text-sm font-bold text-[#1a100f] dark:text-white leading-relaxed">{step}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             {/* Chat Overlay */}
             {chatTarget && socketReady && (
