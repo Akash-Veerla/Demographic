@@ -43,11 +43,13 @@ router.get('/google/callback', (req, res, next) => {
     })(req, res, next);
 });
 
+const INTERESTS_LIST = require('../config/Interests.json');
+
 // Register
 router.post('/register', async (req, res) => {
 
     try {
-        const { displayName, email, password } = req.body; // Simplified: Bio/Interests move to step 2
+        const { displayName, email, password, interests } = req.body;
 
         if (!displayName || !email || !password) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -55,6 +57,16 @@ router.post('/register', async (req, res) => {
 
         if (password.length < 8) {
             return res.status(400).json({ error: 'Password must be at least 8 characters' });
+        }
+
+        // Validate Interests if provided
+        let safeInterests = [];
+        if (interests && Array.isArray(interests)) {
+            const invalidVars = interests.filter(i => !INTERESTS_LIST.includes(i));
+            if (invalidVars.length > 0) {
+                return res.status(400).json({ error: `Invalid interests: ${invalidVars.join(', ')}. Must be from Core List.` });
+            }
+            safeInterests = interests;
         }
 
         // Check for existing user
@@ -67,13 +79,13 @@ router.post('/register', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create User (Interests/Bio empty initially)
+        // Create User
         const newUser = new User({
             displayName,
             email,
             password: hashedPassword,
             bio: '',
-            interests: [],
+            interests: safeInterests,
             profilePhoto: null
         });
 

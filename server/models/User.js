@@ -52,7 +52,8 @@ const userSchema = new Schema({
     },
     availabilityStatus: {
         type: String,
-        default: 'Available for Meetup'
+        default: 'Available', // Strict default as requested
+        enum: ['Available', 'Busy', 'Invisible', 'Available for Meetup', 'Chat Only'] // Expanded for UI compatibility
     }
 }, { timestamps: true });
 

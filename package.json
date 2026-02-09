@@ -8,7 +8,9 @@
     "start": "node server/index.js",
     "build": "npm install && cd client && npm install && npm run build",
     "dev": "concurrently \"npm start\" \"cd client && npm run dev\"",
-    "seed": "node server/seed.js"
+    "seed": "node server/seed.js",
+    "reset-cluster": "node server/scripts/resetCluster.js",
+    "seed-ghosts": "node server/scripts/seedGhosts.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

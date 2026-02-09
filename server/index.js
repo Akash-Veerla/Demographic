@@ -445,9 +445,21 @@ app.post('/api/user/profile', requireAuth, async (req, res) => {
     }
 });
 
+const INTERESTS_LIST = require('./config/Interests.json');
+
 app.post('/api/user/interests', requireAuth, async (req, res) => {
     try {
         const { interests } = req.body; // Expecting array of strings
+
+        if (!interests || !Array.isArray(interests)) {
+            return res.status(400).json({ error: 'Interests must be an array' });
+        }
+
+        const invalidVars = interests.filter(i => !INTERESTS_LIST.includes(i));
+        if (invalidVars.length > 0) {
+            return res.status(400).json({ error: `Invalid interests: ${invalidVars.join(', ')}. Must be from Core List.` });
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
             { interests },
