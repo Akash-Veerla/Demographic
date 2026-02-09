@@ -54,7 +54,26 @@ const Layout = ({ children }) => {
                 {!isMobile && user && (
                     <div className="w-[90%] max-w-2xl mx-auto mt-6 mb-6 h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-full shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0 transition-all duration-300">
                         {/* Brand */}
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+                        <div
+                            className="flex items-center gap-3 cursor-pointer select-none"
+                            onClick={() => navigate('/')}
+                            onMouseDown={() => {
+                                window.logoPressTimer = setTimeout(() => {
+                                    window.dispatchEvent(new Event('show_cluster_centers'));
+                                    // Visual feedback?
+                                    alert('Easter Egg: Clusters Activated!');
+                                }, 3000);
+                            }}
+                            onMouseUp={() => clearTimeout(window.logoPressTimer)}
+                            onMouseLeave={() => clearTimeout(window.logoPressTimer)}
+                            onTouchStart={() => {
+                                window.logoPressTimer = setTimeout(() => {
+                                    window.dispatchEvent(new Event('show_cluster_centers'));
+                                    alert('Easter Egg: Clusters Activated!');
+                                }, 3000);
+                            }}
+                            onTouchEnd={() => clearTimeout(window.logoPressTimer)}
+                        >
                             <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
                                 <Home size={20} className="text-primary" />
                             </div>

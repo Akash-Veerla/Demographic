@@ -66,6 +66,7 @@
 }
 
 /* Base styles from original index.css */
+/* Base styles from original index.css */
 html,
 body,
 #root {
@@ -73,8 +74,27 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
-  font-size: 14px; /* Compact Mode: Reduced from default 16px */
+  font-size: 16px;
+  /* Default */
   /* overflow: hidden; Removed to allow scrolling */
+}
+
+@media (max-height: 800px) {
+
+  html,
+  body,
+  #root {
+    font-size: 14px;
+    /* Compact Mode */
+  }
+}
+
+/* Compact Card Utility */
+.compact-card {
+  padding: clamp(1rem, 2vh, 2rem);
+  /* Dynamic padding based on height */
+  margin: clamp(0.5rem, 1vh, 1rem);
+  /* Dynamic margin */
 }
 
 /* Custom Scrollbar */

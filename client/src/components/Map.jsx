@@ -22,24 +22,23 @@ const MapComponent = () => {
     const isDark = theme.palette.mode === 'dark';
     const mapRef = useRef();
     const [map, setMap] = useState(null);
+
+    // Sources
     const [userSource] = useState(new VectorSource());
     const [routeSource] = useState(new VectorSource());
-    const [radiusSource] = useState(new VectorSource()); // For Discovery Circle
+    const [radiusSource] = useState(new VectorSource());
+    const [destinationSource] = useState(new VectorSource()); // For Dropped Pins
+    const [clusterSource] = useState(new VectorSource()); // For Easter Egg
 
-    // Initialize User Location with Fallback (Null Guard)
-    const [userLocation, setUserLocation] = useState(() => {
-        if (user?.location?.coordinates) {
-            const [lng, lat] = user.location.coordinates;
-            if (lng !== 0 || lat !== 0) {
-                return fromLonLat([lng, lat]);
-            }
-        }
-        return null; // Strict Null Guard
-    });
-
+    // State
+    const [userLocation, setUserLocation] = useState(null); // Init as null, fetch via geolocation
     const [nearbyUsersList, setNearbyUsersList] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
+    // Navigation State
     const [routeInstructions, setRouteInstructions] = useState([]);
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [destinationPin, setDestinationPin] = useState(null); // { coords: [lng, lat] }
+
     const [chatTarget, setChatTarget] = useState(null);
     const [socketReady, setSocketReady] = useState(false);
     const [discoveryMode, setDiscoveryMode] = useState(false);
@@ -53,105 +52,18 @@ const MapComponent = () => {
 
     const socketRef = useRef();
 
-    // Debounce for search
-    useEffect(() => {
-        const timer = setTimeout(async () => {
-            if (searchQuery.length > 2 && showSuggestions) {
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`);
-                    const data = await res.json();
-                    setSearchResults(data);
-                } catch (err) {
-                    console.error("Search error", err);
-                }
-            } else if (searchQuery.length === 0) {
-                setSearchResults([]);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [searchQuery, showSuggestions]);
-
-    // Fetch Nearby or Global Users
-    const fetchNearbyUsers = useCallback(async () => {
-        if (!user || !map) return;
-        try {
-            if (isGlobalMode) {
-                const res = await api.get('/api/users/global', { params: { interests: 'all' } });
-                setNearbyUsersList(res.data || []);
-            } else {
-                // Local / Discovery Mode
-                if (!userLocation) return; // Wait for location to avoid 0,0 fetch
-
-                const center = toLonLat(userLocation);
-                const [lng, lat] = center;
-
-                // Discovery Mode = 10km, Normal = 20km (or similar default)
-                const radius = discoveryMode ? 10 : 20;
-
-                const res = await api.get('/api/users/nearby', {
-                    params: { lat, lng, radius, interests: 'all' }
-                });
-                setNearbyUsersList(res.data || []);
-            }
-        } catch (err) {
-            console.error("Fetch error:", err);
-        }
-    }, [user, map, discoveryMode, isGlobalMode, userLocation]);
-
-    // OSRM Routing
-    const getDirections = async (targetUser) => {
-        if (!map || !targetUser.location?.coordinates) return;
-
-        let startCoords;
-        if (userLocation) {
-            startCoords = toLonLat(userLocation);
-        } else {
-            startCoords = toLonLat(map.getView().getCenter());
-        }
-
-        const [myLng, myLat] = startCoords;
-        const [targetLng, targetLat] = targetUser.location.coordinates;
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${myLng},${myLat};${targetLng},${targetLat}?overview=full&geometries=geojson&steps=true`;
-
-        // Notify Target User
-        if (socketRef.current) {
-            socketRef.current.emit('getting_directions', { targetUserId: targetUser._id });
-        }
-
-        try {
-            const response = await fetch(osrmUrl);
-            const data = await response.json();
-            if (data.routes && data.routes.length > 0) {
-                const route = data.routes[0];
-                const coordinates = route.geometry.coordinates;
-                const instructions = route.legs[0].steps.map(step => step.maneuver.instruction);
-                setRouteInstructions(instructions);
-                routeSource.clear();
-                const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
-                routeFeature.setStyle(new Style({
-                    stroke: new Stroke({ color: isDark ? '#D0BCFF' : theme.palette.primary.main, width: 5 })
-                }));
-                routeSource.addFeature(routeFeature);
-                map.getView().fit(routeFeature.getGeometry().getExtent(), { padding: [100, 100, 100, 100], duration: 1000 });
-            }
-        } catch (err) {
-            console.error("Routing error:", err);
-        }
-    };
-
-    const clearRoute = () => {
-        setRouteInstructions([]);
-        routeSource.clear();
-    };
-
-    // Initial Map Setup & Geolocation
+    // -------------------------------------------------------------------------
+    // 1. Initial Map Setup & Geolocation
+    // -------------------------------------------------------------------------
     useEffect(() => {
         const initialMap = new Map({
             target: mapRef.current,
             layers: [
                 new TileLayer({ source: new OSM(), className: 'map-tile-layer' }),
+                new VectorLayer({ source: clusterSource, zIndex: 4 }), // Easter Egg layer
                 new VectorLayer({ source: radiusSource, zIndex: 5 }),
                 new VectorLayer({ source: routeSource, zIndex: 7 }),
+                new VectorLayer({ source: destinationSource, zIndex: 8 }),
                 new VectorLayer({ source: userSource, zIndex: 10 })
             ],
             view: new View({
@@ -184,85 +96,123 @@ const MapComponent = () => {
             );
         }
 
+        // Click Listener for Users
         initialMap.on('click', (e) => {
             const feature = initialMap.forEachFeatureAtPixel(e.pixel, f => f);
-            if (feature && feature.get('type') === 'user') {
-                setSelectedUser(feature.get('data'));
+            if (feature) {
+                if (feature.get('type') === 'user') {
+                    const userData = feature.get('data');
+                    setSelectedUser(userData);
+                    setDestinationPin(null); // Clear manual pin if user selected
+                    // Move map
+                    initialMap.getView().animate({ center: feature.getGeometry().getCoordinates(), zoom: 16, duration: 800 });
+                }
             } else {
+                // Deselect if clicking empty space (unless we are just dropping a pin context menu)
                 setSelectedUser(null);
-                setRouteInstructions([]);
-                routeSource.clear();
             }
         });
 
-        // Move listener handled in separate effect to avoid stale closures
+        // Context Menu (Right Click) for Pin Drop
+        initialMap.getViewport().addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const pixel = initialMap.getEventPixel(e);
+            const coord = initialMap.getCoordinateFromPixel(pixel); // Web Mercator
+            const lonLat = toLonLat(coord);
+
+            // Drop Destination Pin
+            destinationSource.clear();
+            const pinFeature = new Feature({
+                geometry: new Point(coord),
+                type: 'destination'
+            });
+            pinFeature.setStyle(new Style({
+                image: new StyleCircle({
+                    radius: 8,
+                    fill: new Fill({ color: '#ef4444' }),
+                    stroke: new Stroke({ color: '#fff', width: 3 })
+                }),
+                text: new Text({
+                    text: '📍 Dest',
+                    offsetY: -20,
+                    font: 'bold 14px Outfit',
+                    fill: new Fill({ color: '#ef4444' }),
+                    stroke: new Stroke({ color: '#fff', width: 3 })
+                })
+            }));
+            destinationSource.addFeature(pinFeature);
+            setDestinationPin({ coordinates: lonLat });
+            setSelectedUser(null); // Deselect user to show Pin panel
+            setIsNavigating(false); // Reset nav state until confirmed
+            setRouteInstructions([]);
+            routeSource.clear();
+        });
 
         return () => initialMap.setTarget(null);
     }, []);
 
-    // Handle Map Move & Mode Changes
+    // -------------------------------------------------------------------------
+    // 2. Fetch Users & Polling
+    // -------------------------------------------------------------------------
+    const fetchNearbyUsers = useCallback(async () => {
+        if (!user || !map || !userLocation) return;
+        try {
+            if (isGlobalMode) {
+                const res = await api.get('/api/users/global', { params: { interests: 'all' } });
+                setNearbyUsersList(res.data || []);
+            } else {
+                const center = toLonLat(userLocation);
+                const [lng, lat] = center;
+                const radius = discoveryMode ? 10 : 20;
+                const res = await api.get('/api/users/nearby', {
+                    params: { lat, lng, radius, interests: 'all' }
+                });
+                setNearbyUsersList(res.data || []);
+            }
+        } catch (err) {
+            console.error("Fetch error:", err);
+        }
+    }, [user, map, discoveryMode, isGlobalMode, userLocation]);
+
     useEffect(() => {
         if (!map) return;
-
         const listener = () => fetchNearbyUsers();
         map.on('moveend', listener);
-
-        // Fetch immediately on mode change or map ready
         fetchNearbyUsers();
-
         return () => map.un('moveend', listener);
     }, [map, fetchNearbyUsers]);
 
-    // Selection listener from Social
-    useEffect(() => {
-        const handleSelect = (e) => {
-            const u = e.detail;
-            setSelectedUser(u);
-            const coords = u.location?.coordinates;
-            if (coords && map) {
-                map.getView().animate({
-                    center: fromLonLat(coords),
-                    zoom: 16,
-                    duration: 1500
-                });
-            }
-        };
-        window.addEventListener('select_map_user', handleSelect);
-        return () => window.removeEventListener('select_map_user', handleSelect);
-    }, [map]);
-
+    // -------------------------------------------------------------------------
+    // 3. Render Users on Map (Marker Branding)
+    // -------------------------------------------------------------------------
     useEffect(() => {
         if (!map) return;
-
         userSource.clear();
 
-        // 1. Add "Me" Marker
+        // A. Add "Me" Marker (White, Top Z)
         if (userLocation) {
-            const meFeature = new Feature({
-                geometry: new Point(userLocation),
-                type: 'me',
-            });
+            const meFeature = new Feature({ geometry: new Point(userLocation), type: 'me' });
             meFeature.setStyle(new Style({
                 image: new StyleCircle({
-                    radius: 12,
-                    fill: new Fill({ color: '#ffffff' }), // Always White
-                    stroke: new Stroke({ color: '#000000', width: 3 }), // Neutral border for contrast
+                    radius: 14,
+                    fill: new Fill({ color: '#ffffff' }),
+                    stroke: new Stroke({ color: '#000000', width: 3 }),
                 }),
                 text: new Text({
                     text: 'You',
-                    offsetY: -22,
-                    fill: new Fill({ color: isDark ? '#fff' : '#000' }), // Neutral text
+                    offsetY: -24,
+                    fill: new Fill({ color: isDark ? '#fff' : '#000' }),
                     font: 'bold 13px Outfit',
                     stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 })
-                })
+                }),
+                zIndex: 999
             }));
             userSource.addFeature(meFeature);
         }
 
-        // 2. Add Nearby Users
+        // B. Add Other Users
         nearbyUsersList.forEach(u => {
             if (!u.location?.coordinates) return;
-            // Filter out 0,0 (Null Island) unless it's genuinely intended (unlikely for demographic app)
             if (u.location.coordinates[0] === 0 && u.location.coordinates[1] === 0) return;
 
             const feature = new Feature({
@@ -270,23 +220,35 @@ const MapComponent = () => {
                 type: 'user',
                 data: u
             });
-            const isSelected = selectedUser?._id === u._id;
-            // Online: Socket active (strict logic)
-            const isOnline = u.isOnline; // Remove seed user force logic
 
-            // Marker Color Logic
-            // Online: Red/Purple (Theme), Offline: Black
-            let markerColor;
-            if (isOnline) {
-                markerColor = isDark ? '#D0BCFF' : theme.palette.primary.main;
-            } else {
-                markerColor = '#000000';
+            // Branding Logic
+            const isOnline = u.isOnline;
+            const isBusy = u.availabilityStatus === 'Busy';
+            const isOffline = !u.isActive || !isOnline; // Strict offline definition
+
+            // Mutual Match Check
+            const myInterests = user?.interests || [];
+            const theirInterests = u.interests || [];
+            const isMutual = myInterests.some(i => theirInterests.includes(i));
+
+            let markerColor = '#fbbf24'; // Neutral Default (Yellow)
+            let zIndex = 10;
+            let styles = [];
+
+            if (isOffline) {
+                markerColor = '#000000'; // Black (Offline)
+            } else if (isBusy) {
+                markerColor = '#9ca3af'; // Grey (Busy)
+            } else if (isMutual) {
+                markerColor = '#22c55e'; // Green (Mutual)
             }
 
-            feature.setStyle(new Style({
+            // Base Marker Style
+            const isSelected = selectedUser?._id === u._id;
+            styles.push(new Style({
                 image: new StyleCircle({
                     radius: isSelected ? 12 : 8,
-                    fill: new Fill({ color: isSelected ? markerColor : markerColor }), // Solid color
+                    fill: new Fill({ color: markerColor }),
                     stroke: new Stroke({ color: '#fff', width: isSelected ? 3 : 2 })
                 }),
                 text: isSelected ? new Text({
@@ -294,53 +256,213 @@ const MapComponent = () => {
                     offsetY: -20,
                     fill: new Fill({ color: isDark ? '#fff' : '#000' }),
                     font: 'bold 12px Outfit',
-                    stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 2 })
-                }) : null
+                    stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 })
+                }) : null,
+                zIndex: 10
             }));
+
+            // Busy Badge Overlay
+            if (isBusy && isOnline) {
+                styles.push(new Style({
+                    text: new Text({
+                        text: 'Busy',
+                        offsetY: -24, // Float above
+                        font: 'bold 10px Outfit',
+                        fill: new Fill({ color: '#fff' }),
+                        backgroundFill: new Fill({ color: 'rgba(0,0,0,0.5)' }),
+                        padding: [2, 4, 2, 4],
+                    }),
+                    zIndex: 11
+                }));
+            }
+
+            feature.setStyle(styles);
             userSource.addFeature(feature);
         });
 
-        // 3. Radius Circle (Only in Discovery Mode)
+        // C. Discovery Circle
         radiusSource.clear();
-        if (discoveryMode && !isGlobalMode && userLocation) { // Only show radius if in discovery and not global
+        if (discoveryMode && !isGlobalMode && userLocation) {
             const circleFeature = new Feature({
                 geometry: new GeomCircle(userLocation, 10000)
             });
             circleFeature.setStyle(new Style({
                 stroke: new Stroke({ color: theme.palette.primary.main, width: 2, lineDash: [10, 10] }),
-                fill: new Fill({ color: isDark ? 'rgba(208, 188, 255, 0.1)' : 'rgba(190, 54, 39, 0.05)' })
+                fill: new Fill({ color: isDark ? 'rgba(208, 188, 255, 0.05)' : 'rgba(190, 54, 39, 0.05)' })
             }));
             radiusSource.addFeature(circleFeature);
         }
 
-    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, isGlobalMode, map, userLocation, theme.palette.primary.main]);
+    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, isGlobalMode, map, userLocation, theme, user]);
 
-    // Socket
+    // -------------------------------------------------------------------------
+    // 4. Routing & Navigation
+    // -------------------------------------------------------------------------
+    const getDirections = async (targetCoords) => {
+        if (!map || !targetCoords) return;
+
+        let startCoords;
+        if (userLocation) {
+            startCoords = toLonLat(userLocation);
+        } else {
+            startCoords = toLonLat(map.getView().getCenter());
+        }
+
+        const [myLng, myLat] = startCoords;
+        const [targetLng, targetLat] = targetCoords;
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${myLng},${myLat};${targetLng},${targetLat}?overview=full&geometries=geojson&steps=true`;
+
+        try {
+            const response = await fetch(osrmUrl);
+            const data = await response.json();
+            if (data.routes && data.routes.length > 0) {
+                const route = data.routes[0];
+                const coordinates = route.geometry.coordinates;
+                const instructions = route.legs[0].steps.map(step => step.maneuver.instruction);
+                setRouteInstructions(instructions);
+                setIsNavigating(true);
+
+                routeSource.clear();
+                const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
+                routeFeature.setStyle(new Style({
+                    stroke: new Stroke({ color: theme.palette.primary.main, width: 6 }) // Primary Color Route
+                }));
+                routeSource.addFeature(routeFeature);
+
+                // Fit View
+                map.getView().fit(routeFeature.getGeometry().getExtent(), { padding: [100, 300, 100, 100], duration: 1000 });
+            }
+        } catch (err) {
+            console.error("Routing error:", err);
+            setAlertMessage("Failed to calculate route.");
+        }
+    };
+
+    const clearRoute = () => {
+        setRouteInstructions([]);
+        setIsNavigating(false);
+        routeSource.clear();
+        setDestinationPin(null);
+        destinationSource.clear();
+    };
+
+    const startNavigation = () => {
+        if (destinationPin) {
+            getDirections(destinationPin.coordinates);
+        } else if (selectedUser) {
+            // Notify via socket
+            if (socketRef.current) {
+                socketRef.current.emit('getting_directions', { targetUserId: selectedUser._id });
+            }
+            getDirections(selectedUser.location.coordinates);
+        }
+    };
+
+    // -------------------------------------------------------------------------
+    // 5. Easter Eggs & Clusters
+    // -------------------------------------------------------------------------
+
+    // Trigger from Search Bar
+    useEffect(() => {
+        if (searchQuery === 'SHOW-CLUSTER-CENTERS') {
+            window.dispatchEvent(new Event('show_cluster_centers'));
+            setSearchQuery(''); // Clear it
+        }
+    }, [searchQuery]);
+
+    // Listener for Cluster Event (from Logo or Search)
+    useEffect(() => {
+        const handleShowClusters = () => {
+            if (!map || nearbyUsersList.length === 0) return;
+
+            // 1. Group users by interest[0] (Simpler clustering)
+            const clusters = {};
+            nearbyUsersList.forEach(u => {
+                const mainInterest = u.interests?.[0] || 'Uncategorized';
+                if (!clusters[mainInterest]) clusters[mainInterest] = [];
+                clusters[mainInterest].push(u);
+            });
+
+            clusterSource.clear();
+
+            Object.entries(clusters).forEach(([interest, users]) => {
+                if (users.length < 2) return; // Minimal cluster
+
+                // Calculate Centroid
+                let sumLat = 0, sumLng = 0;
+                users.forEach(u => {
+                    sumLng += u.location.coordinates[0];
+                    sumLat += u.location.coordinates[1];
+                });
+                const avgLng = sumLng / users.length;
+                const avgLat = sumLat / users.length;
+                const center = fromLonLat([avgLng, avgLat]);
+
+                // Render Centroid Circle
+                const centerFeature = new Feature({ geometry: new Point(center) });
+                centerFeature.setStyle(new Style({
+                    image: new StyleCircle({
+                        radius: 20, // Large Pulsing Appearance (Static for now)
+                        stroke: new Stroke({ color: '#ef4444', width: 2 }),
+                        fill: new Fill({ color: 'rgba(239, 68, 68, 0.2)' })
+                    }),
+                    text: new Text({
+                        text: interest,
+                        font: 'bold 12px Outfit',
+                        fill: new Fill({ color: '#ef4444' }),
+                        stroke: new Stroke({ color: '#fff', width: 3 }),
+                        offsetY: 0
+                    })
+                }));
+                clusterSource.addFeature(centerFeature);
+
+                // Render Lines to Users
+                users.forEach(u => {
+                    const line = new Feature({
+                        geometry: new LineString([center, fromLonLat(u.location.coordinates)])
+                    });
+                    line.setStyle(new Style({
+                        stroke: new Stroke({ color: 'rgba(239, 68, 68, 0.3)', width: 1 })
+                    }));
+                    clusterSource.addFeature(line);
+                });
+            });
+
+            // Auto-clear after 10 seconds?
+            setTimeout(() => clusterSource.clear(), 10000);
+
+            // Zoom out to see clusters
+            map.getView().animate({ zoom: map.getView().getZoom() - 1, duration: 1000 });
+        };
+
+        window.addEventListener('show_cluster_centers', handleShowClusters);
+        return () => window.removeEventListener('show_cluster_centers', handleShowClusters);
+    }, [map, nearbyUsersList, clusterSource]);
+
+
+    // -------------------------------------------------------------------------
+    // 6. Socket & Search Helpers
+    // -------------------------------------------------------------------------
     useEffect(() => {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         socketRef.current = io(apiUrl, { withCredentials: true });
         setSocketReady(true);
         if (user) {
             socketRef.current.emit('register_user', user._id || user.id);
-            // Immediate Location Handshake (Logic Sync)
-            if (user.location?.coordinates && (user.location.coordinates[0] !== 0 || user.location.coordinates[1] !== 0)) {
+            if (user.location?.coordinates && (user.location.coordinates[0] !== 0)) {
                 socketRef.current.emit('update_location', {
                     lng: user.location.coordinates[0],
                     lat: user.location.coordinates[1]
                 });
             }
         }
-
         socketRef.current.on('chat_request', ({ from, fromName, roomId }) => {
             setChatTarget({ _id: from, displayName: fromName || 'User', roomId: roomId });
             socketRef.current.emit('accept_chat', { roomId });
         });
-
         socketRef.current.on('directions_alert', ({ message }) => {
             setAlertMessage(message);
-            // Persistent notification: No timeout
         });
-
         return () => socketRef.current.disconnect();
     }, [user]);
 
@@ -350,6 +472,40 @@ const MapComponent = () => {
         setSearchQuery(place.display_name.split(',')[0]);
         setShowSuggestions(false);
     };
+
+    // Debounce Search
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchQuery.length > 2 && showSuggestions && searchQuery !== 'SHOW-CLUSTER-CENTERS') {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`);
+                    setSearchResults(await res.json());
+                } catch (err) { console.error(err); }
+            } else if (searchQuery.length === 0) {
+                setSearchResults([]);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery, showSuggestions]);
+
+    // Selection listener from Social
+    useEffect(() => {
+        const handleSelect = (e) => {
+            const u = e.detail;
+            setSelectedUser(u);
+            setDestinationPin(null);
+            if (u.location?.coordinates && map) {
+                map.getView().animate({
+                    center: fromLonLat(u.location.coordinates),
+                    zoom: 16,
+                    duration: 1500
+                });
+            }
+        };
+        window.addEventListener('select_map_user', handleSelect);
+        return () => window.removeEventListener('select_map_user', handleSelect);
+    }, [map]);
+
 
     return (
         <div className="relative h-full w-full bg-[#e5e7eb] dark:bg-[#1a1a1a] p-4">
@@ -372,7 +528,7 @@ const MapComponent = () => {
                             <span className="material-symbols-outlined text-gray-400 mr-2">search</span>
                             <input
                                 type="text"
-                                placeholder="Search for any place"
+                                placeholder={searchQuery === 'SHOW-CLUSTER-CENTERS' ? "Activating Easter Egg..." : "Search places / Type secret code"}
                                 className="bg-transparent border-none focus:ring-0 text-[#1a100f] dark:text-white font-bold text-sm w-full placeholder-gray-400"
                                 value={searchQuery}
                                 onChange={(e) => {
@@ -388,18 +544,13 @@ const MapComponent = () => {
                             </button>
                         )}
                     </div>
-
-                    {/* Suggestions Dropdown */}
+                    {/* Suggestions */}
                     {showSuggestions && searchResults.length > 0 && (
                         <div className="absolute top-full text-left mt-2 w-full bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-2">
                             {searchResults.map((place) => (
-                                <button
-                                    key={place.place_id}
-                                    onClick={() => handleSearchSelect(place)}
-                                    className="w-full text-left px-4 py-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
-                                >
+                                <button key={place.place_id} onClick={() => handleSearchSelect(place)} className="w-full text-left px-4 py-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0">
                                     <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{place.display_name.split(',')[0]}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{place.display_name}</p>
+                                    <p className="text-xs text-gray-500 truncate">{place.display_name}</p>
                                 </button>
                             ))}
                         </div>
@@ -407,34 +558,18 @@ const MapComponent = () => {
                 </div>
             </div>
 
-
-            {/* Top Controls: Moved from Bottom */}
+            {/* Top Controls */}
             <div className="absolute top-6 right-6 z-20 flex gap-4">
-                {/* Discovery Mode Toggle */}
                 <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-all ${isGlobalMode ? 'opacity-50 pointer-events-none' : ''}`}>
                     <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={discoveryMode}
-                            disabled={isGlobalMode}
-                            onChange={() => setDiscoveryMode(!discoveryMode)}
-                        />
+                        <input type="checkbox" className="sr-only peer" checked={discoveryMode} disabled={isGlobalMode} onChange={() => setDiscoveryMode(!discoveryMode)} />
                         <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
                     <span className="text-[#1a100f] dark:text-white font-bold text-xs">Discovery (10km)</span>
                 </div>
-
-                {/* Global View Toggle */}
                 <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 ${discoveryMode ? 'opacity-50 pointer-events-none' : ''}`}>
                     <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={isGlobalMode}
-                            disabled={discoveryMode}
-                            onChange={() => setIsGlobalMode(!isGlobalMode)}
-                        />
+                        <input type="checkbox" className="sr-only peer" checked={isGlobalMode} disabled={discoveryMode} onChange={() => setIsGlobalMode(!isGlobalMode)} />
                         <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
                     <span className="text-[#1a100f] dark:text-white font-bold text-xs">Global View</span>
@@ -442,85 +577,89 @@ const MapComponent = () => {
             </div>
 
             {/* Alert Message Toast */}
-            {
-                alertMessage && (
-                    <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
-                        <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20">
-                            <span className="material-symbols-outlined fill-current">directions_car</span>
-                            <span className="font-bold text-sm">{alertMessage}</span>
-                            <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80">
-                                <span className="material-symbols-outlined text-sm">close</span>
+            {alertMessage && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20">
+                        <span className="material-symbols-outlined fill-current">directions_car</span>
+                        <span className="font-bold text-sm">{alertMessage}</span>
+                        <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80"><span className="material-symbols-outlined text-sm">close</span></button>
+                    </div>
+                </div>
+            )}
+
+            {/* Navigation / Info Sidebar */}
+            {(selectedUser || destinationPin) && (
+                <div className="absolute top-24 left-6 z-20 w-80 animate-in fade-in slide-in-from-left-4 duration-500">
+                    <div className="bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl rounded-[28px] p-6 shadow-2xl border border-white/20 dark:border-white/5">
+
+                        {/* Header */}
+                        <div className="flex justify-between items-start mb-6">
+                            <h3 className="text-primary text-xl font-black">
+                                {destinationPin ? 'Dropped Pin' : 'User Details'}
+                            </h3>
+                            <button onClick={() => { setSelectedUser(null); setDestinationPin(null); }} className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors">
+                                <span className="material-symbols-outlined text-lg opacity-60">close</span>
                             </button>
                         </div>
-                    </div>
-                )
-            }
 
-            {/* User Card */}
-            {
-                selectedUser && (
-                    <div className="absolute top-24 left-6 z-20 w-80 animate-in fade-in slide-in-from-left-4 duration-500">
-                        <div className="bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl rounded-[28px] p-6 shadow-2xl border border-white/20 dark:border-white/5">
-                            <div className="flex justify-between items-start mb-6">
-                                <h3 className="text-primary text-xl font-black">Location Details</h3>
-                            </div>
+                        {/* Details */}
+                        {selectedUser ? (
                             <div className="space-y-4 mb-6">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500 font-bold">Name:</span>
                                     <span className="text-[#1a100f] dark:text-white font-black">{selectedUser.displayName}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-bold">Lat/Lon:</span>
-                                    <span className="text-[#1a100f] dark:text-white font-bold">
-                                        {selectedUser.location?.coordinates?.[1].toFixed(4)}, {selectedUser.location?.coordinates?.[0].toFixed(4)}
+                                    <span className="text-gray-500 font-bold">Status:</span>
+                                    <span className={`font-black uppercase text-[10px] tracking-widest px-2 py-0.5 rounded ${selectedUser.isOnline ? 'text-green-500 bg-green-500/10' : 'text-gray-500 bg-gray-100'}`}>
+                                        {selectedUser.isOnline ? 'Online' : 'Offline'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-bold">Status:</span>
-                                    {(() => {
-                                        const isOnline = selectedUser.isOnline;
-                                        return (
-                                            <span className={`font-black uppercase text-[10px] tracking-widest px-2 py-0.5 rounded ${isOnline
-                                                ? (isDark ? 'text-[#D0BCFF] bg-purple-500/10' : 'text-primary bg-primary/10')
-                                                : 'text-gray-500 bg-gray-100 dark:bg-white/5'
-                                                }`}>
-                                                {isOnline ? 'Active' : 'Offline'}
-                                            </span>
-                                        );
-                                    })()}
-                                </div>
                             </div>
-
-                            {/* Route Instructions */}
-                            {routeInstructions.length > 0 && (
-                                <div className="mb-6 max-h-48 overflow-y-auto custom-scrollbar border-t border-gray-100 dark:border-white/10 pt-4">
-                                    <p className="text-[10px] font-black uppercase text-gray-400 mb-2">Directions</p>
-                                    {routeInstructions.map((step, i) => (
-                                        <div key={i} className="flex gap-2 mb-2 text-xs font-bold text-[#1a100f] dark:text-white bg-gray-50 dark:bg-white/5 p-2 rounded-lg">
-                                            <span className="text-primary">{i + 1}.</span>
-                                            <span>{step}</span>
-                                        </div>
-                                    ))}
+                        ) : (
+                            <div className="space-y-4 mb-6">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500 font-bold">Location:</span>
+                                    <span className="text-[#1a100f] dark:text-white font-black">Custom Destination</span>
                                 </div>
-                            )}
+                                <p className="text-xs text-gray-400">Right-click on map to move pin.</p>
+                            </div>
+                        )}
 
-                            <div className="flex flex-col gap-3">
+                        {/* Turn-by-Turn Panel */}
+                        {isNavigating && routeInstructions.length > 0 && (
+                            <div className="mb-6 max-h-64 overflow-y-auto custom-scrollbar border-t border-gray-100 dark:border-white/10 pt-4">
+                                <p className="text-[10px] font-black uppercase text-gray-400 mb-2 sticky top-0 bg-white dark:bg-[#141218] py-1">Route Instructions</p>
+                                {routeInstructions.map((step, i) => (
+                                    <div key={i} className="flex gap-3 mb-2 text-xs font-bold text-[#1a100f] dark:text-white bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5">
+                                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary font-black text-[10px]">{i + 1}</div>
+                                        <span>{step}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-3">
+                            {!isNavigating ? (
                                 <button
-                                    onClick={() => getDirections(selectedUser)}
+                                    onClick={startNavigation}
                                     className="w-full bg-primary hover:brightness-110 text-white py-3 rounded-2xl font-black text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                                 >
                                     <span className="material-symbols-outlined text-lg">directions</span>
-                                    Get Directions
+                                    Start Navigation
                                 </button>
-                                {routeInstructions.length > 0 && (
-                                    <button
-                                        onClick={clearRoute}
-                                        className="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 py-3 rounded-2xl font-black text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">close</span>
-                                        Remove Route
-                                    </button>
-                                )}
+                            ) : (
+                                <button
+                                    onClick={clearRoute}
+                                    className="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 py-3 rounded-2xl font-black text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">close</span>
+                                    Stop Navigation
+                                </button>
+                            )}
+
+                            {selectedUser && (
                                 <button
                                     onClick={() => setChatTarget(selectedUser)}
                                     className="w-full bg-white dark:bg-[#231f29] text-primary py-3 rounded-2xl font-black text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -528,31 +667,21 @@ const MapComponent = () => {
                                     <span className="material-symbols-outlined text-lg">chat</span>
                                     Chat
                                 </button>
-                                <button
-                                    onClick={() => setSelectedUser(null)}
-                                    className="w-full py-2 text-gray-400 hover:text-gray-600 dark:hover:text-white font-bold text-sm"
-                                >
-                                    Close
-                                </button>
-                            </div>
+                            )}
                         </div>
                     </div>
-                )
-            }
-
-
+                </div>
+            )}
 
             {/* Chat Overlay */}
-            {
-                chatTarget && socketReady && (
-                    <ChatOverlay
-                        socket={socketRef.current}
-                        user={user}
-                        targetUser={chatTarget}
-                        onClose={() => setChatTarget(null)}
-                    />
-                )
-            }
+            {chatTarget && socketReady && (
+                <ChatOverlay
+                    socket={socketRef.current}
+                    user={user}
+                    targetUser={chatTarget}
+                    onClose={() => setChatTarget(null)}
+                />
+            )}
         </div >
     );
 };

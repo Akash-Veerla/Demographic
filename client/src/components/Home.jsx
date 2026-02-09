@@ -7,7 +7,7 @@ import api from '../utils/api';
 const Home = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [stats, setStats] = useState({ activeNearby: 0, matchedInterestsNearby: 0 });
+    const [stats, setStats] = useState({ activeNearby: 0, matchedInterestsNearby: 0, topInterests: [] });
     const [loadingStats, setLoadingStats] = useState(true);
 
     useEffect(() => {
@@ -50,8 +50,25 @@ const Home = () => {
         </div>
     );
 
+    const PulseCard = ({ category, count, index }) => (
+        <div
+            className="flex-shrink-0 w-64 bg-gradient-to-br from-primary/5 to-transparent dark:from-primary/10 p-6 rounded-3xl border border-primary/10 relative overflow-hidden group cursor-pointer hover:border-primary/30 transition-all"
+            onClick={() => navigate(`/map?filter=${category}`)}
+            style={{ animationDelay: `${index * 100}ms` }}
+        >
+            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full"></div>
+
+            <h4 className="text-xl font-black text-gray-900 dark:text-white mb-1">{category}</h4>
+            <p className="text-sm text-primary font-bold">{count} Active Nearby</p>
+            <div className="mt-4 h-1 w-full bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full" style={{ width: '70%' }}></div>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="min-h-full w-full bg-transparent p-4 md:p-8 font-display transition-colors duration-300">
+        <div className="min-h-full w-full bg-transparent p-4 md:p-8 font-display transition-colors duration-300 pb-20">
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* 1. Header / Greeting */}
@@ -100,7 +117,26 @@ const Home = () => {
                     />
                 </div>
 
-                {/* 4. Info / Welcome Section (Row 3 - Glassmorphism) */}
+                {/* 4. Live Pulse Carousel (New Row) */}
+                {stats.topInterests && stats.topInterests.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                Live Pulse (50km)
+                            </h3>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+                            {stats.topInterests.map((item, i) => (
+                                <div key={i} className="snap-start">
+                                    <PulseCard category={item.category} count={item.count} index={i} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* 5. Info / Welcome Section (Row 4 - Glassmorphism) */}
                 <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[32px] p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                     <div className="max-w-4xl mx-auto relative z-10">

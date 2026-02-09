@@ -586,7 +586,32 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
             });
         }
 
-        res.json({ activeNearby, matchedInterestsNearby });
+        // 3. Top Interests Pulse (50km Radius)
+        const pulseDistance = 50000; // 50km
+        const topInterestsRaw = await User.aggregate([
+            {
+                $geoNear: {
+                    near: { type: 'Point', coordinates: centerCoords },
+                    distanceField: "dist.calculated",
+                    maxDistance: pulseDistance,
+                    query: {
+                        'location.coordinates': { $ne: [0, 0] },
+                        isActive: { $ne: false },
+                        _id: { $ne: userId } // Exclude self
+                    },
+                    includeLocs: "dist.location",
+                    spherical: true
+                }
+            },
+            { $unwind: "$interests" },
+            { $group: { _id: "$interests", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 3 }
+        ]);
+
+        const topInterests = topInterestsRaw.map(i => ({ category: i._id, count: i.count }));
+
+        res.json({ activeNearby, matchedInterestsNearby, topInterests });
 
     } catch (err) {
         console.error('Stats error:', err);
