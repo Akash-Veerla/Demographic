@@ -774,12 +774,13 @@ const MapComponent = () => {
 
 
             {/* F. Navigation Panel (Replaces Detail Panel when navigating) */}
+            {/* F. Navigation Panel (Replaces Detail Panel when navigating) */}
             <div className={`
-                absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
-                ${isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-6 md:right-6 md:w-72 md:rounded-3xl h-fit
-                bottom-0 left-0 right-0 w-full rounded-t-3xl
-                flex flex-col
+                fixed z-[100] bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-500 ease-in-out
+                ${isNavigating ? 'translate-x-0 translate-y-0 opacity-100 pointer-events-auto' : 'md:-translate-x-[120%] translate-y-[120%] opacity-0 pointer-events-none'}
+                md:top-6 md:left-8 md:w-80 md:rounded-[28px] h-fit
+                bottom-0 left-0 right-0 w-full rounded-t-[28px]
+                flex flex-col ring-1 ring-black/5
             `}>
                 {/* Header Only - Directions Removed */}
                 <div className="p-6 shrink-0 flex justify-between items-center">
