@@ -19,9 +19,9 @@ import { useTheme } from '@mui/material';
 const TIPS = [
     { icon: 'person', text: 'Click on user pins to see details' },
     { icon: 'push_pin', text: 'Right click anywhere to drop a pin' },
-    { icon: 'navigation', text: 'Get real-time directions' },
-    { icon: 'chat', text: 'Chat with nearby connections' },
-    { icon: 'travel_explore', text: 'Use Discovery Mode to find interests' },
+    { icon: 'navigation', text: 'Get real-time directions to users' },
+    { icon: 'person_add', text: 'Send friend requests to connect' },
+    { icon: 'group', text: 'Friends can see each other\'s online status' },
 ];
 
 const MapComponent = () => {
@@ -153,14 +153,7 @@ const MapComponent = () => {
             });
             pinFeature.setStyle(new Style({
                 image: new StyleCircle({
-                    radius: 8,
-                    fill: new Fill({ color: '#ef4444' }),
-                    stroke: new Stroke({ color: '#fff', width: 3 })
-                }),
-                text: new Text({
-                    text: '📍 Dest',
-                    offsetY: -20,
-                    font: 'bold 14px Outfit',
+                    radius: 9,
                     fill: new Fill({ color: '#ef4444' }),
                     stroke: new Stroke({ color: '#fff', width: 3 })
                 })
@@ -751,12 +744,9 @@ const MapComponent = () => {
                             )}
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            <div className="aspect-video bg-primary/5 rounded-xl flex items-center justify-center border border-primary/10 border-dashed">
-                                <span className="material-symbols-outlined text-3xl text-primary/40">location_on</span>
-                            </div>
-                            <p className="text-xs font-medium text-gray-500 text-center">
-                                You placed a pin here. Navigate to this location?
+                        <div className="py-2">
+                            <p className="text-xs font-medium text-gray-500 text-center leading-relaxed">
+                                You dropped a pin here. Tap <strong>Directions</strong> below to navigate.
                             </p>
                         </div>
                     )}

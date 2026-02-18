@@ -772,25 +772,30 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
         }
 
         const centerCoords = [parseFloat(lng), parseFloat(lat)];
-        const maxDistance = 10000; // 10km
+        const maxDistance = 20000; // 20km
 
-        // 1. Active Nearby Count (Last 24h)
-        const activeNearby = await User.countDocuments({
-            location: {
-                $near: {
-                    $geometry: { type: 'Point', coordinates: centerCoords },
-                    $maxDistance: maxDistance
-                }
-            },
-            'location.coordinates': { $ne: [0, 0] },
-            lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-            _id: { $ne: userId }
-        });
-
-        // 2. Matched Interests Count (Active or Inactive)
-        const currentUser = await User.findById(userId).select('interests');
+        // Get current user with friends list
+        const currentUser = await User.findById(userId).select('interests friends');
         const userInterests = currentUser.interests || [];
+        const userFriends = currentUser.friends || [];
 
+        // 1. Friends Online Nearby (mutual friends within 20km)
+        let activeNearby = 0;
+        if (userFriends.length > 0) {
+            activeNearby = await User.countDocuments({
+                _id: { $in: userFriends },
+                location: {
+                    $near: {
+                        $geometry: { type: 'Point', coordinates: centerCoords },
+                        $maxDistance: maxDistance
+                    }
+                },
+                'location.coordinates': { $ne: [0, 0] },
+                lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+            });
+        }
+
+        // 2. Matched Interests Count (all users within 20km with shared interests)
         let matchedInterestsNearby = 0;
         if (userInterests.length > 0) {
             matchedInterestsNearby = await User.countDocuments({

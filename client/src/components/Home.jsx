@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Map, MessageSquare, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
+import { Map, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
 import api from '../utils/api';
 
 const Home = () => {
@@ -80,18 +80,12 @@ const Home = () => {
                 </div>
 
                 {/* 2. Navigation Cards (Row 1) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <DashboardCard
                         title="Explore Map"
                         description="Discover people and places matching your vibe nearby."
                         icon={Map}
-                        onClick={() => navigate('/map')}
-                    />
-                    <DashboardCard
-                        title="Conversations"
-                        description="Chat with your connections and plan meetups."
-                        icon={MessageSquare}
-                        onClick={() => navigate('/chat')}
+                        onClick={() => navigate('/social')}
                     />
                     <DashboardCard
                         title="My Profile"
@@ -104,15 +98,15 @@ const Home = () => {
                 {/* 3. Stats (Row 2) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StatCard
-                        label="Active Nearby"
+                        label="Friends Online"
                         count={stats.activeNearby}
-                        description="Users active within 10km in the last 24h"
+                        description="Mutual friends active within 20km"
                         icon={Radio}
                     />
                     <StatCard
                         label="Matched Interests"
                         count={stats.matchedInterestsNearby}
-                        description="Users nearby sharing at least one interest"
+                        description="Users within 20km sharing your interests"
                         icon={Heart}
                     />
                 </div>
@@ -143,7 +137,7 @@ const Home = () => {
                         <div className="mb-10 text-center md:text-left">
                             <h2 className="text-3xl font-black text-[#1a100f] dark:text-white mb-4 tracking-tight">Welcome to KON-NECT</h2>
                             <p className="text-[#5e413d] dark:text-[#CAC4D0] leading-relaxed font-medium text-lg">
-                                Connecting People by Interest. This platform is designed to help you find meaningful connections based on what you truly care about. Unlike traditional social networks, we prioritize privacy and intentionality.
+                                KON-NECT helps you discover and connect with people near you who share your passions. Whether it's tech, travel, music, or art — find your tribe on the map, send a friend request, and start real conversations. No algorithms, no endless scrolling — just genuine connections based on what you love.
                             </p>
                         </div>
 
@@ -157,9 +151,9 @@ const Home = () => {
                                 </h3>
                                 <ul className="space-y-4">
                                     {[
-                                        "Navigate to the Map to see who is around you.",
-                                        "Use Discovery Mode to find people with shared interests.",
-                                        "Send a Friend Request if you'd like to connect."
+                                        "Open the Map to see people near you with shared interests.",
+                                        "Click on a pin to view their profile and interests.",
+                                        "Send a Friend Request to connect and start chatting."
                                     ].map((text, i) => (
                                         <li key={i} className="flex gap-4 items-start group/li">
                                             <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 group-hover/li:scale-150 transition-transform"></span>
@@ -177,9 +171,9 @@ const Home = () => {
                                 </h3>
                                 <ul className="space-y-4">
                                     {[
-                                        "Your exact location is protected (fuzzed).",
-                                        "Chat is only enabled after mutual acceptance.",
-                                        "You are in control of your visibility settings."
+                                        "Your exact location is fuzzed — only your general area is visible.",
+                                        "Online status is only visible to your mutual friends.",
+                                        "Chat unlocks only after both users accept a friend request."
                                     ].map((text, i) => (
                                         <li key={i} className="flex gap-4 items-start group/li">
                                             <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 group-hover/li:scale-150 transition-transform"></span>
