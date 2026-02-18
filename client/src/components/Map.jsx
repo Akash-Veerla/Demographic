@@ -669,48 +669,48 @@ const MapComponent = () => {
             <div className={`
                 absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
                 ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-28 md:left-8 md:w-80 md:rounded-3xl md:h-auto md:max-h-[calc(100%-9rem)]
-                bottom-0 left-0 right-0 w-full rounded-t-3xl max-h-[85vh]
+                md:top-24 md:left-6 md:w-72 md:rounded-2xl md:h-auto md:max-h-[calc(100%-7rem)]
+                bottom-0 left-0 right-0 w-full rounded-t-3xl max-h-[70vh]
                 flex flex-col overflow-hidden ring-1 ring-black/5
             `}>
                 {/* Header */}
-                <div className="p-6 pb-2 shrink-0 flex justify-between items-start">
-                    <div>
-                        <h3 className="text-2xl font-black tracking-tight text-[#1a100f] dark:text-white">
+                <div className="px-4 pt-4 pb-1.5 shrink-0 flex justify-between items-start">
+                    <div className="min-w-0 flex-1 mr-2">
+                        <h3 className="text-lg font-black tracking-tight text-[#1a100f] dark:text-white truncate">
                             {selectedUser ? selectedUser.displayName : (destinationPin ? 'Dropped Pin' : 'Details')}
                         </h3>
-                        <p className="text-xs font-bold text-primary uppercase tracking-widest mt-0.5">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
                             {selectedUser ? 'User Details' : 'Location'}
                         </p>
                     </div>
                     <button
                         onClick={() => { setSelectedUser(null); setDestinationPin(null); }}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors shrink-0"
                     >
-                        <span className="material-symbols-outlined text-xl opacity-60">close</span>
+                        <span className="material-symbols-outlined text-lg opacity-60">close</span>
                     </button>
                 </div>
 
                 {/* Content (Scrollable) */}
-                <div className="p-6 pt-2 overflow-y-auto custom-scrollbar grow">
+                <div className="px-4 pb-3 overflow-y-auto custom-scrollbar grow">
                     {selectedUser ? (
-                        <div className="space-y-4">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Status</span>
-                                <div className="flex items-center gap-2 flex-wrap">
+                        <div className="space-y-2.5">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                     {selectedUser.isFriend ? (
                                         <>
-                                            <span className={`font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full ${selectedUser.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
+                                            <span className={`font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-full ${selectedUser.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
                                                 {selectedUser.isOnline ? '● Online' : '○ Offline'}
                                             </span>
-                                            <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10">
+                                            <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-full text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10">
                                                 ★ Friend
                                             </span>
                                         </>
                                     ) : (
                                         <>
                                             {selectedUser.sharedInterests && selectedUser.sharedInterests.length > 0 && (
-                                                <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                                                <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
                                                     ★ {selectedUser.matchScore} Match{selectedUser.matchScore !== 1 ? 'es' : ''}
                                                 </span>
                                             )}
@@ -720,49 +720,54 @@ const MapComponent = () => {
                             </div>
 
                             {selectedUser.interests && (
-                                <div className="flex flex-col gap-2">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Interests</span>
-                                    <div className="flex flex-wrap gap-2">
-                                        {selectedUser.interests.map((int, i) => {
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Interests</span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {selectedUser.interests.slice(0, 4).map((int, i) => {
                                             const interestStr = typeof int === 'string' ? int : int.name;
                                             const isShared = selectedUser.sharedInterests?.some(si => si.toLowerCase() === interestStr.toLowerCase());
                                             return (
-                                                <span key={i} className={`text-xs font-bold px-2 py-1 rounded-md border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
+                                                <span key={i} className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
                                                     {isShared && '★ '}{interestStr}
                                                 </span>
                                             );
                                         })}
+                                        {selectedUser.interests.length > 4 && (
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-500">
+                                                +{selectedUser.interests.length - 4} more
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
                             {selectedUser.bio && (
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Bio</span>
-                                    <p className="tex-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Bio</span>
+                                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-snug line-clamp-2">
                                         {selectedUser.bio}
                                     </p>
                                 </div>
                             )}
                         </div>
                     ) : (
-                        <div className="space-y-6">
-                            <div className="aspect-video bg-primary/5 rounded-2xl flex items-center justify-center border border-primary/10 border-dashed">
-                                <span className="material-symbols-outlined text-4xl text-primary/40">location_on</span>
+                        <div className="space-y-4">
+                            <div className="aspect-video bg-primary/5 rounded-xl flex items-center justify-center border border-primary/10 border-dashed">
+                                <span className="material-symbols-outlined text-3xl text-primary/40">location_on</span>
                             </div>
-                            <p className="text-sm font-medium text-gray-500 text-center">
-                                You placed a pin here. Would you like to navigate to this location?
+                            <p className="text-xs font-medium text-gray-500 text-center">
+                                You placed a pin here. Navigate to this location?
                             </p>
                         </div>
                     )}
                 </div>
 
                 {/* Actions Footer */}
-                <div className="p-6 pt-4 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-3">
+                <div className="px-4 py-3 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-2">
                     {selectedUser && !selectedUser.isFriend && (
                         selectedUser.friendRequestSent ? (
-                            <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 h-12 rounded-full font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
-                                <span className="material-symbols-outlined text-xl">schedule_send</span>
+                            <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 h-9 rounded-full font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
+                                <span className="material-symbols-outlined text-base">schedule_send</span>
                                 Request Sent
                             </button>
                         ) : selectedUser.friendRequestReceived ? (
@@ -781,10 +786,10 @@ const MapComponent = () => {
                                         setAlertMessage(err.response?.data?.error || 'Failed to accept');
                                     }
                                 }}
-                                className="w-full bg-green-500 hover:bg-green-600 text-white h-12 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                                className="w-full bg-green-500 hover:bg-green-600 text-white h-9 rounded-full font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
-                                <span className="material-symbols-outlined text-xl">person_add</span>
-                                Accept Friend Request
+                                <span className="material-symbols-outlined text-base">person_add</span>
+                                Accept Request
                             </button>
                         ) : (
                             <button
@@ -792,42 +797,43 @@ const MapComponent = () => {
                                     try {
                                         const res = await api.post('/api/friend-request/send', { toUserId: selectedUser._id });
                                         setAlertMessage(res.data.message);
-                                        // Immediately update selectedUser so button changes without waiting for refetch
                                         setSelectedUser(prev => ({ ...prev, friendRequestSent: true }));
                                         fetchNearbyUsers();
                                     } catch (err) {
                                         setAlertMessage(err.response?.data?.error || 'Failed to send request');
                                     }
                                 }}
-                                className="w-full bg-primary hover:brightness-110 text-white h-12 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                                className="w-full bg-primary hover:brightness-110 text-white h-9 rounded-full font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
-                                <span className="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">person_add</span>
+                                <span className="material-symbols-outlined text-base">person_add</span>
                                 Send Friend Request
                             </button>
                         )
                     )}
                     {selectedUser && selectedUser.isFriend && (
-                        <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] h-12 rounded-full font-bold text-sm flex items-center justify-center gap-2">
-                            <span className="material-symbols-outlined text-xl">group</span>
+                        <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] h-9 rounded-full font-bold text-xs flex items-center justify-center gap-2">
+                            <span className="material-symbols-outlined text-base">group</span>
                             Friends
                         </div>
                     )}
-                    <button
-                        onClick={startNavigation}
-                        className="w-full bg-primary hover:brightness-110 text-white h-12 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group"
-                    >
-                        <span className="material-symbols-outlined text-xl group-hover:animate-bounce">directions</span>
-                        Get Directions
-                    </button>
-                    {selectedUser && (
+                    <div className="flex gap-2">
                         <button
-                            onClick={() => setChatTarget(selectedUser)}
-                            className="w-full bg-white dark:bg-[#231f29] text-primary h-12 rounded-full font-bold text-sm border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            onClick={startNavigation}
+                            className="flex-1 bg-primary hover:brightness-110 text-white h-9 rounded-full font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5"
                         >
-                            <span className="material-symbols-outlined text-xl">chat</span>
-                            Chat
+                            <span className="material-symbols-outlined text-base">directions</span>
+                            Directions
                         </button>
-                    )}
+                        {selectedUser && (
+                            <button
+                                onClick={() => setChatTarget(selectedUser)}
+                                className="flex-1 bg-white dark:bg-[#231f29] text-primary h-9 rounded-full font-bold text-xs border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                            >
+                                <span className="material-symbols-outlined text-base">chat</span>
+                                Chat
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
