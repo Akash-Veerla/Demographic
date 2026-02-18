@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
 const DEFAULT_INTERESTS = [
-    "Technology", "Sports", "Music", "Travel", "Food", "Art",
-    "Gaming", "Fitness", "Movies", "Reading", "Nature", "Photography"
+    "Sports & Outdoors", "Travel", "Business & Industry", "Entertainment & Media",
+    "Food & Drink", "Home Family & Pets", "Lifestyle & Values", "Science & Education",
+    "Automotive", "Art & Design", "History & Humanities", "Programming and Technologies"
 ];
 
 const ProfileSetup = () => {

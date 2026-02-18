@@ -17,24 +17,6 @@ const Profile = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteError, setDeleteError] = useState('');
 
-    // Settings State
-    const [availabilityStatus, setAvailabilityStatus] = useState(user?.availabilityStatus || 'Available for Meetup');
-    const [saveSuccess, setSaveSuccess] = useState('');
-    const [saveError, setSaveError] = useState('');
-
-    const handleSaveSettings = async () => {
-        try {
-            await api.post('/api/user/profile', { availabilityStatus });
-            setSaveSuccess('Settings saved successfully!');
-            setSaveError('');
-            // Persistent notification: No timeout, user must dismiss
-        } catch (err) {
-            console.error(err);
-            setSaveError('Failed to save settings.');
-            setSaveSuccess('');
-        }
-    };
-
     const handleChangePassword = async () => {
         if (!passData.currentPassword || !passData.newPassword) {
             setPassError('All fields are required');
@@ -119,55 +101,18 @@ const Profile = () => {
                         </div>
                     </section>
 
-                    {/* Right Column: Settings & Requests */}
+                    {/* Right Column: Account Security & Requests */}
                     <section className="lg:col-span-7 flex flex-col gap-6">
-                        {/* Settings */}
+                        {/* Account Security */}
                         <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 h-fit">
                             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#be3627]/10 dark:border-white/5">
                                 <span className="material-symbols-outlined text-primary text-2xl">security</span>
-                                <h2 className="text-xl font-display font-bold text-[#1a100f] dark:text-[#E6E1E5]">Privacy & Status</h2>
+                                <h2 className="text-xl font-display font-bold text-[#1a100f] dark:text-[#E6E1E5]">Account Security</h2>
                             </div>
-
-                            {/* Persistent Notifications */}
-                            {saveSuccess && (
-                                <div className="mb-4 bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-100 px-4 py-3 rounded-xl flex justify-between items-center">
-                                    <span className="font-bold text-sm">{saveSuccess}</span>
-                                    <button onClick={() => setSaveSuccess('')} className="hover:opacity-70">
-                                        <span className="material-symbols-outlined text-lg">close</span>
-                                    </button>
-                                </div>
-                            )}
-                            {saveError && (
-                                <div className="mb-4 bg-red-100 dark:bg-red-900 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-100 px-4 py-3 rounded-xl flex justify-between items-center">
-                                    <span className="font-bold text-sm">{saveError}</span>
-                                    <button onClick={() => setSaveError('')} className="hover:opacity-70">
-                                        <span className="material-symbols-outlined text-lg">close</span>
-                                    </button>
-                                </div>
-                            )}
 
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-2">Availability Status</label>
-                                    <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] mb-3">Controls your visibility on the map. "Invisible" hides you completely.</p>
-                                    <div className="relative">
-                                        <select
-                                            value={availabilityStatus}
-                                            onChange={(e) => setAvailabilityStatus(e.target.value)}
-                                            className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-3 [appearance:none] [-webkit-appearance:none] [-moz-appearance:none] focus:ring-2 focus:ring-primary text-[#1a100f] dark:text-[#E6E1E5] font-medium cursor-pointer"
-                                        >
-                                            <option value="Chat Only">Chat Only</option>
-                                            <option value="Available for Meetup">Available for Meetup</option>
-                                            <option value="Invisible">Invisible</option>
-                                        </select>
-                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#915b55] dark:text-[#CAC4D0]">
-                                            <span className="material-symbols-outlined">expand_more</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="border-t border-[#be3627]/10 dark:border-white/5 pt-6 mt-2">
-                                    <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-3">Account Security</label>
+                                    <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-3">Password</label>
                                     <button
                                         onClick={() => setIsPassModalOpen(true)}
                                         className="w-full py-4 px-4 rounded-2xl border-2 border-primary/20 text-primary font-bold hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 group"
@@ -177,7 +122,7 @@ const Profile = () => {
                                     </button>
                                 </div>
 
-                                <div className="border-t border-[#be3627]/10 dark:border-white/5 pt-6 mt-6">
+                                <div className="border-t border-[#be3627]/10 dark:border-white/5 pt-6">
                                     <label className="block text-sm font-bold text-red-600 dark:text-red-400 mb-3">Danger Zone</label>
                                     <button
                                         onClick={() => setIsDeleteModalOpen(true)}
@@ -187,15 +132,6 @@ const Profile = () => {
                                         Delete Account
                                     </button>
                                 </div>
-                            </div>
-
-                            <div className="pt-8">
-                                <button
-                                    onClick={handleSaveSettings}
-                                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-full shadow-lg shadow-primary/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                                >
-                                    Save Settings
-                                </button>
                             </div>
                         </div>
 

@@ -50,11 +50,6 @@ const userSchema = new Schema({
         type: Boolean,
         default: true
     },
-    availabilityStatus: {
-        type: String,
-        default: 'Available', // Strict default as requested
-        enum: ['Available', 'Busy', 'Invisible', 'Available for Meetup', 'Chat Only'] // Expanded for UI compatibility
-    },
     userType: {
         type: String,
         enum: ['user', 'ghost', 'admin'],

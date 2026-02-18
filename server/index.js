@@ -9,6 +9,7 @@ const passport = require('passport'); // Import Passport
 require('./auth/google'); // Import Google Strategy Config
 
 const User = require('./models/User');
+const CustomInterest = require('./models/CustomInterest');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
@@ -208,18 +209,33 @@ io.on('connection', (socket) => {
 // --- New API Routes for Dynamic Discovery ---
 
 // Get Nearby Users (Dynamic Radius)
+// ---------------------------------------------------------------------------
+// DEMOGRAPHIC MATCHING ENDPOINT (Replicates GNN model logic in JS)
+// Logic: Return only users within 20km radius who share >= 1 interest
+//        with the current user. This mirrors the notebook's matching:
+//        has_edge = (distance <= threshold) && (shared_interests > 0)
+// ---------------------------------------------------------------------------
 app.get('/api/users/nearby', requireAuth, async (req, res) => {
     try {
-        const { lat, lng, radius, interests } = req.query;
+        const { lat, lng } = req.query;
         const userId = req.user.id;
 
         if (!lat || !lng || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
             return res.status(400).json({ error: 'Valid Latitude and Longitude required' });
         }
 
-        const maxDistance = (radius ? Math.min(parseFloat(radius), 50) : 10) * 1000; // Max 50km, convert to meters
+        // Get current user's interests for matching
+        const currentUser = await User.findById(userId).select('interests');
+        const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
 
-        // Find users within radius (exclude self)
+        if (myInterests.length === 0) {
+            return res.json([]); // No interests = no matches (must have >= 1)
+        }
+
+        // 20km radius (20,000 meters) — matching the model's distance constraint
+        const MATCH_RADIUS_METERS = 20000;
+
+        // Find all users within 20km radius (exclude self, exclude unset locations)
         const nearbyUsers = await User.find({
             location: {
                 $near: {
@@ -227,32 +243,34 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                         type: 'Point',
                         coordinates: [parseFloat(lng), parseFloat(lat)]
                     },
-                    $maxDistance: maxDistance
+                    $maxDistance: MATCH_RADIUS_METERS
                 }
             },
-            'location.coordinates': { $ne: [0, 0] }, // Null Guard
-            isActive: { $ne: false },
-            _id: { $ne: userId }
-        }).select('displayName email interests location profilePhoto bio lastLogin isActive');
+            'location.coordinates': { $ne: [0, 0] },
+            _id: { $ne: userId },
+            interests: { $exists: true, $ne: [] } // Must have interests
+        }).select('displayName email interests location profilePhoto bio lastLogin');
 
-        // Map with Online Status
-        const usersWithStatus = nearbyUsers.map(u => ({
-            ...u.toObject(),
-            isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0
-        }));
+        // Interest-matching filter (case-insensitive, >= 1 shared interest)
+        const matchedUsers = nearbyUsers
+            .map(u => {
+                const obj = u.toObject();
+                const theirInterests = (obj.interests || []).map(i => i.toLowerCase().trim());
+                const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
+                if (sharedInterests.length === 0) return null; // Filter out non-matches
+                return {
+                    ...obj,
+                    isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0,
+                    sharedInterests, // Send shared interests to frontend
+                    matchScore: sharedInterests.length // Number of shared interests
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.matchScore - a.matchScore); // Best matches first
 
-        // Optional Interest Filtering
-        let filteredUsers = usersWithStatus;
-        if (interests && interests !== 'all') {
-            const userInterests = interests.split(',');
-            filteredUsers = usersWithStatus.filter(u =>
-                u.interests.some(i => userInterests.includes(typeof i === 'string' ? i : i.name))
-            );
-        }
-
-        res.json(filteredUsers);
+        res.json(matchedUsers);
     } catch (err) {
-        console.error('Error fetching nearby users:', err);
+        console.error('Error fetching nearby matched users:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -331,41 +349,35 @@ app.get('/api/admin/seed', async (req, res) => {
 });
 
 // Get Global Users (For when no one is nearby or explicit global search)
+// Global view — still shows all users but marks interest matches
 app.get('/api/users/global', requireAuth, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { interests } = req.query;
+        const currentUser = await User.findById(userId).select('interests');
+        const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
 
-        // Fetch users globally (exclude self)
-        // No limits for Global View as per request "All the users in the database should be shown"
-        // But let's keep a reasonable safety limit if DB is huge (e.g. 500) or just return all?
-        // User said "All the users". I will use a high limit.
-        let query = {
+        const globalUsers = await User.find({
             _id: { $ne: userId },
-            'location.coordinates': { $ne: [0, 0] }, // Null Guard
-            isActive: { $ne: false } // Availability logic
-        };
-
-        const globalUsers = await User.find(query)
+            'location.coordinates': { $ne: [0, 0] },
+            interests: { $exists: true, $ne: [] }
+        })
             .sort({ lastLogin: -1 })
             .limit(500)
-            .select('displayName email interests location profilePhoto bio lastLogin isActive');
+            .select('displayName email interests location profilePhoto bio lastLogin');
 
-        // Map with Online Status
-        const usersWithStatus = globalUsers.map(u => ({
-            ...u.toObject(),
-            isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0
-        }));
+        const usersWithMatch = globalUsers.map(u => {
+            const obj = u.toObject();
+            const theirInterests = (obj.interests || []).map(i => i.toLowerCase().trim());
+            const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
+            return {
+                ...obj,
+                isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0,
+                sharedInterests,
+                matchScore: sharedInterests.length
+            };
+        });
 
-        let filteredUsers = usersWithStatus;
-        if (interests && interests !== 'all') {
-            const userInterests = interests.split(',');
-            filteredUsers = usersWithStatus.filter(u =>
-                u.interests && u.interests.some(i => userInterests.includes(typeof i === 'string' ? i : i.name))
-            );
-        }
-
-        res.json(filteredUsers);
+        res.json(usersWithMatch);
     } catch (err) {
         console.error('Error fetching global users:', err);
         res.status(500).json({ error: 'Server error' });
@@ -399,17 +411,11 @@ app.get('/api/current_user', requireAuth, async (req, res) => {
 // User Updates - Protected
 app.post('/api/user/profile', requireAuth, async (req, res) => {
     try {
-        const { displayName, bio, profilePhoto, availabilityStatus } = req.body;
+        const { displayName, bio, profilePhoto } = req.body;
         const updateData = {};
         if (displayName) updateData.displayName = displayName;
-        if (bio) updateData.bio = bio;
+        if (bio !== undefined) updateData.bio = bio;
         if (profilePhoto) updateData.profilePhoto = profilePhoto;
-
-        // Map Availability Status to isActive
-        if (availabilityStatus) {
-            updateData.availabilityStatus = availabilityStatus;
-            updateData.isActive = availabilityStatus !== 'Invisible';
-        }
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
@@ -419,19 +425,25 @@ app.post('/api/user/profile', requireAuth, async (req, res) => {
 
         res.json(updatedUser);
     } catch (err) {
-        console.error("Profile update error:", err);
+        console.error('Error updating profile:', err);
         res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 
-const INTERESTS_LIST = require('./config/Interests.json');
+const STANDARD_INTERESTS = require('./config/Interests.json');
 
+// Save user interests + persist custom ones to MongoDB
 app.post('/api/user/interests', requireAuth, async (req, res) => {
     try {
-        const { interests } = req.body; // Expecting array of strings
+        const { interests } = req.body; // Array of strings
 
         if (!interests || !Array.isArray(interests)) {
             return res.status(400).json({ error: 'Interests must be an array' });
+        }
+
+        // Must have at least 1 interest
+        if (interests.length === 0) {
+            return res.status(400).json({ error: 'At least one interest is required' });
         }
 
         // Sanitize: trim whitespace, remove empties, cap at 20
@@ -440,6 +452,27 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
             .filter(Boolean)
             .slice(0, 20);
 
+        // Identify custom interests (not in the 12 standard ones)
+        const standardLower = STANDARD_INTERESTS.map(s => s.toLowerCase());
+        const customOnes = sanitized.filter(i => !standardLower.includes(i.toLowerCase()));
+
+        // Persist new custom interests to MongoDB (upsert, ignore duplicates)
+        if (customOnes.length > 0) {
+            const ops = customOnes.map(name => ({
+                updateOne: {
+                    filter: { name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
+                    update: { $setOnInsert: { name, addedBy: req.user.id } },
+                    upsert: true
+                }
+            }));
+            try {
+                await CustomInterest.bulkWrite(ops, { ordered: false });
+            } catch (bulkErr) {
+                // Ignore duplicate key errors (E11000), they're expected
+                if (bulkErr.code !== 11000) console.error('Custom interest save warning:', bulkErr.message);
+            }
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
             { interests: sanitized },
@@ -447,15 +480,30 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
         ).select('-password');
         res.send(updatedUser);
     } catch (err) {
+        console.error('Error updating interests:', err);
         res.status(500).send(err);
     }
 });
 
-// Interests - Served from canonical JSON (single source of truth)
-console.log(`Interests loaded: ${INTERESTS_LIST.length} items from Interests.json`);
+// Interests API — serves 12 standard + all user-contributed custom from MongoDB
+console.log(`Standard interests loaded: ${STANDARD_INTERESTS.length} items`);
 
-app.get('/api/interests', requireAuth, (req, res) => {
-    res.json(INTERESTS_LIST);
+app.get('/api/interests', requireAuth, async (req, res) => {
+    try {
+        const customInterests = await CustomInterest.find({}).select('name -_id').lean();
+        const customNames = customInterests.map(c => c.name);
+
+        // Merge: standard first, then custom (deduplicated, case-insensitive)
+        const standardLower = STANDARD_INTERESTS.map(s => s.toLowerCase());
+        const uniqueCustom = customNames.filter(c => !standardLower.includes(c.toLowerCase()));
+        const allInterests = [...STANDARD_INTERESTS, ...uniqueCustom.sort()];
+
+        res.json(allInterests);
+    } catch (err) {
+        console.error('Error fetching interests:', err);
+        // Fallback to standard only if DB fails
+        res.json(STANDARD_INTERESTS);
+    }
 });
 
 // Change Password

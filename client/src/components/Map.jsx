@@ -184,21 +184,20 @@ const MapComponent = () => {
         if (!user || !map || !userLocation) return;
         try {
             if (isGlobalMode) {
-                const res = await api.get('/api/users/global', { params: { interests: 'all' } });
+                const res = await api.get('/api/users/global');
                 setNearbyUsersList(res.data || []);
             } else {
                 const center = toLonLat(userLocation);
                 const [lng, lat] = center;
-                const radius = discoveryMode ? 10 : 20;
                 const res = await api.get('/api/users/nearby', {
-                    params: { lat, lng, radius, interests: 'all' }
+                    params: { lat, lng }
                 });
                 setNearbyUsersList(res.data || []);
             }
         } catch (err) {
             console.error("Fetch error:", err);
         }
-    }, [user, map, discoveryMode, isGlobalMode, userLocation]);
+    }, [user, map, isGlobalMode, userLocation]);
 
     useEffect(() => {
         if (!map) return;
@@ -236,7 +235,7 @@ const MapComponent = () => {
             userSource.addFeature(meFeature);
         }
 
-        // B. Add Other Users
+        // B. Add Other Users (All returned users are matches — server already filtered)
         nearbyUsersList.forEach(u => {
             if (!u.location?.coordinates) return;
             if (u.location.coordinates[0] === 0 && u.location.coordinates[1] === 0) return;
@@ -247,27 +246,14 @@ const MapComponent = () => {
                 data: u
             });
 
-            // Branding Logic
             const isOnline = u.isOnline;
-            const isBusy = u.availabilityStatus === 'Busy';
-            const isOffline = !u.isActive || !isOnline; // Strict offline definition
+            const hasSharedInterests = (u.sharedInterests?.length || 0) > 0;
 
-            // Mutual Match Check
-            const myInterests = user?.interests || [];
-            const theirInterests = u.interests || [];
-            const isMutual = myInterests.some(i => theirInterests.includes(i));
+            // Simplified marker colors: Green = match with shared interests, Yellow = no match
+            let markerColor = hasSharedInterests ? '#22c55e' : '#fbbf24';
+            if (!isOnline) markerColor = hasSharedInterests ? '#16a34a' : '#a3a3a3'; // Darker green / grey if offline
 
-            let markerColor = '#fbbf24'; // Neutral Default (Yellow)
-            let zIndex = 10;
             let styles = [];
-
-            if (isOffline) {
-                markerColor = '#000000'; // Black (Offline)
-            } else if (isBusy) {
-                markerColor = '#9ca3af'; // Grey (Busy)
-            } else if (isMutual) {
-                markerColor = '#22c55e'; // Green (Mutual)
-            }
 
             // Base Marker Style
             const isSelected = selectedUser?._id === u._id;
@@ -287,16 +273,16 @@ const MapComponent = () => {
                 zIndex: 10
             }));
 
-            // Busy Badge Overlay - Updated for Material You
-            if (isBusy && isOnline) {
+            // Match badge - show shared interest count if > 0
+            if (hasSharedInterests) {
                 styles.push(new Style({
                     text: new Text({
-                        text: 'Busy',
-                        offsetY: -24, // Float above
+                        text: `★ ${u.matchScore || u.sharedInterests.length}`,
+                        offsetY: -24,
                         font: 'bold 10px Outfit',
-                        fill: new Fill({ color: isDark ? '#E6E1E5' : '#1D1B20' }), // On Surface
-                        backgroundFill: new Fill({ color: isDark ? '#49454F' : '#E7E0EC' }), // Surface Container High
-                        padding: [4, 8, 4, 8],
+                        fill: new Fill({ color: isDark ? '#86EFAC' : '#166534' }),
+                        backgroundFill: new Fill({ color: isDark ? '#14532D' : '#DCFCE7' }),
+                        padding: [3, 6, 3, 6],
                     }),
                     zIndex: 11
                 }));
@@ -709,9 +695,9 @@ const MapComponent = () => {
                                     <span className={`font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full ${selectedUser.isOnline ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
                                         {selectedUser.isOnline ? 'Online' : 'Offline'}
                                     </span>
-                                    {selectedUser.availabilityStatus && (
-                                        <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400">
-                                            {selectedUser.availabilityStatus}
+                                    {selectedUser.sharedInterests && selectedUser.sharedInterests.length > 0 && (
+                                        <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                                            ★ Match
                                         </span>
                                     )}
                                 </div>
@@ -721,11 +707,15 @@ const MapComponent = () => {
                                 <div className="flex flex-col gap-2">
                                     <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Interests</span>
                                     <div className="flex flex-wrap gap-2">
-                                        {selectedUser.interests.map((int, i) => (
-                                            <span key={i} className="text-xs font-bold px-2 py-1 bg-primary/5 text-primary rounded-md border border-primary/10">
-                                                {typeof int === 'string' ? int : int.name}
-                                            </span>
-                                        ))}
+                                        {selectedUser.interests.map((int, i) => {
+                                            const interestStr = typeof int === 'string' ? int : int.name;
+                                            const isShared = selectedUser.sharedInterests?.some(si => si.toLowerCase() === interestStr.toLowerCase());
+                                            return (
+                                                <span key={i} className={`text-xs font-bold px-2 py-1 rounded-md border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
+                                                    {isShared && '★ '}{interestStr}
+                                                </span>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}

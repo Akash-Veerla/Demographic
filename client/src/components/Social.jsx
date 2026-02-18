@@ -23,10 +23,9 @@ const ConnectView = () => {
         fetchUsers();
     }, []);
 
-    const checkInterestMatch = (uInterests) => {
-        if (!user?.interests || !uInterests) return false;
-        const mySet = new Set(user.interests.map(i => typeof i === 'string' ? i.toLowerCase() : i.name.toLowerCase()));
-        return uInterests.some(i => mySet.has(typeof i === 'string' ? i.toLowerCase() : i.name.toLowerCase()));
+    // Server now provides sharedInterests and matchScore in each user object
+    const checkInterestMatch = (u) => {
+        return (u.sharedInterests?.length || 0) > 0;
     };
 
     const handleConnectClick = (targetUser) => {
@@ -91,7 +90,7 @@ const ConnectView = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {users.filter(u => u._id !== user?._id).slice(0, 50).map(u => {
-                            const isMatch = checkInterestMatch(u.interests);
+                            const isMatch = checkInterestMatch(u);
                             return (
                                 <div key={u._id} className="bg-white dark:bg-[#141218] rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 flex flex-col items-center text-center gap-5 transition-transform hover:-translate-y-1 duration-300">
                                     <div className="relative">
@@ -105,19 +104,28 @@ const ConnectView = () => {
                                     <div className="space-y-1">
                                         <Typography variant="h6" sx={{ fontWeight: 900, color: 'text.primary', letterSpacing: '-0.02em' }}>{u.displayName}</Typography>
                                         <Typography variant="body2" sx={{ fontStyle: 'italic', fontWeight: 600, color: 'text.secondary' }}>{u.bio || 'Interests seeker'}</Typography>
+                                        {isMatch && (
+                                            <span className="inline-block text-[10px] font-black text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full uppercase tracking-wider">
+                                                ★ {u.matchScore} shared interest{u.matchScore !== 1 ? 's' : ''}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex flex-wrap gap-2 justify-center">
-                                        {u.interests?.slice(0, 5).map((int, i) => (
-                                            <span
-                                                key={i}
-                                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${isMatch && (typeof int === 'string' ? user.interests.some(mi => (typeof mi === 'string' ? mi.toLowerCase() : mi.name.toLowerCase()) === int.toLowerCase()) : true)
-                                                    ? 'bg-primary/10 border-primary/20 text-primary'
-                                                    : 'bg-[#f2e9e9] dark:bg-[#231f29] border-transparent text-[#915b55] dark:text-[#938F99]'
-                                                    }`}
-                                            >
-                                                {typeof int === 'string' ? int : int.name}
-                                            </span>
-                                        ))}
+                                        {u.interests?.slice(0, 5).map((int, i) => {
+                                            const intStr = typeof int === 'string' ? int : int.name;
+                                            const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
+                                            return (
+                                                <span
+                                                    key={i}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${isShared
+                                                        ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                                                        : 'bg-[#f2e9e9] dark:bg-[#231f29] border-transparent text-[#915b55] dark:text-[#938F99]'
+                                                        }`}
+                                                >
+                                                    {isShared && '★ '}{intStr}
+                                                </span>
+                                            );
+                                        })}
                                     </div>
 
                                     <div className="flex gap-2 w-full mt-2">

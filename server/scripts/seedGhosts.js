@@ -87,7 +87,7 @@ async function seedGhosts() {
                 authMethod: 'local',
                 isActive: true,
                 lastLogin: new Date(),
-                availabilityStatus: 'Available',
+
                 bio: "Automated test profile for proximity clustering.",
                 interests: [selectedInterest],
                 location: {
