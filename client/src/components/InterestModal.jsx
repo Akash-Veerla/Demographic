@@ -34,15 +34,8 @@ const InterestModal = () => {
 
     const handleSubmit = () => {
         if (selectedInterests.length > 0) {
-            // Transform object array to string array if backend expects strings,
-            // but backend schema says [String].
-            // The availableInterests are { category, name }.
-            // Let's store just the names or check how `server/index.js` handles it.
-            // Server index.js: broadcast checks `oi.name === i.name` or `oi === i`.
-            // User schema: [String].
-            // So we should save names.
-            const interestNames = selectedInterests.map(i => i.name || i);
-            dispatch(updateInterests(interestNames));
+            // Interests are now flat strings from the API
+            dispatch(updateInterests(selectedInterests));
         }
     };
 
@@ -59,7 +52,7 @@ const InterestModal = () => {
                     <Autocomplete
                         multiple
                         options={availableInterests}
-                        getOptionLabel={(option) => option.name || option}
+                        getOptionLabel={(option) => option}
                         value={selectedInterests}
                         onChange={(event, newValue) => {
                             setSelectedInterests(newValue);
@@ -69,7 +62,7 @@ const InterestModal = () => {
                         )}
                         renderTags={(tagValue, getTagProps) =>
                             tagValue.map((option, index) => (
-                                <Chip label={option.name || option} {...getTagProps({ index })} />
+                                <Chip label={option} {...getTagProps({ index })} />
                             ))
                         }
                     />

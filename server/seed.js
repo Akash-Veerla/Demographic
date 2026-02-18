@@ -11,12 +11,7 @@ const LAT_MAX = 19.0;
 const LNG_MIN = 77.0;
 const LNG_MAX = 84.5;
 
-const INTERESTS_LIST = [
-    'Sports & Outdoors', 'Special Interest Travel', 'Business & Industry',
-    'Entertainment & Media', 'Food & Drink', 'Home Family & Pets',
-    'Lifestyle & Values', 'Science & Education', 'Automotive',
-    'Art & Design', 'History & Humanities', 'Programming and Technologies'
-];
+const INTERESTS_LIST = require('./config/Interests.json');
 
 const NAMES = [
     "Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Sai", "Reyansh", "Ayaan", "Krishna", "Ishaan",
@@ -35,7 +30,7 @@ function getRandomCoordinate(min, max) {
 
 function getRandomInterests() {
     const num = Math.floor(Math.random() * 3) + 1; // 1 to 3 interests
-    const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
+    const shuffled = [...INTERESTS_LIST].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, num);
 }
 

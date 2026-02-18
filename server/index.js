@@ -2,9 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
-const fs = require('fs');
 const path = require('path');
-const csv = require('csv-parser');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const passport = require('passport'); // Import Passport
@@ -14,6 +12,24 @@ const User = require('./models/User');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
+
+// --- Shared CORS Origin Helper ---
+function isAllowedOrigin(origin) {
+    if (!origin) return true; // Allow server-to-server / same-origin
+    const clientUrl = (process.env.CLIENT_URL || '').replace(/\/$/, '');
+    const allowedOrigins = [clientUrl, 'http://localhost:5173', 'http://localhost:5000', 'http://localhost:3000'].filter(Boolean);
+    if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
+        return true;
+    }
+    return false;
+}
+
+function corsOriginHandler(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+}
 
 
 // --- Global Error Handling to Prevent Crash on Auth Fail ---
@@ -28,71 +44,36 @@ process.on('uncaughtException', (err) => {
 });
 
 // --- Database Connection ---
-let mongoUri = process.env.MONGO_URI;
+const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
-    console.error('FATAL: MONGO_URI environment variable is not defined.');
-} else {
-    // Attempt to handle special characters in password if present, though standard URI usually works.
-    // This is a safety measure requested for "bad auth" debugging.
-    try {
-        if (mongoUri.includes('@') && mongoUri.includes('mongodb+srv://')) {
-            const parts = mongoUri.split('@');
-            const credentials = parts[0].split('//')[1];
-            if (credentials.includes(':')) {
-                const [user, pass] = credentials.split(':');
-                const encodedPass = encodeURIComponent(pass);
-                // Reconstruct only if password changed (encoding needed)
-                if (pass !== encodedPass) {
-                    mongoUri = `mongodb + srv://${user}:${encodedPass}@${parts[1]}`;
-                    console.log("Encoded special characters in MongoDB password.");
-                }
-            }
-        }
-    } catch (e) {
-        console.error("Error parsing/encoding MONGO_URI:", e);
-    }
+    console.error('FATAL: MONGO_URI environment variable is not defined. DB-dependent routes will fail.');
 }
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: (origin, callback) => {
-            if (!origin) return callback(null, true);
-            const clientUrl = (process.env.CLIENT_URL || "https://demographic-alpha.vercel.app").replace(/\/$/, "");
-            const allowedOrigins = [clientUrl, 'https://demographic-alpha.vercel.app', 'http://localhost:5173', 'http://localhost:5000', 'http://localhost:3000'];
-            if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
-                return callback(null, true);
-            }
-            return callback(new Error('Not allowed by CORS'));
-        },
+        origin: corsOriginHandler,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         credentials: true
     }
 });
 
-console.log("Attempting to connect to MongoDB Atlas...");
-mongoose.connect(mongoUri)
-    .then(() => console.log('MongoDB Connected'))
-    .catch(err => {
-        console.error('MongoDB Connection Error:', err);
-        process.exit(1); // Exit so platform restarts or logs failure clearly
-    });
+if (mongoUri) {
+    console.log("Attempting to connect to MongoDB Atlas...");
+    mongoose.connect(mongoUri)
+        .then(() => console.log('MongoDB Connected'))
+        .catch(err => {
+            console.error('MongoDB Connection Error:', err.message);
+            console.error('The server will remain running but DB-dependent routes will fail.');
+        });
+}
 
-const allowedOrigin = (process.env.CLIENT_URL || "https://demographic-alpha.vercel.app").replace(/\/$/, "");
-console.log("CORS allowed for: " + allowedOrigin);
+console.log("CORS allowed for: " + (process.env.CLIENT_URL || '(CLIENT_URL not set — only localhost allowed)'));
 
 // --- Middleware ---
 app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        const clientUrl = (process.env.CLIENT_URL || "https://demographic-alpha.vercel.app").replace(/\/$/, "");
-        const allowedOrigins = [clientUrl, 'https://demographic-alpha.vercel.app', 'http://localhost:5173', 'http://localhost:5000', 'http://localhost:3000'];
-        if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
-            return callback(null, true);
-        }
-        return callback(new Error('Not allowed by CORS'));
-    },
+    origin: corsOriginHandler,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -304,10 +285,8 @@ app.get('/api/admin/seed', async (req, res) => {
             "Mahesh", "Prabhas", "Allu", "Ram", "NTR", "Vijay", "Samantha", "Kajal", "Tamannaah", "Rashmika"
         ];
 
-        const INTERESTS_LIST = [
-            'Coding', 'Design', 'Music', 'Travel', 'Food', 'Gaming', 'Reading', 'Fitness',
-            'Photography', 'Art', 'Movies', 'Tech', 'Startups', 'Nature', 'Dancing'
-        ];
+        // Use canonical interests list (same source as validation + API)
+        const SEED_INTERESTS = require('./config/Interests.json');
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash('password123', salt);
@@ -319,7 +298,7 @@ app.get('/api/admin/seed', async (req, res) => {
 
             // Random Interests
             const numInterests = Math.floor(Math.random() * 4) + 1;
-            const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
+            const shuffled = [...SEED_INTERESTS].sort(() => 0.5 - Math.random());
             const selectedInterests = shuffled.slice(0, numInterests);
 
             // Random Location in AP Box
@@ -455,14 +434,15 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'Interests must be an array' });
         }
 
-        const invalidVars = interests.filter(i => !INTERESTS_LIST.includes(i));
-        if (invalidVars.length > 0) {
-            return res.status(400).json({ error: `Invalid interests: ${invalidVars.join(', ')}. Must be from Core List.` });
-        }
+        // Sanitize: trim whitespace, remove empties, cap at 20
+        const sanitized = interests
+            .map(i => (typeof i === 'string' ? i.trim() : ''))
+            .filter(Boolean)
+            .slice(0, 20);
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
-            { interests },
+            { interests: sanitized },
             { new: true }
         ).select('-password');
         res.send(updatedUser);
@@ -471,24 +451,11 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
     }
 });
 
-// Load Interests CSV
-const interests = [];
-fs.createReadStream(path.join(__dirname, 'Interests.csv'))
-    .pipe(csv())
-    .on('data', (row) => {
-        Object.keys(row).forEach(category => {
-            if (row[category]) {
-                interests.push({ category, name: row[category] });
-            }
-        });
-    })
-    .on('end', () => {
-        console.log('Interests loaded');
-    });
+// Interests - Served from canonical JSON (single source of truth)
+console.log(`Interests loaded: ${INTERESTS_LIST.length} items from Interests.json`);
 
-// Interests - Protected
 app.get('/api/interests', requireAuth, (req, res) => {
-    res.json(interests);
+    res.json(INTERESTS_LIST);
 });
 
 // Change Password

@@ -53,8 +53,8 @@ async function seedGhosts() {
         const ghostPassword = await bcrypt.hash('Konnect@Ghost1', 10);
         const ghosts = [];
 
-        // Core Interests from first row of Interests.csv logic
-        const coreInterests = ['Technology', 'Arts', 'Food', 'Business', 'Sports', 'Music', 'Movies', 'Travel', 'Health', 'Science', 'Fashion', 'Gaming'];
+        // Use canonical interests list (single source of truth)
+        const coreInterests = require('../config/Interests.json');
 
         for (let i = 0; i < GHOST_COUNT; i++) {
             const record = apRecords[Math.floor(Math.random() * apRecords.length)];

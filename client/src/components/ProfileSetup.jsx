@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
-const INTEREST_OPTIONS = [
+const DEFAULT_INTERESTS = [
     "Technology", "Sports", "Music", "Travel", "Food", "Art",
     "Gaming", "Fitness", "Movies", "Reading", "Nature", "Photography"
 ];
@@ -14,10 +14,26 @@ const ProfileSetup = () => {
 
     const [bio, setBio] = useState('');
     const [selectedInterests, setSelectedInterests] = useState([]);
+    const [interestOptions, setInterestOptions] = useState(DEFAULT_INTERESTS);
     const [customInterest, setCustomInterest] = useState(''); // For adding new ones
     const [profilePhoto, setProfilePhoto] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    // Fetch canonical interests from API
+    useEffect(() => {
+        const fetchInterests = async () => {
+            try {
+                const res = await api.get('/api/interests');
+                if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+                    setInterestOptions(res.data);
+                }
+            } catch (err) {
+                console.error("Failed to load interests, using defaults", err);
+            }
+        };
+        fetchInterests();
+    }, []);
 
     // Pre-fill data
     useEffect(() => {
@@ -178,7 +194,7 @@ const ProfileSetup = () => {
                             </div>
 
                             <div className="flex flex-wrap gap-2.5 justify-center bg-[#f2e9e9]/50 dark:bg-[#231f29]/30 p-6 rounded-[24px] border border-dashed border-[#be3627]/20 dark:border-white/10">
-                                {INTEREST_OPTIONS.map((interest) => (
+                                {interestOptions.map((interest) => (
                                     <button
                                         key={interest}
                                         type="button"
@@ -191,7 +207,7 @@ const ProfileSetup = () => {
                                         {interest}
                                     </button>
                                 ))}
-                                {selectedInterests.filter(i => !INTEREST_OPTIONS.includes(i)).map(interest => (
+                                {selectedInterests.filter(i => !interestOptions.includes(i)).map(interest => (
                                     <button
                                         key={interest}
                                         type="button"

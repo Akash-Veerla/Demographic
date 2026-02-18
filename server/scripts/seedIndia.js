@@ -3,14 +3,14 @@ const mongoose = require('mongoose');
 const { faker } = require('@faker-js/faker');
 const User = require('../models/User'); // Adjust path to User model
 
-// Hardcoded URI as fallback if .env fails in this specific script context context
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://konnect-admin:konnect123@cluster0.mongodb.net/konnect?retryWrites=true&w=majority";
+// Hardcoded URI as fallback if .env fails in this specific script context
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) {
+    console.error('FATAL: MONGO_URI not found in environment.');
+    process.exit(1);
+}
 
-const INTERESTS_LIST = [
-    'Coding', 'Design', 'Music', 'Travel', 'Food', 'Gaming', 'Reading', 'Fitness',
-    'Photography', 'Art', 'Movies', 'Tech', 'Startups', 'Nature', 'Dancing',
-    'Writing', 'History', 'Science', 'Yoga', 'Hiking'
-];
+const INTERESTS_LIST = require('../config/Interests.json');
 
 async function seedUsers() {
     try {
@@ -43,7 +43,7 @@ async function seedUsers() {
 
             // Generate random interests (1-4)
             const numInterests = Math.floor(Math.random() * 4) + 1;
-            const shuffled = INTERESTS_LIST.sort(() => 0.5 - Math.random());
+            const shuffled = [...INTERESTS_LIST].sort(() => 0.5 - Math.random());
             const selectedInterests = shuffled.slice(0, numInterests); // Array of strings
 
             // Generate Location in AP Box

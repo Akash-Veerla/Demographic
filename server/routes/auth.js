@@ -43,7 +43,6 @@ router.get('/google/callback', (req, res, next) => {
     })(req, res, next);
 });
 
-const INTERESTS_LIST = require('../config/Interests.json');
 
 // Register
 router.post('/register', async (req, res) => {
@@ -59,14 +58,13 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 8 characters' });
         }
 
-        // Validate Interests if provided
+        // Sanitize Interests if provided
         let safeInterests = [];
         if (interests && Array.isArray(interests)) {
-            const invalidVars = interests.filter(i => !INTERESTS_LIST.includes(i));
-            if (invalidVars.length > 0) {
-                return res.status(400).json({ error: `Invalid interests: ${invalidVars.join(', ')}. Must be from Core List.` });
-            }
-            safeInterests = interests;
+            safeInterests = interests
+                .map(i => (typeof i === 'string' ? i.trim() : ''))
+                .filter(Boolean)
+                .slice(0, 20);
         }
 
         // Check for existing user
