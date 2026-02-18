@@ -116,6 +116,39 @@ export const AuthProvider = ({ children }) => {
 
     // --- Init ---
 
+    const updateLocation = useCallback(() => {
+        if (!navigator.geolocation) return;
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                try {
+                    await api.post('/api/user/location', { lat: latitude, lng: longitude });
+                    setUser(prev => {
+                        if (!prev) return prev;
+                        return {
+                            ...prev,
+                            location: {
+                                type: 'Point',
+                                coordinates: [longitude, latitude]
+                            }
+                        };
+                    });
+                } catch (err) {
+                    console.error("Failed to update location:", err);
+                }
+            },
+            (err) => console.error("Geolocation error:", err),
+            { enableHighAccuracy: true }
+        );
+    }, []);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            updateLocation();
+        }
+    }, [isAuthenticated, updateLocation]);
+
     useEffect(() => {
         // Check for token in URL (Google Auth Redirect)
         const params = new URLSearchParams(window.location.search);

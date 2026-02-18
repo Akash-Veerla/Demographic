@@ -461,6 +461,33 @@ app.post('/api/user/profile', requireAuth, async (req, res) => {
     }
 });
 
+// Update User Location (REST)
+app.post('/api/user/location', requireAuth, async (req, res) => {
+    try {
+        const { lat, lng } = req.body;
+        if (!lat || !lng) {
+            return res.status(400).json({ error: 'Latitude and Longitude required' });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            {
+                location: {
+                    type: 'Point',
+                    coordinates: [parseFloat(lng), parseFloat(lat)]
+                },
+                lastLogin: new Date()
+            },
+            { new: true }
+        ).select('-password');
+
+        res.json(updatedUser);
+    } catch (err) {
+        console.error('Error updating location via REST:', err);
+        res.status(500).json({ error: 'Failed to update location' });
+    }
+});
+
 const STANDARD_INTERESTS = require('./config/Interests.json');
 
 // Save user interests + persist custom ones to MongoDB

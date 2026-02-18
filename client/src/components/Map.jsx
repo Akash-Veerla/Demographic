@@ -667,12 +667,12 @@ const MapComponent = () => {
                 flex flex-col overflow-hidden ring-1 ring-black/5
             `}>
                 {/* Header */}
-                <div className="px-4 pt-4 pb-1.5 shrink-0 flex justify-between items-start">
-                    <div className="min-w-0 flex-1 mr-2">
-                        <h3 className="text-lg font-black tracking-tight text-[#1a100f] dark:text-white truncate">
+                <div className="px-5 pt-5 pb-2 shrink-0 flex justify-between items-start">
+                    <div className="min-w-0 flex-1 mr-3">
+                        <h3 className="text-2xl font-black tracking-tight text-[#1a100f] dark:text-white truncate">
                             {selectedUser ? selectedUser.displayName : (destinationPin ? 'Dropped Pin' : 'Details')}
                         </h3>
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                        <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">
                             {selectedUser ? 'User Details' : 'Location'}
                         </p>
                     </div>
@@ -685,25 +685,25 @@ const MapComponent = () => {
                 </div>
 
                 {/* Content (Scrollable) */}
-                <div className="px-4 pb-3 overflow-y-auto custom-scrollbar grow">
+                <div className="px-5 pb-4 overflow-y-auto custom-scrollbar grow">
                     {selectedUser ? (
-                        <div className="space-y-2.5">
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</span>
-                                <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="space-y-4">
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Status</span>
+                                <div className="flex items-center gap-2 flex-wrap">
                                     {selectedUser.isFriend ? (
                                         <>
-                                            <span className={`font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-full ${selectedUser.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
+                                            <span className={`font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-full ${selectedUser.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
                                                 {selectedUser.isOnline ? '● Online' : '○ Offline'}
                                             </span>
-                                            <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-full text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10">
+                                            <span className="font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-full text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10">
                                                 ★ Friend
                                             </span>
                                         </>
                                     ) : (
                                         <>
                                             {selectedUser.sharedInterests && selectedUser.sharedInterests.length > 0 && (
-                                                <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                                                <span className="font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
                                                     ★ {selectedUser.matchScore} Match{selectedUser.matchScore !== 1 ? 'es' : ''}
                                                 </span>
                                             )}
@@ -713,21 +713,21 @@ const MapComponent = () => {
                             </div>
 
                             {selectedUser.interests && (
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Interests</span>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {selectedUser.interests.slice(0, 4).map((int, i) => {
+                                <div className="flex flex-col gap-1.5">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Interests</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedUser.interests.slice(0, 10).map((int, i) => {
                                             const interestStr = typeof int === 'string' ? int : int.name;
                                             const isShared = selectedUser.sharedInterests?.some(si => si.toLowerCase() === interestStr.toLowerCase());
                                             return (
-                                                <span key={i} className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
+                                                <span key={i} className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
                                                     {isShared && '★ '}{interestStr}
                                                 </span>
                                             );
                                         })}
-                                        {selectedUser.interests.length > 4 && (
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-500">
-                                                +{selectedUser.interests.length - 4} more
+                                        {selectedUser.interests.length > 10 && (
+                                            <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500">
+                                                +{selectedUser.interests.length - 10} more
                                             </span>
                                         )}
                                     </div>
@@ -735,11 +735,13 @@ const MapComponent = () => {
                             )}
 
                             {selectedUser.bio && (
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Bio</span>
-                                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-snug line-clamp-2">
-                                        {selectedUser.bio}
-                                    </p>
+                                <div className="flex flex-col gap-1.5">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Bio</span>
+                                    <div className="max-h-32 overflow-y-auto custom-scrollbar pr-1">
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">
+                                            {selectedUser.bio}
+                                        </p>
+                                    </div>
                                 </div>
                             )}
                         </div>

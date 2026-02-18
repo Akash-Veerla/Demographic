@@ -13,6 +13,8 @@ const Home = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
+                // If we have location, we could pass it, but backend now uses stored location if omitted.
+                // We re-run this when user.location changes to ensure freshness.
                 const res = await api.get('/api/stats/local');
                 setStats(res.data);
             } catch (err) {
@@ -21,8 +23,11 @@ const Home = () => {
                 setLoadingStats(false);
             }
         };
-        fetchStats();
-    }, []);
+
+        if (user) {
+            fetchStats();
+        }
+    }, [user?.location]); // Re-fetch when location updates
 
     // Card Component for consistency
     const DashboardCard = ({ title, description, icon: Icon, onClick, className = "" }) => (

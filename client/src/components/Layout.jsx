@@ -52,7 +52,7 @@ const Layout = ({ children }) => {
             }}>
                 {/* Desktop / Tablet Navbar (In Flow) */}
                 {!isMobile && user && (
-                    <div className="w-[90%] max-w-2xl mx-auto mt-6 mb-6 h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-full shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0 transition-all duration-300">
+                    <div className={`w-[90%] max-w-2xl mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-2' : 'mb-6'} h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-full shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0 transition-all duration-300`}>
                         {/* Brand */}
                         <div
                             className="flex items-center gap-3 cursor-pointer select-none"
