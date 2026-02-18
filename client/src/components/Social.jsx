@@ -344,7 +344,7 @@ const Social = () => {
             {/* Content Area */}
             <div className="flex-1 relative w-full">
                 {activeTab === 'map' ? (
-                    <div className="w-full h-[85vh] relative overflow-hidden shadow-inner">
+                    <div className="w-full relative overflow-hidden shadow-inner" style={{ height: 'calc(100vh - 8rem)' }}>
                         <MapComponent />
                     </div>
                 ) : (

@@ -540,11 +540,11 @@ const MapComponent = () => {
 
 
     return (
-        <div className="relative h-full w-full bg-transparent p-4 overflow-hidden">
+        <div className="relative h-full w-full bg-transparent p-2 overflow-hidden">
             {/* Map Container */}
             <div
                 ref={mapRef}
-                className="absolute inset-4 rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/5"
+                className="absolute inset-2 rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/5"
                 style={{
                     filter: isDark
                         ? 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)'
@@ -617,7 +617,7 @@ const MapComponent = () => {
             </div>
 
             {/* D. Map Controls (Bottom Right) */}
-            <div className="absolute bottom-6 right-6 z-20 flex flex-col gap-2">
+            <div className="absolute bottom-5 right-5 z-20 flex flex-col gap-2">
                 <button
                     onClick={() => {
                         if (navigator.geolocation && map) {
@@ -627,24 +627,24 @@ const MapComponent = () => {
                             });
                         }
                     }}
-                    className="p-3 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95"
+                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
                     title="Locate Me"
                 >
-                    <span className="material-symbols-outlined">my_location</span>
+                    <span className="material-symbols-outlined text-xl">my_location</span>
                 </button>
                 <button
                     onClick={() => map && map.getView().animate({ zoom: map.getView().getZoom() + 1, duration: 300 })}
-                    className="p-3 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95"
+                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
                     title="Zoom In"
                 >
-                    <span className="material-symbols-outlined">add</span>
+                    <span className="material-symbols-outlined text-xl">add</span>
                 </button>
                 <button
                     onClick={() => map && map.getView().animate({ zoom: map.getView().getZoom() - 1, duration: 300 })}
-                    className="p-3 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95"
+                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
                     title="Zoom Out"
                 >
-                    <span className="material-symbols-outlined">remove</span>
+                    <span className="material-symbols-outlined text-xl">remove</span>
                 </button>
             </div>
 
@@ -675,9 +675,14 @@ const MapComponent = () => {
             `}>
                 {/* Header */}
                 <div className="p-6 pb-2 shrink-0 flex justify-between items-start">
-                    <h3 className="text-primary text-2xl font-black tracking-tight">
-                        {destinationPin ? 'Dropped Pin' : 'User Details'}
-                    </h3>
+                    <div>
+                        <h3 className="text-2xl font-black tracking-tight text-[#1a100f] dark:text-white">
+                            {selectedUser ? selectedUser.displayName : (destinationPin ? 'Dropped Pin' : 'Details')}
+                        </h3>
+                        <p className="text-xs font-bold text-primary uppercase tracking-widest mt-0.5">
+                            {selectedUser ? 'User Details' : 'Location'}
+                        </p>
+                    </div>
                     <button
                         onClick={() => { setSelectedUser(null); setDestinationPin(null); }}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
@@ -689,12 +694,7 @@ const MapComponent = () => {
                 {/* Content (Scrollable) */}
                 <div className="p-6 pt-2 overflow-y-auto custom-scrollbar grow">
                     {selectedUser ? (
-                        <div className="space-y-6">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Name</span>
-                                <span className="text-3xl font-black text-[#1a100f] dark:text-white">{selectedUser.displayName}</span>
-                            </div>
-
+                        <div className="space-y-4">
                             <div className="flex flex-col gap-1">
                                 <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Status</span>
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -774,6 +774,7 @@ const MapComponent = () => {
                                         if (match) {
                                             await api.post('/api/friend-request/accept', { requestId: match._id });
                                             setAlertMessage('Friend request accepted!');
+                                            setSelectedUser(prev => ({ ...prev, isFriend: true, friendRequestReceived: false }));
                                             fetchNearbyUsers();
                                         }
                                     } catch (err) {
@@ -791,6 +792,8 @@ const MapComponent = () => {
                                     try {
                                         const res = await api.post('/api/friend-request/send', { toUserId: selectedUser._id });
                                         setAlertMessage(res.data.message);
+                                        // Immediately update selectedUser so button changes without waiting for refetch
+                                        setSelectedUser(prev => ({ ...prev, friendRequestSent: true }));
                                         fetchNearbyUsers();
                                     } catch (err) {
                                         setAlertMessage(err.response?.data?.error || 'Failed to send request');
