@@ -28,8 +28,19 @@ const ProtectedRoute = ({ children }) => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            <div className="flex items-center justify-center h-screen bg-[#f8f6f6] dark:bg-[#141218] relative overflow-hidden">
+                {/* Background image layer — same as Layout */}
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                    <div
+                        className="w-full h-full bg-cover bg-center filter blur-xl scale-110 opacity-40 dark:opacity-20"
+                        style={{ backgroundImage: 'var(--bg-map-url)' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f8f6f6]/40 to-[#f8f6f6]/90 dark:via-[#141218]/60 dark:to-[#141218]/70" />
+                </div>
+                {/* Spinner */}
+                <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
+                    <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-primary/20 border-t-primary" />
+                </div>
             </div>
         );
     }
@@ -78,8 +89,19 @@ const AppContent = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            <div className="flex items-center justify-center h-screen bg-[#f8f6f6] dark:bg-[#141218] relative overflow-hidden">
+                {/* Background image layer — same as Layout */}
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                    <div
+                        className="w-full h-full bg-cover bg-center filter blur-xl scale-110 opacity-40 dark:opacity-20"
+                        style={{ backgroundImage: 'var(--bg-map-url)' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f8f6f6]/40 to-[#f8f6f6]/90 dark:via-[#141218]/60 dark:to-[#141218]/70" />
+                </div>
+                {/* Spinner */}
+                <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
+                    <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-primary/20 border-t-primary" />
+                </div>
             </div>
         );
     }
