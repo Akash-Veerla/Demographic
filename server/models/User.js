@@ -50,6 +50,10 @@ const userSchema = new Schema({
         type: Boolean,
         default: true
     },
+    friends: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     userType: {
         type: String,
         enum: ['user', 'ghost', 'admin'],

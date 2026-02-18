@@ -10,6 +10,7 @@ require('./auth/google'); // Import Google Strategy Config
 
 const User = require('./models/User');
 const CustomInterest = require('./models/CustomInterest');
+const FriendRequest = require('./models/FriendRequest');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
@@ -224,18 +225,17 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'Valid Latitude and Longitude required' });
         }
 
-        // Get current user's interests for matching
-        const currentUser = await User.findById(userId).select('interests');
+        // Get current user's interests + friends list
+        const currentUser = await User.findById(userId).select('interests friends');
         const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
+        const myFriends = (currentUser?.friends || []).map(f => f.toString());
 
         if (myInterests.length === 0) {
-            return res.json([]); // No interests = no matches (must have >= 1)
+            return res.json([]);
         }
 
-        // 20km radius (20,000 meters) — matching the model's distance constraint
         const MATCH_RADIUS_METERS = 20000;
 
-        // Find all users within 20km radius (exclude self, exclude unset locations)
         const nearbyUsers = await User.find({
             location: {
                 $near: {
@@ -248,25 +248,43 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
             },
             'location.coordinates': { $ne: [0, 0] },
             _id: { $ne: userId },
-            interests: { $exists: true, $ne: [] } // Must have interests
+            interests: { $exists: true, $ne: [] }
         }).select('displayName email interests location profilePhoto bio lastLogin');
 
-        // Interest-matching filter (case-insensitive, >= 1 shared interest)
+        // Get pending friend requests for UI state
+        const sentRequests = await FriendRequest.find({ from: userId, status: 'pending' }).select('to').lean();
+        const receivedRequests = await FriendRequest.find({ to: userId, status: 'pending' }).select('from').lean();
+        const sentToIds = sentRequests.map(r => r.to.toString());
+        const receivedFromIds = receivedRequests.map(r => r.from.toString());
+
         const matchedUsers = nearbyUsers
             .map(u => {
                 const obj = u.toObject();
+                const uid = u._id.toString();
                 const theirInterests = (obj.interests || []).map(i => i.toLowerCase().trim());
                 const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
-                if (sharedInterests.length === 0) return null; // Filter out non-matches
+                if (sharedInterests.length === 0) return null;
+
+                const isFriend = myFriends.includes(uid);
+                const isOnline = (io.sockets.adapter.rooms.get(uid)?.size || 0) > 0;
+
                 return {
                     ...obj,
-                    isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0,
-                    sharedInterests, // Send shared interests to frontend
-                    matchScore: sharedInterests.length // Number of shared interests
+                    // Only friends can see each other's online status
+                    isOnline: isFriend ? isOnline : null,
+                    isFriend,
+                    friendRequestSent: sentToIds.includes(uid),
+                    friendRequestReceived: receivedFromIds.includes(uid),
+                    sharedInterests,
+                    matchScore: sharedInterests.length
                 };
             })
             .filter(Boolean)
-            .sort((a, b) => b.matchScore - a.matchScore); // Best matches first
+            .sort((a, b) => {
+                // Friends first, then by match score
+                if (a.isFriend !== b.isFriend) return b.isFriend ? 1 : -1;
+                return b.matchScore - a.matchScore;
+            });
 
         res.json(matchedUsers);
     } catch (err) {
@@ -353,8 +371,9 @@ app.get('/api/admin/seed', async (req, res) => {
 app.get('/api/users/global', requireAuth, async (req, res) => {
     try {
         const userId = req.user.id;
-        const currentUser = await User.findById(userId).select('interests');
+        const currentUser = await User.findById(userId).select('interests friends');
         const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
+        const myFriends = (currentUser?.friends || []).map(f => f.toString());
 
         const globalUsers = await User.find({
             _id: { $ne: userId },
@@ -365,13 +384,25 @@ app.get('/api/users/global', requireAuth, async (req, res) => {
             .limit(500)
             .select('displayName email interests location profilePhoto bio lastLogin');
 
+        const sentRequests = await FriendRequest.find({ from: userId, status: 'pending' }).select('to').lean();
+        const receivedRequests = await FriendRequest.find({ to: userId, status: 'pending' }).select('from').lean();
+        const sentToIds = sentRequests.map(r => r.to.toString());
+        const receivedFromIds = receivedRequests.map(r => r.from.toString());
+
         const usersWithMatch = globalUsers.map(u => {
             const obj = u.toObject();
+            const uid = u._id.toString();
             const theirInterests = (obj.interests || []).map(i => i.toLowerCase().trim());
             const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
+            const isFriend = myFriends.includes(uid);
+            const isOnline = (io.sockets.adapter.rooms.get(uid)?.size || 0) > 0;
+
             return {
                 ...obj,
-                isOnline: (io.sockets.adapter.rooms.get(u._id.toString())?.size || 0) > 0,
+                isOnline: isFriend ? isOnline : null,
+                isFriend,
+                friendRequestSent: sentToIds.includes(uid),
+                friendRequestReceived: receivedFromIds.includes(uid),
                 sharedInterests,
                 matchScore: sharedInterests.length
             };
@@ -538,11 +569,185 @@ app.post('/api/user/change-password', requireAuth, async (req, res) => {
 // Delete Account
 app.delete('/api/user/delete', requireAuth, async (req, res) => {
     try {
-        await User.findByIdAndDelete(req.user.id);
+        const userId = req.user.id;
+        // Remove user from all friends lists
+        await User.updateMany({ friends: userId }, { $pull: { friends: userId } });
+        // Remove all friend requests involving this user
+        await FriendRequest.deleteMany({ $or: [{ from: userId }, { to: userId }] });
+        await User.findByIdAndDelete(userId);
         res.json({ message: 'User deleted successfully' });
     } catch (err) {
         console.error("Delete user error:", err);
         res.status(500).json({ error: 'Failed to delete account' });
+    }
+});
+
+// ---------------------------------------------------------------------------
+// FRIEND REQUEST SYSTEM
+// ---------------------------------------------------------------------------
+
+// Send a friend request
+app.post('/api/friend-request/send', requireAuth, async (req, res) => {
+    try {
+        const fromId = req.user.id;
+        const { toUserId } = req.body;
+
+        if (!toUserId) return res.status(400).json({ error: 'Target user ID required' });
+        if (fromId === toUserId) return res.status(400).json({ error: 'Cannot send request to yourself' });
+
+        // Check if target user exists
+        const targetUser = await User.findById(toUserId);
+        if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+        // Check if already friends
+        const currentUser = await User.findById(fromId).select('friends');
+        if (currentUser.friends.map(f => f.toString()).includes(toUserId)) {
+            return res.status(400).json({ error: 'Already friends' });
+        }
+
+        // Check for existing request in either direction
+        const existing = await FriendRequest.findOne({
+            $or: [
+                { from: fromId, to: toUserId },
+                { from: toUserId, to: fromId }
+            ],
+            status: 'pending'
+        });
+
+        if (existing) {
+            // If THEY already sent us a request, auto-accept it
+            if (existing.from.toString() === toUserId) {
+                existing.status = 'accepted';
+                await existing.save();
+                // Add each other as friends
+                await User.findByIdAndUpdate(fromId, { $addToSet: { friends: toUserId } });
+                await User.findByIdAndUpdate(toUserId, { $addToSet: { friends: fromId } });
+                return res.json({ message: 'Friend request auto-accepted! You are now friends.', status: 'accepted' });
+            }
+            return res.status(400).json({ error: 'Friend request already sent' });
+        }
+
+        // Check if previously rejected — allow resending
+        const rejected = await FriendRequest.findOne({ from: fromId, to: toUserId, status: 'rejected' });
+        if (rejected) {
+            rejected.status = 'pending';
+            await rejected.save();
+            return res.json({ message: 'Friend request re-sent', status: 'pending' });
+        }
+
+        await FriendRequest.create({ from: fromId, to: toUserId });
+        res.json({ message: 'Friend request sent', status: 'pending' });
+    } catch (err) {
+        console.error('Friend request send error:', err);
+        if (err.code === 11000) return res.status(400).json({ error: 'Request already exists' });
+        res.status(500).json({ error: 'Failed to send friend request' });
+    }
+});
+
+// Accept a friend request
+app.post('/api/friend-request/accept', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { requestId } = req.body;
+
+        const request = await FriendRequest.findById(requestId);
+        if (!request) return res.status(404).json({ error: 'Request not found' });
+        if (request.to.toString() !== userId) return res.status(403).json({ error: 'Not your request to accept' });
+        if (request.status !== 'pending') return res.status(400).json({ error: 'Request is no longer pending' });
+
+        request.status = 'accepted';
+        await request.save();
+
+        // Add each other as friends (bidirectional)
+        await User.findByIdAndUpdate(userId, { $addToSet: { friends: request.from } });
+        await User.findByIdAndUpdate(request.from, { $addToSet: { friends: userId } });
+
+        res.json({ message: 'Friend request accepted' });
+    } catch (err) {
+        console.error('Friend request accept error:', err);
+        res.status(500).json({ error: 'Failed to accept request' });
+    }
+});
+
+// Reject a friend request
+app.post('/api/friend-request/reject', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { requestId } = req.body;
+
+        const request = await FriendRequest.findById(requestId);
+        if (!request) return res.status(404).json({ error: 'Request not found' });
+        if (request.to.toString() !== userId) return res.status(403).json({ error: 'Not your request to reject' });
+        if (request.status !== 'pending') return res.status(400).json({ error: 'Request is no longer pending' });
+
+        request.status = 'rejected';
+        await request.save();
+
+        res.json({ message: 'Friend request rejected' });
+    } catch (err) {
+        console.error('Friend request reject error:', err);
+        res.status(500).json({ error: 'Failed to reject request' });
+    }
+});
+
+// Get pending incoming friend requests
+app.get('/api/friend-requests/pending', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const pending = await FriendRequest.find({ to: userId, status: 'pending' })
+            .populate('from', 'displayName email profilePhoto bio interests')
+            .sort({ createdAt: -1 });
+        res.json(pending);
+    } catch (err) {
+        console.error('Fetch pending requests error:', err);
+        res.status(500).json({ error: 'Failed to fetch requests' });
+    }
+});
+
+// Get friends list
+app.get('/api/friends', requireAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id)
+            .populate('friends', 'displayName email profilePhoto bio interests location lastLogin');
+
+        const friendsList = (user?.friends || []).map(f => {
+            const obj = f.toObject();
+            return {
+                ...obj,
+                isOnline: (io.sockets.adapter.rooms.get(f._id.toString())?.size || 0) > 0
+            };
+        });
+
+        res.json(friendsList);
+    } catch (err) {
+        console.error('Fetch friends error:', err);
+        res.status(500).json({ error: 'Failed to fetch friends' });
+    }
+});
+
+// Remove a friend (unfriend)
+app.post('/api/friends/remove', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { friendId } = req.body;
+        if (!friendId) return res.status(400).json({ error: 'Friend ID required' });
+
+        // Remove from both users' friends arrays
+        await User.findByIdAndUpdate(userId, { $pull: { friends: friendId } });
+        await User.findByIdAndUpdate(friendId, { $pull: { friends: userId } });
+
+        // Clean up the friend request record
+        await FriendRequest.deleteMany({
+            $or: [
+                { from: userId, to: friendId },
+                { from: friendId, to: userId }
+            ]
+        });
+
+        res.json({ message: 'Friend removed' });
+    } catch (err) {
+        console.error('Remove friend error:', err);
+        res.status(500).json({ error: 'Failed to remove friend' });
     }
 });
 

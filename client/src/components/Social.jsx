@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MapComponent from './Map';
 import api from '../utils/api';
 import { Box, Card, CardContent, Typography, Avatar, Chip, Button } from '@mui/material';
@@ -7,23 +7,30 @@ import { MessageSquare } from 'lucide-react';
 
 const ConnectView = () => {
     const [users, setUsers] = useState([]);
+    const [pendingRequests, setPendingRequests] = useState([]);
+    const [friends, setFriends] = useState([]);
+    const [actionLoading, setActionLoading] = useState(null); // Track which button is loading
     const { user } = useAuth();
-    const pendingRequests = [];
-    const friends = [];
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await api.get('/api/users/global');
-                setUsers(res.data);
-            } catch (err) {
-                console.error("Failed to fetch users", err);
-            }
-        };
-        fetchUsers();
+    const fetchAll = useCallback(async () => {
+        try {
+            const [usersRes, pendingRes, friendsRes] = await Promise.all([
+                api.get('/api/users/global'),
+                api.get('/api/friend-requests/pending'),
+                api.get('/api/friends')
+            ]);
+            setUsers(usersRes.data);
+            setPendingRequests(pendingRes.data);
+            setFriends(friendsRes.data);
+        } catch (err) {
+            console.error("Failed to fetch data", err);
+        }
     }, []);
 
-    // Server now provides sharedInterests and matchScore in each user object
+    useEffect(() => {
+        fetchAll();
+    }, [fetchAll]);
+
     const checkInterestMatch = (u) => {
         return (u.sharedInterests?.length || 0) > 0;
     };
@@ -32,13 +39,57 @@ const ConnectView = () => {
         window.dispatchEvent(new CustomEvent('map_connect_user', { detail: targetUser }));
     };
 
+    const handleSendRequest = async (toUserId) => {
+        setActionLoading(toUserId);
+        try {
+            await api.post('/api/friend-request/send', { toUserId });
+            await fetchAll(); // Refresh all data
+        } catch (err) {
+            console.error('Failed to send friend request', err);
+        }
+        setActionLoading(null);
+    };
+
+    const handleAcceptRequest = async (requestId) => {
+        setActionLoading(requestId);
+        try {
+            await api.post('/api/friend-request/accept', { requestId });
+            await fetchAll();
+        } catch (err) {
+            console.error('Failed to accept request', err);
+        }
+        setActionLoading(null);
+    };
+
+    const handleRejectRequest = async (requestId) => {
+        setActionLoading(requestId);
+        try {
+            await api.post('/api/friend-request/reject', { requestId });
+            await fetchAll();
+        } catch (err) {
+            console.error('Failed to reject request', err);
+        }
+        setActionLoading(null);
+    };
+
+    const handleRemoveFriend = async (friendId) => {
+        setActionLoading(friendId);
+        try {
+            await api.post('/api/friends/remove', { friendId });
+            await fetchAll();
+        } catch (err) {
+            console.error('Failed to remove friend', err);
+        }
+        setActionLoading(null);
+    };
+
     return (
         <div className="h-full w-full p-4 space-y-4 animate-fade-in relative z-10">
             <div className="max-w-[1600px] mx-auto space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Friend Requests */}
                     <div className="bg-white dark:bg-[#141218] rounded-3xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
-                        <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-2xl text-primary transition-transform group-hover:scale-110">
                                     <span className="material-symbols-outlined text-2xl font-bold">person_add</span>
@@ -47,18 +98,48 @@ const ConnectView = () => {
                             </div>
                             <span className="text-xs font-black bg-primary/10 text-primary px-4 py-1.5 rounded-full uppercase tracking-wider">{pendingRequests.length}</span>
                         </div>
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-3xl bg-secondary/5 dark:bg-white/5">
-                            <div className="w-20 h-20 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99] shadow-inner">
-                                <span className="material-symbols-outlined text-3xl">inbox</span>
+                        {pendingRequests.length === 0 ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-3xl bg-secondary/5 dark:bg-white/5">
+                                <div className="w-20 h-20 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99] shadow-inner">
+                                    <span className="material-symbols-outlined text-3xl">inbox</span>
+                                </div>
+                                <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">Inbox is empty</p>
+                                <p className="text-xs text-[#915b55] dark:text-[#938F99] mt-1 font-medium italic">New requests will appear here</p>
                             </div>
-                            <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">Inbox is empty</p>
-                            <p className="text-xs text-[#915b55] dark:text-[#938F99] mt-1 font-medium italic">New requests will appear here</p>
-                        </div>
+                        ) : (
+                            <div className="flex-1 space-y-3 overflow-y-auto max-h-[280px]">
+                                {pendingRequests.map(req => (
+                                    <div key={req._id} className="flex items-center gap-3 p-3 rounded-2xl bg-secondary/5 dark:bg-white/5 border border-white/10 dark:border-white/5">
+                                        <Avatar src={req.from?.profilePhoto} sx={{ width: 48, height: 48 }} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{req.from?.displayName}</p>
+                                            <p className="text-xs text-gray-500 truncate">{req.from?.bio || 'Wants to connect'}</p>
+                                        </div>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button
+                                                onClick={() => handleAcceptRequest(req._id)}
+                                                disabled={actionLoading === req._id}
+                                                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
+                                            >
+                                                Accept
+                                            </button>
+                                            <button
+                                                onClick={() => handleRejectRequest(req._id)}
+                                                disabled={actionLoading === req._id}
+                                                className="px-4 py-2 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 rounded-full text-xs font-bold hover:bg-gray-200 dark:hover:bg-white/20 transition-all active:scale-95 disabled:opacity-50"
+                                            >
+                                                Decline
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {/* My Connections */}
+                    {/* My Connections (Friends List) */}
                     <div className="bg-white dark:bg-[#141218] rounded-3xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
-                        <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-2xl text-primary transition-transform group-hover:scale-110">
                                     <span className="material-symbols-outlined text-2xl font-bold">group</span>
@@ -67,13 +148,50 @@ const ConnectView = () => {
                             </div>
                             <span className="text-xs font-black bg-primary/10 text-primary px-4 py-1.5 rounded-full uppercase tracking-wider">{friends.length}</span>
                         </div>
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-3xl bg-secondary/5 dark:bg-white/5">
-                            <div className="w-20 h-20 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99] shadow-inner">
-                                <span className="material-symbols-outlined text-3xl">diversity_3</span>
+                        {friends.length === 0 ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-3xl bg-secondary/5 dark:bg-white/5">
+                                <div className="w-20 h-20 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99] shadow-inner">
+                                    <span className="material-symbols-outlined text-3xl">diversity_3</span>
+                                </div>
+                                <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">No connections yet</p>
+                                <p className="text-xs text-[#915b55] dark:text-[#938F99] mt-1 font-medium italic">Expand your map to find people</p>
                             </div>
-                            <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">No connections yet</p>
-                            <p className="text-xs text-[#915b55] dark:text-[#938F99] mt-1 font-medium italic">Expand your map to find people</p>
-                        </div>
+                        ) : (
+                            <div className="flex-1 space-y-3 overflow-y-auto max-h-[280px]">
+                                {friends.map(friend => (
+                                    <div key={friend._id} className="flex items-center gap-3 p-3 rounded-2xl bg-secondary/5 dark:bg-white/5 border border-white/10 dark:border-white/5">
+                                        <div className="relative">
+                                            <Avatar src={friend.profilePhoto} sx={{ width: 48, height: 48, border: friend.isOnline ? '3px solid' : 'none', borderColor: 'var(--color-primary)' }} />
+                                            {/* Online indicator dot */}
+                                            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#141218] ${friend.isOnline ? 'bg-primary dark:bg-[#D0BCFF]' : 'bg-gray-400'}`} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{friend.displayName}</p>
+                                            <p className={`text-xs font-bold ${friend.isOnline ? 'text-primary dark:text-[#D0BCFF]' : 'text-gray-400'}`}>
+                                                {friend.isOnline ? '● Online' : '○ Offline'}
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button
+                                                onClick={() => handleConnectClick(friend)}
+                                                className="p-2 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-all active:scale-95"
+                                                title="View on map"
+                                            >
+                                                <span className="material-symbols-outlined text-lg">share_location</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handleRemoveFriend(friend._id)}
+                                                disabled={actionLoading === friend._id}
+                                                className="p-2 bg-gray-100 dark:bg-white/10 text-gray-500 rounded-full hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-all active:scale-95 disabled:opacity-50"
+                                                title="Remove friend"
+                                            >
+                                                <span className="material-symbols-outlined text-lg">person_remove</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -91,51 +209,93 @@ const ConnectView = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {users.filter(u => u._id !== user?._id).slice(0, 50).map(u => {
                             const isMatch = checkInterestMatch(u);
+                            const isFriend = u.isFriend;
                             return (
-                                <div key={u._id} className="bg-white dark:bg-[#141218] rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 flex flex-col items-center text-center gap-5 transition-transform hover:-translate-y-1 duration-300">
-                                    <div className="relative">
-                                        <Avatar src={u.profilePhoto} sx={{ width: 90, height: 90, border: isMatch ? '4px solid #be3627' : '4px solid transparent', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }} />
-                                        {isMatch && (
-                                            <div className="absolute -top-1 -right-1 bg-primary text-white rounded-full p-1 shadow-md border-2 border-white dark:border-[#141218]">
-                                                <span className="material-symbols-outlined text-[14px] font-black">star</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Typography variant="h6" sx={{ fontWeight: 900, color: 'text.primary', letterSpacing: '-0.02em' }}>{u.displayName}</Typography>
-                                        <Typography variant="body2" sx={{ fontStyle: 'italic', fontWeight: 600, color: 'text.secondary' }}>{u.bio || 'Interests seeker'}</Typography>
-                                        {isMatch && (
-                                            <span className="inline-block text-[10px] font-black text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full uppercase tracking-wider">
-                                                ★ {u.matchScore} shared interest{u.matchScore !== 1 ? 's' : ''}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 justify-center">
-                                        {u.interests?.slice(0, 5).map((int, i) => {
-                                            const intStr = typeof int === 'string' ? int : int.name;
-                                            const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
-                                            return (
-                                                <span
-                                                    key={i}
-                                                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${isShared
-                                                        ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
-                                                        : 'bg-[#f2e9e9] dark:bg-[#231f29] border-transparent text-[#915b55] dark:text-[#938F99]'
-                                                        }`}
-                                                >
-                                                    {isShared && '★ '}{intStr}
+                                <div key={u._id} className={`bg-white dark:bg-[#141218] rounded-3xl p-6 shadow-xl border transition-transform hover:-translate-y-1 duration-300 ${isFriend ? 'border-primary/30 dark:border-[#D0BCFF]/30' : 'border-white/20 dark:border-white/5'}`}>
+                                    <div className="flex flex-col items-center text-center gap-5">
+                                        <div className="relative">
+                                            <Avatar
+                                                src={u.profilePhoto}
+                                                sx={{
+                                                    width: 90, height: 90,
+                                                    border: isFriend ? '4px solid var(--color-primary)' : isMatch ? '4px solid #22c55e' : '4px solid transparent',
+                                                    boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
+                                                }}
+                                            />
+                                            {isFriend && (
+                                                <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-3 border-white dark:border-[#141218] ${u.isOnline ? 'bg-primary dark:bg-[#D0BCFF]' : 'bg-gray-400'}`} />
+                                            )}
+                                            {!isFriend && isMatch && (
+                                                <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-1 shadow-md border-2 border-white dark:border-[#141218]">
+                                                    <span className="material-symbols-outlined text-[14px] font-black">star</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Typography variant="h6" sx={{ fontWeight: 900, color: 'text.primary', letterSpacing: '-0.02em' }}>{u.displayName}</Typography>
+                                            <Typography variant="body2" sx={{ fontStyle: 'italic', fontWeight: 600, color: 'text.secondary' }}>{u.bio || 'Interests seeker'}</Typography>
+                                            {isFriend ? (
+                                                <span className={`inline-block text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${u.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
+                                                    {u.isOnline ? '● Online' : '○ Offline'} · ★ Friend
                                                 </span>
-                                            );
-                                        })}
-                                    </div>
+                                            ) : isMatch ? (
+                                                <span className="inline-block text-[10px] font-black text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full uppercase tracking-wider">
+                                                    ★ {u.matchScore} shared interest{u.matchScore !== 1 ? 's' : ''}
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            {u.interests?.slice(0, 5).map((int, i) => {
+                                                const intStr = typeof int === 'string' ? int : int.name;
+                                                const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
+                                                return (
+                                                    <span
+                                                        key={i}
+                                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${isShared
+                                                            ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                                                            : 'bg-[#f2e9e9] dark:bg-[#231f29] border-transparent text-[#915b55] dark:text-[#938F99]'
+                                                            }`}
+                                                    >
+                                                        {isShared && '★ '}{intStr}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
 
-                                    <div className="flex gap-2 w-full mt-2">
-                                        <button
-                                            onClick={() => handleConnectClick(u)}
-                                            className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-10 rounded-full shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">share_location</span>
-                                            Connect
-                                        </button>
+                                        <div className="flex gap-2 w-full mt-2">
+                                            {isFriend ? (
+                                                <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] font-bold h-10 rounded-full flex items-center justify-center gap-2 text-sm">
+                                                    <span className="material-symbols-outlined text-lg">group</span>
+                                                    Friends
+                                                </div>
+                                            ) : u.friendRequestSent ? (
+                                                <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 font-bold h-10 rounded-full flex items-center justify-center gap-2 text-sm cursor-not-allowed">
+                                                    <span className="material-symbols-outlined text-lg">schedule_send</span>
+                                                    Request Sent
+                                                </button>
+                                            ) : u.friendRequestReceived ? (
+                                                <button
+                                                    onClick={async () => {
+                                                        const match = pendingRequests.find(r => (r.from?._id || r.from) === u._id);
+                                                        if (match) await handleAcceptRequest(match._id);
+                                                    }}
+                                                    disabled={actionLoading === u._id}
+                                                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-10 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">person_add</span>
+                                                    Accept Request
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleSendRequest(u._id)}
+                                                    disabled={actionLoading === u._id}
+                                                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-10 rounded-full shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">{isMatch ? 'person_add' : 'share_location'}</span>
+                                                    {isMatch ? 'Add Friend' : 'Connect'}
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )

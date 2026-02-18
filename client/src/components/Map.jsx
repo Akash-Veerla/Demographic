@@ -49,7 +49,6 @@ const MapComponent = () => {
 
     const [chatTarget, setChatTarget] = useState(null);
     const [socketReady, setSocketReady] = useState(false);
-    const [discoveryMode, setDiscoveryMode] = useState(false);
     const [isGlobalMode, setIsGlobalMode] = useState(false);
     const [alertMessage, setAlertMessage] = useState(null);
 
@@ -235,7 +234,7 @@ const MapComponent = () => {
             userSource.addFeature(meFeature);
         }
 
-        // B. Add Other Users (All returned users are matches — server already filtered)
+        // B. Add Other Users — color-coded by relationship
         nearbyUsersList.forEach(u => {
             if (!u.location?.coordinates) return;
             if (u.location.coordinates[0] === 0 && u.location.coordinates[1] === 0) return;
@@ -246,12 +245,21 @@ const MapComponent = () => {
                 data: u
             });
 
-            const isOnline = u.isOnline;
+            const isFriend = u.isFriend;
             const hasSharedInterests = (u.sharedInterests?.length || 0) > 0;
 
-            // Simplified marker colors: Green = match with shared interests, Yellow = no match
-            let markerColor = hasSharedInterests ? '#22c55e' : '#fbbf24';
-            if (!isOnline) markerColor = hasSharedInterests ? '#16a34a' : '#a3a3a3'; // Darker green / grey if offline
+            // Marker color logic:
+            // Friends: Red (light) / Purple (dark) — with online glow if online
+            // Matched interests: Green
+            // No match: Gray
+            let markerColor;
+            if (isFriend) {
+                markerColor = isDark ? '#D0BCFF' : '#be3627'; // Purple (dark) / Red (light)
+            } else if (hasSharedInterests) {
+                markerColor = '#22c55e'; // Green
+            } else {
+                markerColor = '#9ca3af'; // Gray
+            }
 
             let styles = [];
 
@@ -259,9 +267,12 @@ const MapComponent = () => {
             const isSelected = selectedUser?._id === u._id;
             styles.push(new Style({
                 image: new StyleCircle({
-                    radius: isSelected ? 12 : 8,
+                    radius: isSelected ? 12 : (isFriend ? 10 : 8),
                     fill: new Fill({ color: markerColor }),
-                    stroke: new Stroke({ color: '#fff', width: isSelected ? 3 : 2 })
+                    stroke: new Stroke({
+                        color: isFriend && u.isOnline ? (isDark ? '#D0BCFF' : '#be3627') : '#fff',
+                        width: isFriend && u.isOnline ? 4 : 2
+                    })
                 }),
                 text: isSelected ? new Text({
                     text: u.displayName,
@@ -270,11 +281,23 @@ const MapComponent = () => {
                     font: 'bold 12px Outfit',
                     stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 })
                 }) : null,
-                zIndex: 10
+                zIndex: isFriend ? 50 : 10
             }));
 
-            // Match badge - show shared interest count if > 0
-            if (hasSharedInterests) {
+            // Badge: Friend online/offline, or match count
+            if (isFriend) {
+                styles.push(new Style({
+                    text: new Text({
+                        text: u.isOnline ? '● Online' : '○ Offline',
+                        offsetY: -24,
+                        font: 'bold 10px Outfit',
+                        fill: new Fill({ color: u.isOnline ? (isDark ? '#D0BCFF' : '#be3627') : '#9ca3af' }),
+                        backgroundFill: new Fill({ color: isDark ? '#1D1B20' : '#fff' }),
+                        padding: [3, 6, 3, 6],
+                    }),
+                    zIndex: 51
+                }));
+            } else if (hasSharedInterests) {
                 styles.push(new Style({
                     text: new Text({
                         text: `★ ${u.matchScore || u.sharedInterests.length}`,
@@ -292,20 +315,10 @@ const MapComponent = () => {
             userSource.addFeature(feature);
         });
 
-        // C. Discovery Circle
+        // C. Radius circle removed (server handles 20km filtering)
         radiusSource.clear();
-        if (discoveryMode && !isGlobalMode && userLocation) {
-            const circleFeature = new Feature({
-                geometry: new GeomCircle(userLocation, 10000)
-            });
-            circleFeature.setStyle(new Style({
-                stroke: new Stroke({ color: theme.palette.primary.main, width: 2, lineDash: [10, 10] }),
-                fill: new Fill({ color: isDark ? 'rgba(208, 188, 255, 0.05)' : 'rgba(190, 54, 39, 0.05)' })
-            }));
-            radiusSource.addFeature(circleFeature);
-        }
 
-    }, [nearbyUsersList, selectedUser, isDark, discoveryMode, isGlobalMode, map, userLocation, theme, user]);
+    }, [nearbyUsersList, selectedUser, isDark, isGlobalMode, map, userLocation, theme, user]);
 
     // -------------------------------------------------------------------------
     // 4. Routing & Navigation
@@ -592,18 +605,11 @@ const MapComponent = () => {
                 </div>
             </div>
 
-            {/* C. Top Right Controls (Discovery) */}
+            {/* C. Top Right Controls (Global View only) */}
             <div className="absolute top-6 right-6 z-20 flex gap-4 hidden md:flex">
-                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-all ${isGlobalMode ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3">
                     <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" checked={discoveryMode} disabled={isGlobalMode} onChange={() => setDiscoveryMode(!discoveryMode)} />
-                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                    </label>
-                    <span className="text-[#1a100f] dark:text-white font-bold text-xs">Discovery (10km)</span>
-                </div>
-                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3 ${discoveryMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" checked={isGlobalMode} disabled={discoveryMode} onChange={() => setIsGlobalMode(!isGlobalMode)} />
+                        <input type="checkbox" className="sr-only peer" checked={isGlobalMode} onChange={() => setIsGlobalMode(!isGlobalMode)} />
                         <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
                     <span className="text-[#1a100f] dark:text-white font-bold text-xs">Global View</span>
@@ -691,14 +697,24 @@ const MapComponent = () => {
 
                             <div className="flex flex-col gap-1">
                                 <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Status</span>
-                                <div className="flex items-center gap-2">
-                                    <span className={`font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full ${selectedUser.isOnline ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
-                                        {selectedUser.isOnline ? 'Online' : 'Offline'}
-                                    </span>
-                                    {selectedUser.sharedInterests && selectedUser.sharedInterests.length > 0 && (
-                                        <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
-                                            ★ Match
-                                        </span>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {selectedUser.isFriend ? (
+                                        <>
+                                            <span className={`font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full ${selectedUser.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
+                                                {selectedUser.isOnline ? '● Online' : '○ Offline'}
+                                            </span>
+                                            <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10">
+                                                ★ Friend
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {selectedUser.sharedInterests && selectedUser.sharedInterests.length > 0 && (
+                                                <span className="font-bold uppercase text-xs tracking-wider px-3 py-1 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                                                    ★ {selectedUser.matchScore} Match{selectedUser.matchScore !== 1 ? 'es' : ''}
+                                                </span>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -743,6 +759,56 @@ const MapComponent = () => {
 
                 {/* Actions Footer */}
                 <div className="p-6 pt-4 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-3">
+                    {selectedUser && !selectedUser.isFriend && (
+                        selectedUser.friendRequestSent ? (
+                            <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 h-12 rounded-full font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
+                                <span className="material-symbols-outlined text-xl">schedule_send</span>
+                                Request Sent
+                            </button>
+                        ) : selectedUser.friendRequestReceived ? (
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const pendingRes = await api.get('/api/friend-requests/pending');
+                                        const match = pendingRes.data.find(r => r.from._id === selectedUser._id || r.from === selectedUser._id);
+                                        if (match) {
+                                            await api.post('/api/friend-request/accept', { requestId: match._id });
+                                            setAlertMessage('Friend request accepted!');
+                                            fetchNearbyUsers();
+                                        }
+                                    } catch (err) {
+                                        setAlertMessage(err.response?.data?.error || 'Failed to accept');
+                                    }
+                                }}
+                                className="w-full bg-green-500 hover:bg-green-600 text-white h-12 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-xl">person_add</span>
+                                Accept Friend Request
+                            </button>
+                        ) : (
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const res = await api.post('/api/friend-request/send', { toUserId: selectedUser._id });
+                                        setAlertMessage(res.data.message);
+                                        fetchNearbyUsers();
+                                    } catch (err) {
+                                        setAlertMessage(err.response?.data?.error || 'Failed to send request');
+                                    }
+                                }}
+                                className="w-full bg-primary hover:brightness-110 text-white h-12 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                            >
+                                <span className="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">person_add</span>
+                                Send Friend Request
+                            </button>
+                        )
+                    )}
+                    {selectedUser && selectedUser.isFriend && (
+                        <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] h-12 rounded-full font-bold text-sm flex items-center justify-center gap-2">
+                            <span className="material-symbols-outlined text-xl">group</span>
+                            Friends
+                        </div>
+                    )}
                     <button
                         onClick={startNavigation}
                         className="w-full bg-primary hover:brightness-110 text-white h-12 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group"
