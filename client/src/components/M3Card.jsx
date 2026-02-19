@@ -29,21 +29,19 @@ const M3Card = memo(({
 
     const variantClasses = {
         elevated: `
-            bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl
-            shadow-[0_4px_12px_rgba(0,0,0,0.15)]
-            dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)]
-            border-[0.5px] border-white/30 dark:border-white/10
-            ${isClickable ? 'hover:shadow-[0_0_25px_rgba(255,255,255,0.15)] hover:border-white/50 active:scale-[0.98]' : ''}
+            m3-surface-container
+            shadow-[0_4px_12px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)]
+            ${isClickable ? 'hover:shadow-[0_0_25px_rgba(255,255,255,0.15)] hover:border-black/5 dark:hover:border-white/50 active:scale-[0.98]' : ''}
         `,
         filled: `
-            bg-[#E7E0EC]/15 dark:bg-[#49454F]/15 backdrop-blur-2xl
-            border-[0.5px] border-white/20 dark:border-white/5
-            ${isClickable ? 'hover:bg-white/20 hover:border-white/40 active:scale-[0.98]' : ''}
+            bg-gray-100 dark:bg-white/5 dark:backdrop-blur-xl
+            border border-transparent dark:border-white/5
+            ${isClickable ? 'hover:bg-gray-200 dark:hover:bg-white/10 active:scale-[0.98]' : ''}
         `,
         outlined: `
-            bg-white/5 dark:bg-[#1C1B1F]/5 backdrop-blur-2xl
-            border-[0.5px] border-white/40 dark:border-[#49454F]/50
-            ${isClickable ? 'hover:bg-white/10 hover:border-white/60 active:scale-[0.98]' : ''}
+            bg-transparent
+            border border-gray-300 dark:border-white/20
+            ${isClickable ? 'hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98]' : ''}
         `,
     };
 

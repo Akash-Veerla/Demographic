@@ -84,7 +84,8 @@ const M3Dialog = memo(({
                 className={`
                     relative z-10
                     w-full min-w-[280px] max-w-[560px]
-                    bg-white dark:bg-[#2B2930]
+                    bg-white dark:bg-white/5 dark:backdrop-blur-xl
+                    border border-gray-200 dark:border-white/10
                     rounded-sq-2xl
                     shadow-[0_8px_32px_rgba(0,0,0,0.24)]
                     p-6

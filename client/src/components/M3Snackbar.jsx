@@ -25,10 +25,10 @@ import React, { memo, useEffect, useState, useCallback, useRef } from 'react';
 
 const VARIANT_MAP = {
     default: {
-        bg: 'bg-[#313033] dark:bg-[#E6E1E5]',
-        text: 'text-white dark:text-[#313033]',
-        action: 'text-[#D0BCFF] dark:text-[#6750A4]',
-        icon: 'text-white/70 dark:text-[#313033]/70'
+        bg: 'bg-white border border-gray-200 shadow-xl dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-none',
+        text: 'text-[#1a100f] dark:text-[#E6E1E5]',
+        action: 'text-primary dark:text-[#D0BCFF]',
+        icon: 'text-gray-500 dark:text-[#E6E1E5]/70'
     },
     success: {
         bg: 'bg-[#1B5E20] dark:bg-[#A5D6A7]',

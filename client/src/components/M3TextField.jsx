@@ -80,8 +80,8 @@ const M3TextField = memo(({
                 <div
                     className={`
                         relative h-14 group
-                        bg-white/10 dark:bg-white/5
-                        backdrop-blur-md
+                        bg-gray-50 dark:bg-white/5
+                        dark:backdrop-blur-md
                         rounded-t-sq-xs
                         cursor-text
                         ${disabled ? 'opacity-38 cursor-not-allowed' : ''}

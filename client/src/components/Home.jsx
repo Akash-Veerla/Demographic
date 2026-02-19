@@ -80,9 +80,9 @@ const Home = () => {
 
     return (
         <div className="min-h-full w-full bg-transparent p-4 md:p-8 font-display transition-colors duration-300 pb-8">
-            <div className="max-w-7xl mx-auto space-y-8">
+            <div className="max-w-5xl mx-auto w-full px-4 space-y-8">
 
-                {/* 1. Header / Greeting */}
+                {/* 1. Header / Greeting (Aligned) */}
                 <div className="mb-4 animate-fade-in">
                     <h1 className="text-3xl md:text-4xl font-black text-[#1a100f] dark:text-white tracking-tight">
                         Welcome back, <span className="text-primary">{user?.displayName?.split(' ')[0]}</span>
@@ -90,8 +90,8 @@ const Home = () => {
                     <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold mt-1">Ready to find some new connections?</p>
                 </div>
 
-                {/* 2. Navigation Cards (Row 1) — Capped width to prevent stretching */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto md:mx-0">
+                {/* 2. Navigation Cards (Row 1) — Uses Grid for structure */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                     <DashboardCard
                         title="Explore Map"
                         description="Discover people and places matching your vibe nearby."

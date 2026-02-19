@@ -94,7 +94,8 @@ const M3BottomSheet = memo(({
                 ref={sheetRef}
                 className={`
                     absolute bottom-0 left-0 right-0
-                    bg-white dark:bg-[#2B2930]
+                    bg-white dark:bg-white/5 dark:backdrop-blur-xl
+                    border-t border-gray-200 dark:border-white/10
                     max-h-[90vh]
                     overflow-hidden
                     transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)]
