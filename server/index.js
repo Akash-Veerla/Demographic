@@ -280,15 +280,88 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                 };
             })
             .filter(Boolean)
-            .sort((a, b) => {
-                // Friends first, then by match score
-                if (a.isFriend !== b.isFriend) return b.isFriend ? 1 : -1;
-                return b.matchScore - a.matchScore;
-            });
+            .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
 
         res.json(matchedUsers);
     } catch (err) {
-        console.error('Error fetching nearby matched users:', err);
+        console.error("Failed to fetch nearby users", err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Discover People (50 Nearest Users -> Sorted by Interest Match)
+app.get('/api/users/discover', requireAuth, async (req, res) => {
+    try {
+        const { lat, lng } = req.query;
+        const userId = req.user.id;
+
+        if (!lat || !lng) {
+            return res.json([]); // Need location for "nearest"
+        }
+
+        const currentUser = await User.findById(userId).select('interests friends');
+        const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
+        const myFriends = (currentUser?.friends || []).map(f => f.toString());
+
+        // 1. Gather 50 users near the user (sorted by distance by default)
+        const nearestUsers = await User.aggregate([
+            {
+                $geoNear: {
+                    near: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+                    distanceField: "dist.calculated",
+                    maxDistance: 10000000, // Large radius (10,000 km) to just get "nearest"
+                    query: {
+                        _id: { $ne: new mongoose.Types.ObjectId(userId) },
+                        'location.coordinates': { $ne: [0, 0] }
+                    },
+                    spherical: true
+                }
+            },
+            { $limit: 50 }, // Take top 50 closest
+            {
+                $project: {
+                    displayName: 1,
+                    email: 1,
+                    interests: 1,
+                    location: 1,
+                    profilePhoto: 1,
+                    bio: 1,
+                    lastLogin: 1,
+                    dist: 1
+                }
+            }
+        ]);
+
+        const sentRequests = await FriendRequest.find({ from: userId, status: 'pending' }).select('to').lean();
+        const receivedRequests = await FriendRequest.find({ to: userId, status: 'pending' }).select('from').lean();
+        const sentToIds = sentRequests.map(r => r.to.toString());
+        const receivedFromIds = receivedRequests.map(r => r.from.toString());
+
+        // 2. Sort by highest number of matching interests
+        const discoveredUsers = nearestUsers.map(u => {
+            const uid = u._id.toString();
+            const theirInterests = (u.interests || []).map(i => i.toLowerCase().trim());
+            const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
+            const isFriend = myFriends.includes(uid);
+
+            // Basic online check (optional)
+            const isOnline = (io.sockets.adapter.rooms.get(uid)?.size || 0) > 0;
+
+            return {
+                ...u,
+                isOnline: isFriend ? isOnline : null,
+                isFriend,
+                friendRequestSent: sentToIds.includes(uid),
+                friendRequestReceived: receivedFromIds.includes(uid),
+                sharedInterests,
+                matchScore: sharedInterests.length
+            };
+        }).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+
+        res.json(discoveredUsers);
+
+    } catch (err) {
+        console.error("Failed to fetch discover users", err);
         res.status(500).json({ error: 'Server error' });
     }
 });

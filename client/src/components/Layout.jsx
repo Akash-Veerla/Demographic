@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import Avatar from './Avatar';
 import M3NavBar from './M3NavBar';
 import M3IconButton from './M3IconButton';
+import M3Switch from './M3Switch';
 import M3SegmentedButton from './M3SegmentedButton';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -101,13 +102,12 @@ const Layout = ({ children }) => {
 
                         {/* Right Profile & Actions */}
                         <div className="flex items-center gap-3">
-                            {/* Theme Toggle — M3 Icon Button */}
-                            <M3IconButton
-                                icon={mode === 'dark' ? 'light_mode' : 'dark_mode'}
-                                variant="tonal"
-                                onClick={toggleColorMode}
-                                ariaLabel="Toggle theme"
-                                size="default"
+                            {/* Theme Toggle — M3 Switch (Sun/Moon) */}
+                            <M3Switch
+                                checked={mode === 'dark'}
+                                onChange={toggleColorMode}
+                                iconOn="dark_mode"
+                                iconOff="light_mode"
                             />
 
                             <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/profile')}>

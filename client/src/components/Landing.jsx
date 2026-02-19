@@ -9,7 +9,7 @@ const Landing = () => {
     const { toggleColorMode, mode } = useContext(ColorModeContext);
 
     return (
-        <div className="h-screen flex flex-col bg-[#f8f6f6] dark:bg-[#141218] text-[#1a100f] dark:text-[#E6E1E5] font-display relative selection:bg-primary/30 overflow-hidden">
+        <div className="min-h-screen flex flex-col bg-[#f8f6f6] dark:bg-[#141218] text-[#1a100f] dark:text-[#E6E1E5] font-display relative selection:bg-primary/30 overflow-x-hidden">
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0 pointer-events-none">

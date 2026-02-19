@@ -17,11 +17,15 @@ const ConnectView = () => {
     const [initialLoading, setInitialLoading] = useState(true);
     const { user, userLocation } = useAuth();
 
-    // Fetch Global Users, Friend Requests, Friends
+    // Fetch Global Users (Discover), Friend Requests, Friends
     const fetchAll = useCallback(async () => {
         try {
+            // If location available, use discover endpoint (nearest 50), else fallback to global
+            const userEndpoint = userLocation ? '/api/users/discover' : '/api/users/global';
+            const params = userLocation ? { params: { lat: userLocation.lat, lng: userLocation.lng } } : {};
+
             const [usersRes, pendingRes, friendsRes] = await Promise.all([
-                api.get('/api/users/global'),
+                api.get(userEndpoint, params),
                 api.get('/api/friend-requests/pending'),
                 api.get('/api/friends')
             ]);
@@ -33,7 +37,7 @@ const ConnectView = () => {
         } finally {
             setInitialLoading(false);
         }
-    }, []);
+    }, [userLocation?.lat, userLocation?.lng]);
 
     // Fetch Matched Users (Nearby + Shared Interests) - uses stable userLocation
     const fetchMatches = useCallback(async () => {
@@ -100,7 +104,7 @@ const ConnectView = () => {
     const handleRemoveFriend = async (friendId) => {
         setActionLoading(friendId);
         try {
-            await api.post('/api/friends/remove', { friendId });
+            await api.delete(`/api/friends/${friendId}`);
             await fetchAll();
             await fetchMatches();
         } catch (err) {
@@ -111,60 +115,65 @@ const ConnectView = () => {
 
     // User Item Renderer (Reusable) — squircle design
     const renderUserCard = (u) => {
-        const isMatch = checkInterestMatch(u) || u.matchScore > 0;
-        const isFriend = u.isFriend;
+        const isMatch = checkInterestMatch(u);
+        const isFriend = friends.some(f => f._id === u._id);
+
         return (
-            <div key={u._id} className={`bg-white dark:bg-[#141218] rounded-sq-2xl p-6 shadow-xl border transition-transform hover:-translate-y-1 duration-300 ${isFriend ? 'border-primary/30 dark:border-[#D0BCFF]/30' : 'border-white/20 dark:border-white/5'}`}>
-                <div className="flex flex-col items-center text-center gap-5">
-                    <div className="relative">
+            <div key={u._id} className="bg-white/80 dark:bg-[#1f1b24]/80 backdrop-blur-xl rounded-sq-2xl overflow-hidden shadow-lg border border-white/20 dark:border-white/5 group hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div className="p-6 flex flex-col items-center text-center flex-1">
+                    <div className="relative mb-4 shrink-0">
                         <Avatar
                             src={u.profilePhoto}
-                            sx={{
-                                width: 90, height: 90,
-                                borderRadius: '24px',
-                                border: isFriend ? '4px solid var(--color-primary)' : isMatch ? '4px solid #22c55e' : '4px solid transparent',
-                                boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
-                            }}
+                            sx={{ width: 96, height: 96, borderRadius: '24px', fontSize: '2rem' }}
                             variant="rounded"
                         />
-                        {isFriend && (
-                            <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-sq-sm border-3 border-white dark:border-[#141218] ${u.isOnline ? 'bg-primary dark:bg-[#D0BCFF]' : 'bg-gray-400'}`} />
-                        )}
-                        {!isFriend && isMatch && (
-                            <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-sq-sm p-1 shadow-md border-2 border-white dark:border-[#141218]">
-                                <span className="material-symbols-outlined text-[14px] font-black">star</span>
+                        {isMatch && !isFriend && (
+                            <div className="absolute -top-2 -right-2 bg-green-500 text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-[#1f1b24]" title="Matched Interests">
+                                <span className="material-symbols-outlined text-sm font-bold block">star</span>
                             </div>
                         )}
+                        {isFriend && (
+                            <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-md border-2 border-white dark:border-[#1f1b24] ${u.isOnline ? 'bg-green-500' : 'bg-gray-400'}`} title={u.isOnline ? "Online" : "Offline"}></div>
+                        )}
                     </div>
-                    <div className="space-y-1">
-                        <Typography variant="h6" sx={{ fontWeight: 900, color: 'text.primary', letterSpacing: '-0.02em' }}>{u.displayName}</Typography>
-                        <Typography variant="body2" sx={{ fontStyle: 'italic', fontWeight: 600, color: 'text.secondary' }}>{u.bio || 'Interests seeker'}</Typography>
-                        {isFriend ? (
-                            <span className={`inline-block text-[10px] font-black px-3 py-1 rounded-sq-md uppercase tracking-wider ${u.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
-                                {u.isOnline ? '● Online' : '○ Offline'} · ★ Friend
-                            </span>
-                        ) : isMatch ? (
-                            <span className="inline-block text-[10px] font-black text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-sq-md uppercase tracking-wider">
-                                ★ {u.matchScore} shared interest{u.matchScore !== 1 ? 's' : ''}
-                            </span>
-                        ) : null}
-                    </div>
-                    <M3ChipSet className="justify-center">
-                        {u.interests?.slice(0, 5).map((int, i) => {
+
+                    <h3 className="text-xl font-black text-[#1a100f] dark:text-white mb-1 line-clamp-1">{u.displayName}</h3>
+                    <p className="text-sm font-medium text-[#915b55] dark:text-[#CAC4D0] line-clamp-2 min-h-[2.5em] mb-3">
+                        {u.bio || "No bio yet"}
+                    </p>
+
+                    {/* MATCHED INTERESTS BADGE / TEXT */}
+                    {isMatch ? (
+                        <div className="bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full mb-4 border border-green-200 dark:border-green-800 shrink-0">
+                            <p className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-widest flex items-center justify-center gap-1">
+                                <span className="material-symbols-outlined text-sm">stars</span>
+                                {u.sharedInterests?.length || 0} SHARED INTERESTS
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="h-8 mb-4 shrink-0"></div>
+                    )}
+
+                    <M3ChipSet className="justify-center mb-4 min-h-[40px] flex-wrap">
+                        {u.interests?.slice(0, 3).map((int, i) => {
                             const intStr = typeof int === 'string' ? int : int.name;
                             const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
                             return (
                                 <M3Chip
                                     key={i}
-                                    label={isShared ? `★ ${intStr}` : intStr}
-                                    type="suggestion"
+                                    label={intStr}
+                                    type="assist"
                                     highlighted={isShared}
+                                    className="scale-90"
                                 />
                             );
                         })}
+                        {(u.interests?.length || 0) > 3 && (
+                            <span className="text-xs text-gray-400 font-bold self-center">+{u.interests.length - 3}</span>
+                        )}
                     </M3ChipSet>
 
-                    <div className="flex gap-2 w-full mt-2">
+                    <div className="w-full mt-auto pt-2">
                         {isFriend ? (
                             <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm">
                                 <span className="material-symbols-outlined text-lg">group</span>
@@ -177,15 +186,12 @@ const ConnectView = () => {
                             </button>
                         ) : u.friendRequestReceived ? (
                             <button
-                                onClick={async () => {
-                                    const match = pendingRequests.find(r => (r.from?._id || r.from) === u._id);
-                                    if (match) await handleAcceptRequest(match._id);
-                                }}
+                                onClick={() => handleAcceptRequest(u._id)}
                                 disabled={actionLoading === u._id}
-                                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-10 rounded-sq-lg shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-10 rounded-sq-lg shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-50 transition-all active:scale-95"
                             >
                                 <span className="material-symbols-outlined text-lg">person_add</span>
-                                Accept Request
+                                Accept
                             </button>
                         ) : (
                             <button
