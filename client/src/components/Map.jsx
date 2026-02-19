@@ -667,7 +667,7 @@ const MapComponent = () => {
                 absolute z-30 bg-white dark:bg-[#1C1B1F]/10 dark:backdrop-blur-2xl shadow-2xl border-[0.5px] border-white/30 dark:border-white/10 transition-all duration-500 ease-in-out
                 ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
                 md:top-24 md:left-6 md:w-80 md:rounded-sq-2xl md:h-auto md:max-h-[calc(100%-7rem)]
-                bottom-0 left-0 right-0 w-full rounded-t-sq-2xl max-h-[70vh]
+                bottom-0 left-0 right-0 w-full rounded-t-sq-2xl h-fit max-h-[60vh]
                 flex flex-col overflow-hidden ring-1 ring-black/5 hover:border-white/50 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]
             `}>
                 {/* Header */}

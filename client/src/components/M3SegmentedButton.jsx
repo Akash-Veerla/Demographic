@@ -31,7 +31,7 @@ const M3SegmentedButton = memo(({
 
     return (
         <div
-            className={`inline-flex rounded-sq-xl overflow-hidden shadow-sm ${className}`}
+            className={`inline-flex rounded-sq-lg overflow-hidden shadow-sm ${className}`}
             role="group"
         >
             {segments.map((segment, index) => {
@@ -58,9 +58,10 @@ const M3SegmentedButton = memo(({
                         aria-pressed={isSelected}
                     >
                         {/* Checkmark for selected */}
-                        {isSelected && showIcon && (
+                        {/* Checkmark removed as requested */}
+                        {/* {isSelected && showIcon && (
                             <span className="material-symbols-outlined text-[16px] font-bold">check</span>
-                        )}
+                        )} */}
 
                         {/* Icon */}
                         {segment.icon && !isSelected && (

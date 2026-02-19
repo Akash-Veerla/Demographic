@@ -371,13 +371,15 @@ const ConnectView = () => {
 
                 {/* 2. Discover People Section */}
                 <div className="pt-4">
-                    <div className="flex items-center gap-4 mb-6 ml-2">
-                        <div className="w-10 h-10 bg-primary rounded-sq-lg flex items-center justify-center text-white shadow-lg shadow-primary/30">
-                            <span className="material-symbols-outlined text-xl font-bold">explore</span>
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-black text-[#1a100f] dark:text-white tracking-tight leading-none">Discover People</h2>
-                            <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">Recommended for you · Sorted by match</p>
+                    <div className="bg-white dark:bg-white/5 dark:backdrop-blur-xl rounded-sq-xl p-4 shadow-sm border border-black/5 dark:border-white/5 mb-6 mx-2">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-primary rounded-sq-lg flex items-center justify-center text-white shadow-lg shadow-primary/30">
+                                <span className="material-symbols-outlined text-xl font-bold">explore</span>
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black text-[#1a100f] dark:text-white tracking-tight leading-none">Discover People</h2>
+                                <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">Recommended for you · Sorted by match</p>
+                            </div>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -406,7 +408,7 @@ const Social = () => {
     return (
         <div className="flex flex-col h-full w-full relative transition-colors duration-300">
             {/* Tab Navigation Bar — Glass Segmented Container */}
-            <div className="bg-transparent px-6 sticky top-0 z-30 flex justify-center h-16 items-center">
+            <div className="bg-white dark:bg-[#141218]/95 dark:backdrop-blur-md border-b border-black/5 dark:border-white/5 px-6 sticky top-0 z-30 flex justify-center h-16 items-center shadow-sm">
                 <M3SegmentedButton
                     segments={[
                         { value: 'map', label: 'Map View', icon: 'map' },
