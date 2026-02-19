@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { Box, Card, CardContent, Typography, Avatar, Chip, Button } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare } from 'lucide-react';
+import M3LoadingIndicator from './M3LoadingIndicator';
 
 const ConnectView = () => {
     const [users, setUsers] = useState([]);
@@ -11,6 +12,7 @@ const ConnectView = () => {
     const [pendingRequests, setPendingRequests] = useState([]);
     const [friends, setFriends] = useState([]);
     const [actionLoading, setActionLoading] = useState(null);
+    const [initialLoading, setInitialLoading] = useState(true);
     const { user, userLocation } = useAuth();
 
     // Fetch Global Users, Friend Requests, Friends
@@ -26,6 +28,8 @@ const ConnectView = () => {
             setFriends(friendsRes.data);
         } catch (err) {
             console.error("Failed to fetch data", err);
+        } finally {
+            setInitialLoading(false);
         }
     }, []);
 
@@ -206,6 +210,15 @@ const ConnectView = () => {
         .filter(u => u._id !== user?._id && !matchedIds.has(u._id))
         .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
         .slice(0, 50);
+
+    if (initialLoading) {
+        return (
+            <div className="h-full w-full flex flex-col items-center justify-center gap-4 py-32 animate-fade-in">
+                <M3LoadingIndicator size={56} />
+                <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Loading people...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full w-full p-4 space-y-8 animate-fade-in relative z-10 pb-24">

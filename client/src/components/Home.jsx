@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Map, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
 import api from '../utils/api';
+import M3LoadingIndicator from './M3LoadingIndicator';
 
 const Home = () => {
     const { user, userLocation } = useAuth();
@@ -50,7 +51,7 @@ const Home = () => {
                 <Icon size={14} /> {label}
             </span>
             <div className="text-6xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">
-                {loadingStats ? '-' : count}
+                {loadingStats ? <M3LoadingIndicator size={40} className="mx-auto" /> : count}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
         </div>
