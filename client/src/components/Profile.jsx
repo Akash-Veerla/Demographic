@@ -73,7 +73,7 @@ const Profile = () => {
                                 {/* Bio */}
                                 <div className="w-full text-left">
                                     <label className="block text-xs font-bold uppercase tracking-wider text-[#915b55] dark:text-[#938F99] mb-2">Bio</label>
-                                    <div className="bg-[#f2e9e9] dark:bg-[#231f29] rounded-2xl p-4 border border-[#be3627]/10 dark:border-white/5 text-[#1a100f] dark:text-[#E6E1E5]">
+                                    <div className="bg-[#f2e9e9] dark:bg-[#231f29] rounded-sq-xl p-4 border border-[#be3627]/10 dark:border-white/5 text-[#1a100f] dark:text-[#E6E1E5]">
                                         <p className="text-base leading-relaxed">{user.bio || "No bio yet."}</p>
                                     </div>
                                 </div>
@@ -115,7 +115,7 @@ const Profile = () => {
                                     <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-3">Password</label>
                                     <button
                                         onClick={() => setIsPassModalOpen(true)}
-                                        className="w-full py-4 px-4 rounded-2xl border-2 border-primary/20 text-primary font-bold hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 group"
+                                        className="w-full py-4 px-4 rounded-sq-xl border-2 border-primary/20 text-primary font-bold hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 group"
                                     >
                                         <span className="material-symbols-outlined group-hover:scale-110 transition-transform">lock_reset</span>
                                         Change Password
@@ -126,7 +126,7 @@ const Profile = () => {
                                     <label className="block text-sm font-bold text-red-600 dark:text-red-400 mb-3">Danger Zone</label>
                                     <button
                                         onClick={() => setIsDeleteModalOpen(true)}
-                                        className="w-full py-4 px-4 rounded-2xl border-2 border-red-500/20 text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2 group"
+                                        className="w-full py-4 px-4 rounded-sq-xl border-2 border-red-500/20 text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2 group"
                                     >
                                         <span className="material-symbols-outlined group-hover:scale-110 transition-transform">delete</span>
                                         Delete Account

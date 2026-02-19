@@ -14,6 +14,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userLocation, setUserLocation] = useState(null); // { lat, lng } — single source of truth for geolocation
 
     // Check localStorage OR URL query param for token to set initial loading state
     const [loading, setLoading] = useState(!!localStorage.getItem('token') || window.location.search.includes('token='));
@@ -25,8 +26,16 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         try {
             const response = await api.get('/api/current_user');
-            setUser(response.data);
+            const fetchedUser = response.data;
+            setUser(fetchedUser);
             setIsAuthenticated(true);
+            // Seed userLocation from stored DB location if available
+            if (fetchedUser?.location?.coordinates) {
+                const [lng, lat] = fetchedUser.location.coordinates;
+                if (lat && lng && !(lat === 0 && lng === 0)) {
+                    setUserLocation({ lat, lng });
+                }
+            }
         } catch (err) {
             console.error("Fetch User Failed:", err);
             localStorage.removeItem('token');
@@ -124,6 +133,8 @@ export const AuthProvider = ({ children }) => {
                 const { latitude, longitude } = position.coords;
                 try {
                     await api.post('/api/user/location', { lat: latitude, lng: longitude });
+                    // Update both user object and standalone location
+                    setUserLocation({ lat: latitude, lng: longitude });
                     setUser(prev => {
                         if (!prev) return prev;
                         return {
@@ -170,6 +181,7 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        userLocation,
         isAuthenticated,
         loading,
         error,
@@ -178,6 +190,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateInterests,
         updateProfile,
+        updateLocation,
         forgotPassword,
         fetchCurrentUser
     };

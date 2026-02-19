@@ -85,8 +85,8 @@ const Landing = () => {
                         { icon: <Users size={24} />, title: "Interest Matching", desc: "Filter the map by shared hobbies and passions instantly." },
                         { icon: <Globe size={24} />, title: "Global & Local", desc: "Switch seamlessly between your neighborhood and the world." }
                     ].map((feature, i) => (
-                        <div key={i} className="p-6 rounded-3xl bg-white/60 dark:bg-[#1f1b24]/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 group text-left">
-                            <div className="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+                        <div key={i} className="p-6 rounded-sq-2xl bg-white/60 dark:bg-[#1f1b24]/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 group text-left">
+                            <div className="w-12 h-12 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
                                 {feature.icon}
                             </div>
                             <h3 className="text-xl font-bold mb-2">{feature.title}</h3>

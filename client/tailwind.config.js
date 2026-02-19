@@ -55,6 +55,13 @@ export default {
         'xl': '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
+        // Squircle design system
+        'sq-xs': '8px',
+        'sq-sm': '12px',
+        'sq-md': '16px',
+        'sq-lg': '20px',
+        'sq-xl': '24px',
+        'sq-2xl': '28px',
       },
       boxShadow: {
         'elevation-1': '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',

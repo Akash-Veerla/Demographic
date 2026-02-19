@@ -5,17 +5,20 @@ import { Map, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
 import api from '../utils/api';
 
 const Home = () => {
-    const { user } = useAuth();
+    const { user, userLocation } = useAuth();
     const navigate = useNavigate();
     const [stats, setStats] = useState({ activeNearby: 0, matchedInterestsNearby: 0, topInterests: [] });
     const [loadingStats, setLoadingStats] = useState(true);
 
     useEffect(() => {
+        if (!user || !userLocation) return;
+
         const fetchStats = async () => {
             try {
-                // If we have location, we could pass it, but backend now uses stored location if omitted.
-                // We re-run this when user.location changes to ensure freshness.
-                const res = await api.get('/api/stats/local');
+                // Pass current coordinates directly for guaranteed accuracy
+                const res = await api.get('/api/stats/local', {
+                    params: { lat: userLocation.lat, lng: userLocation.lng }
+                });
                 setStats(res.data);
             } catch (err) {
                 console.error("Failed to load stats", err);
@@ -24,18 +27,16 @@ const Home = () => {
             }
         };
 
-        if (user) {
-            fetchStats();
-        }
-    }, [user?.location]); // Re-fetch when location updates
+        fetchStats();
+    }, [userLocation?.lat, userLocation?.lng]); // Stable primitive deps
 
     // Card Component for consistency
     const DashboardCard = ({ title, description, icon: Icon, onClick, className = "" }) => (
         <div
             onClick={onClick}
-            className={`bg-white dark:bg-[#141218] p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all duration-200 hover:shadow-md hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group ${className}`}
+            className={`bg-white dark:bg-[#141218] p-6 rounded-sq-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all duration-200 hover:shadow-md hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group ${className}`}
         >
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+            <div className="w-12 h-12 bg-primary/10 rounded-sq-xl flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                 <Icon size={24} />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
@@ -44,7 +45,7 @@ const Home = () => {
     );
 
     const StatCard = ({ label, count, description, icon: Icon }) => (
-        <div className="bg-white dark:bg-[#141218] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center justify-center h-full">
+        <div className="bg-white dark:bg-[#141218] p-8 rounded-sq-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center justify-center h-full">
             <span className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-4 flex items-center gap-2">
                 <Icon size={14} /> {label}
             </span>
@@ -57,17 +58,17 @@ const Home = () => {
 
     const PulseCard = ({ category, count, index }) => (
         <div
-            className="flex-shrink-0 w-64 bg-gradient-to-br from-primary/5 to-transparent dark:from-primary/10 p-6 rounded-3xl border border-primary/10 relative overflow-hidden group cursor-pointer hover:border-primary/30 transition-all"
+            className="flex-shrink-0 w-64 bg-gradient-to-br from-primary/5 to-transparent dark:from-primary/10 p-6 rounded-sq-2xl border border-primary/10 relative overflow-hidden group cursor-pointer hover:border-primary/30 transition-all"
             onClick={() => navigate(`/map?filter=${category}`)}
             style={{ animationDelay: `${index * 100}ms` }}
         >
-            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full"></div>
+            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs animate-ping"></div>
+            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs"></div>
 
             <h4 className="text-xl font-black text-gray-900 dark:text-white mb-1">{category}</h4>
             <p className="text-sm text-primary font-bold">{count} Active Nearby</p>
-            <div className="mt-4 h-1 w-full bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full" style={{ width: '70%' }}></div>
+            <div className="mt-4 h-1 w-full bg-gray-100 dark:bg-white/10 rounded-sq-md overflow-hidden">
+                <div className="h-full bg-primary rounded-sq-md" style={{ width: '70%' }}></div>
             </div>
         </div>
     );
@@ -136,7 +137,7 @@ const Home = () => {
                 )}
 
                 {/* 5. Info / Welcome Section (Row 4 - Glassmorphism) */}
-                <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[32px] p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
+                <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-sq-2xl p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                     <div className="max-w-4xl mx-auto relative z-10">
                         <div className="mb-10 text-center md:text-left">
@@ -149,7 +150,7 @@ const Home = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20">
                             <div>
                                 <h3 className="font-black text-xl text-[#1a100f] dark:text-white mb-6 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                                    <div className="w-10 h-10 bg-primary/10 rounded-sq-lg flex items-center justify-center text-primary">
                                         <CheckCircle size={22} strokeWidth={2.5} />
                                     </div>
                                     How it Works
@@ -169,7 +170,7 @@ const Home = () => {
                             </div>
                             <div>
                                 <h3 className="font-black text-xl text-[#1a100f] dark:text-white mb-6 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                                    <div className="w-10 h-10 bg-primary/10 rounded-sq-lg flex items-center justify-center text-primary">
                                         <Shield size={22} strokeWidth={2.5} />
                                     </div>
                                     Safe & Private

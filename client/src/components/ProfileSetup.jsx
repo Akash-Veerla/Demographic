@@ -122,7 +122,7 @@ const ProfileSetup = () => {
             <main className="relative z-10 flex flex-col items-center justify-center py-12 p-4">
                 <div className="w-full max-w-2xl bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] shadow-2xl p-8 md:p-10 border border-white/20 dark:border-white/5 transition-all duration-300">
                     <div className="text-center mb-10">
-                        <div className="w-16 h-16 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4">
+                        <div className="w-16 h-16 bg-primary/10 dark:bg-primary/20 rounded-sq-xl flex items-center justify-center text-primary mx-auto mb-4">
                             <span className="material-symbols-outlined text-3xl">edit_square</span>
                         </div>
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">Edit Profile</h1>
@@ -150,7 +150,7 @@ const ProfileSetup = () => {
                                 <input
                                     type="text"
                                     placeholder="Or paste an image URL..."
-                                    className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-2.5 text-sm text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary placeholder:text-[#915b55]/50 transition-all font-medium"
+                                    className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-sq-xl px-4 py-2.5 text-sm text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary placeholder:text-[#915b55]/50 transition-all font-medium"
                                     onChange={(e) => setPreviewUrl(e.target.value)}
                                 />
                             </div>
@@ -167,7 +167,7 @@ const ProfileSetup = () => {
                             <textarea
                                 id="bio"
                                 rows="3"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-4 text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] placeholder:text-[#915b55]/50 resize-none transition-all font-medium"
+                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-sq-xl px-4 py-4 text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] placeholder:text-[#915b55]/50 resize-none transition-all font-medium"
                                 placeholder="Tell us about yourself... ⛰️💻"
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value.slice(0, 150))}
@@ -188,10 +188,10 @@ const ProfileSetup = () => {
                                     value={customInterest}
                                     onChange={(e) => setCustomInterest(e.target.value)}
                                     placeholder="Add custom (e.g. Design)"
-                                    className="flex-1 bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-2xl px-4 py-3 text-sm text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary placeholder:text-[#915b55]/50 font-medium"
+                                    className="flex-1 bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-sq-xl px-4 py-3 text-sm text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary placeholder:text-[#915b55]/50 font-medium"
                                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomInterest(); } }}
                                 />
-                                <button type="button" onClick={addCustomInterest} className="px-6 py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-2xl text-sm font-bold hover:bg-primary hover:text-white transition-all">Add</button>
+                                <button type="button" onClick={addCustomInterest} className="px-6 py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-sq-xl text-sm font-bold hover:bg-primary hover:text-white transition-all">Add</button>
                             </div>
 
                             <div className="flex flex-wrap gap-2.5 justify-center bg-[#f2e9e9]/50 dark:bg-[#231f29]/30 p-6 rounded-[24px] border border-dashed border-[#be3627]/20 dark:border-white/10">

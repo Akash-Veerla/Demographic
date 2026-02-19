@@ -52,7 +52,7 @@ const Layout = ({ children }) => {
             }}>
                 {/* Desktop / Tablet Navbar (In Flow) */}
                 {!isMobile && user && (
-                    <div className={`w-[90%] max-w-2xl mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-2' : 'mb-6'} h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-full shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0 transition-all duration-300`}>
+                    <div className={`w-[90%] max-w-2xl mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-1' : 'mb-6'} h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-sq-2xl shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0 transition-all duration-300`}>
                         {/* Brand */}
                         <div
                             className="flex items-center gap-3 cursor-pointer select-none"
@@ -79,23 +79,23 @@ const Layout = ({ children }) => {
                             }}
                             onTouchEnd={() => clearTimeout(window.logoPressTimer)}
                         >
-                            <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
+                            <div className="w-10 h-10 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
                                 <Home size={20} className="text-primary" />
                             </div>
                             <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
                         </div>
 
                         {/* Center Toggles */}
-                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-full p-1 border border-slate-200 dark:border-slate-700/50">
+                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-sq-xl p-1 border border-slate-200 dark:border-slate-700/50">
                             <button
                                 onClick={() => navigate('/')}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname === '/' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
+                                className={`px-4 py-1.5 rounded-sq-lg text-sm font-medium transition-all ${location.pathname === '/' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
                             >
                                 Home
                             </button>
                             <button
                                 onClick={() => navigate('/social')}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
+                                className={`px-4 py-1.5 rounded-sq-lg text-sm font-medium transition-all ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
                             >
                                 Social
                             </button>

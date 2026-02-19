@@ -406,7 +406,12 @@ app.get('/api/users/global', requireAuth, async (req, res) => {
                 sharedInterests,
                 matchScore: sharedInterests.length
             };
-        });
+        })
+            // Sort: friends first, then by matchScore descending
+            .sort((a, b) => {
+                if (a.isFriend !== b.isFriend) return b.isFriend ? 1 : -1;
+                return b.matchScore - a.matchScore;
+            });
 
         res.json(usersWithMatch);
     } catch (err) {

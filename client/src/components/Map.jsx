@@ -25,7 +25,7 @@ const TIPS = [
 ];
 
 const MapComponent = () => {
-    const { user } = useAuth();
+    const { user, userLocation: storedLocation } = useAuth();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const mapRef = useRef();
@@ -100,23 +100,28 @@ const MapComponent = () => {
 
         setMap(initialMap);
 
-        // Get User Location
-        if (navigator.geolocation) {
+        // Center map using stored location from AuthContext (no re-fetch)
+        if (storedLocation) {
+            const center = fromLonLat([storedLocation.lng, storedLocation.lat]);
+            setUserLocation(center);
+            initialMap.getView().animate({ center, zoom: 14, duration: 300 });
+            // Also emit to socket for nearby user broadcast
+            if (socketRef.current) {
+                socketRef.current.emit('update_location', { lat: storedLocation.lat, lng: storedLocation.lng });
+            }
+        } else if (navigator.geolocation) {
+            // Fallback: only fetch geolocation if no stored location
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const center = fromLonLat([longitude, latitude]);
                     setUserLocation(center);
                     initialMap.getView().animate({ center, zoom: 14 });
-
-                    // Update backend immediately
                     if (socketRef.current) {
                         socketRef.current.emit('update_location', { lat: latitude, lng: longitude });
                     }
                 },
-                (error) => {
-                    console.error("Geolocation error:", error);
-                },
+                (error) => console.error("Geolocation error:", error),
                 { enableHighAccuracy: true }
             );
         }
@@ -537,7 +542,7 @@ const MapComponent = () => {
             {/* Map Container */}
             <div
                 ref={mapRef}
-                className="absolute inset-2 rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/5"
+                className="absolute inset-2 rounded-sq-2xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/5"
                 style={{
                     filter: isDark
                         ? 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)'
@@ -547,7 +552,7 @@ const MapComponent = () => {
 
             {/* A. Tips Carousel (Top Left of Search) */}
             <div className="absolute top-6 left-6 z-20 hidden lg:block transition-all duration-500 ease-in-out">
-                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-opacity duration-500 ${isTipVisible ? 'opacity-100' : 'opacity-0'}`}>
+                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-sq-xl shadow-xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-opacity duration-500 ${isTipVisible ? 'opacity-100' : 'opacity-0'}`}>
                     <span className="material-symbols-outlined text-primary text-xl animate-bounce">
                         {TIPS[currentTipIndex].icon}
                     </span>
@@ -563,7 +568,7 @@ const MapComponent = () => {
             {/* B. Top Search Bar */}
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4 transition-all duration-300">
                 <div className="relative">
-                    <div className="flex items-center bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-full p-1 shadow-2xl border border-white/20 dark:border-white/5">
+                    <div className="flex items-center bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-2xl p-1 shadow-2xl border border-white/20 dark:border-white/5">
                         <div className="flex-1 flex items-center pl-4">
                             <span className="material-symbols-outlined text-gray-400 mr-2">search</span>
                             <input
@@ -586,7 +591,7 @@ const MapComponent = () => {
                     </div>
                     {/* Suggestions */}
                     {showSuggestions && searchResults.length > 0 && (
-                        <div className="absolute top-full text-left mt-2 w-full bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                        <div className="absolute top-full text-left mt-2 w-full bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-xl rounded-sq-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-2">
                             {searchResults.map((place) => (
                                 <button key={place.place_id} onClick={() => handleSearchSelect(place)} className="w-full text-left px-4 py-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0">
                                     <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{place.display_name.split(',')[0]}</p>
@@ -600,7 +605,7 @@ const MapComponent = () => {
 
             {/* C. Top Right Controls (Global View only) */}
             <div className="absolute top-6 right-6 z-20 flex gap-4 hidden md:flex">
-                <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-2xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3">
+                <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-sq-xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3">
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" checked={isGlobalMode} onChange={() => setIsGlobalMode(!isGlobalMode)} />
                         <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
@@ -620,21 +625,21 @@ const MapComponent = () => {
                             });
                         }
                     }}
-                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
+                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-lg shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
                     title="Locate Me"
                 >
                     <span className="material-symbols-outlined text-xl">my_location</span>
                 </button>
                 <button
                     onClick={() => map && map.getView().animate({ zoom: map.getView().getZoom() + 1, duration: 300 })}
-                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
+                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-lg shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
                     title="Zoom In"
                 >
                     <span className="material-symbols-outlined text-xl">add</span>
                 </button>
                 <button
                     onClick={() => map && map.getView().animate({ zoom: map.getView().getZoom() - 1, duration: 300 })}
-                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
+                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-lg shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
                     title="Zoom Out"
                 >
                     <span className="material-symbols-outlined text-xl">remove</span>
@@ -645,7 +650,7 @@ const MapComponent = () => {
             {/* Alert Message Toast */}
             {alertMessage && (
                 <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 pointer-events-none">
-                    <div className="bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/20 pointer-events-auto">
+                    <div className="bg-primary text-white px-6 py-3 rounded-sq-xl shadow-2xl flex items-center gap-3 border border-white/20 pointer-events-auto">
                         <span className="material-symbols-outlined fill-current">directions_car</span>
                         <span className="font-bold text-sm">{alertMessage}</span>
                         <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80"><span className="material-symbols-outlined text-sm">close</span></button>
@@ -662,8 +667,8 @@ const MapComponent = () => {
             <div className={`
                 absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
                 ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-24 md:left-6 md:w-72 md:rounded-2xl md:h-auto md:max-h-[calc(100%-7rem)]
-                bottom-0 left-0 right-0 w-full rounded-t-3xl max-h-[70vh]
+                md:top-24 md:left-6 md:w-72 md:rounded-sq-2xl md:h-auto md:max-h-[calc(100%-7rem)]
+                bottom-0 left-0 right-0 w-full rounded-t-sq-2xl max-h-[70vh]
                 flex flex-col overflow-hidden ring-1 ring-black/5
             `}>
                 {/* Header */}
@@ -678,7 +683,7 @@ const MapComponent = () => {
                     </div>
                     <button
                         onClick={() => { setSelectedUser(null); setDestinationPin(null); }}
-                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors shrink-0"
+                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 rounded-sq-sm transition-colors shrink-0"
                     >
                         <span className="material-symbols-outlined text-lg opacity-60">close</span>
                     </button>
@@ -693,17 +698,17 @@ const MapComponent = () => {
                                 <div className="flex items-center gap-2 flex-wrap">
                                     {selectedUser.isFriend ? (
                                         <>
-                                            <span className={`font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-full ${selectedUser.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
+                                            <span className={`font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-sq-md ${selectedUser.isOnline ? 'text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10' : 'text-gray-500 bg-gray-100 dark:bg-white/10'}`}>
                                                 {selectedUser.isOnline ? '● Online' : '○ Offline'}
                                             </span>
-                                            <span className="font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-full text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10">
+                                            <span className="font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-sq-md text-primary bg-primary/10 dark:text-[#D0BCFF] dark:bg-[#D0BCFF]/10">
                                                 ★ Friend
                                             </span>
                                         </>
                                     ) : (
                                         <>
                                             {selectedUser.sharedInterests && selectedUser.sharedInterests.length > 0 && (
-                                                <span className="font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                                                <span className="font-bold uppercase text-xs tracking-wider px-2.5 py-1 rounded-sq-md text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
                                                     ★ {selectedUser.matchScore} Match{selectedUser.matchScore !== 1 ? 'es' : ''}
                                                 </span>
                                             )}
@@ -720,13 +725,13 @@ const MapComponent = () => {
                                             const interestStr = typeof int === 'string' ? int : int.name;
                                             const isShared = selectedUser.sharedInterests?.some(si => si.toLowerCase() === interestStr.toLowerCase());
                                             return (
-                                                <span key={i} className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
+                                                <span key={i} className={`text-xs font-bold px-2.5 py-1 rounded-sq-sm border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
                                                     {isShared && '★ '}{interestStr}
                                                 </span>
                                             );
                                         })}
                                         {selectedUser.interests.length > 10 && (
-                                            <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500">
+                                            <span className="text-xs font-bold px-2.5 py-1 rounded-sq-sm bg-gray-100 dark:bg-white/10 text-gray-500">
                                                 +{selectedUser.interests.length - 10} more
                                             </span>
                                         )}
@@ -758,7 +763,7 @@ const MapComponent = () => {
                 <div className="px-4 py-3 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-2">
                     {selectedUser && !selectedUser.isFriend && (
                         selectedUser.friendRequestSent ? (
-                            <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 h-9 rounded-full font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
+                            <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 h-9 rounded-sq-lg font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
                                 <span className="material-symbols-outlined text-base">schedule_send</span>
                                 Request Sent
                             </button>
@@ -778,7 +783,7 @@ const MapComponent = () => {
                                         setAlertMessage(err.response?.data?.error || 'Failed to accept');
                                     }
                                 }}
-                                className="w-full bg-green-500 hover:bg-green-600 text-white h-9 rounded-full font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                                className="w-full bg-green-500 hover:bg-green-600 text-white h-9 rounded-sq-lg font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-base">person_add</span>
                                 Accept Request
@@ -795,7 +800,7 @@ const MapComponent = () => {
                                         setAlertMessage(err.response?.data?.error || 'Failed to send request');
                                     }
                                 }}
-                                className="w-full bg-primary hover:brightness-110 text-white h-9 rounded-full font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                                className="w-full bg-primary hover:brightness-110 text-white h-9 rounded-sq-lg font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-base">person_add</span>
                                 Send Friend Request
@@ -803,7 +808,7 @@ const MapComponent = () => {
                         )
                     )}
                     {selectedUser && selectedUser.isFriend && (
-                        <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] h-9 rounded-full font-bold text-xs flex items-center justify-center gap-2">
+                        <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] h-9 rounded-sq-lg font-bold text-xs flex items-center justify-center gap-2">
                             <span className="material-symbols-outlined text-base">group</span>
                             Friends
                         </div>
@@ -811,7 +816,7 @@ const MapComponent = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={startNavigation}
-                            className="flex-1 bg-primary hover:brightness-110 text-white h-9 rounded-full font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                            className="flex-1 bg-primary hover:brightness-110 text-white h-9 rounded-sq-lg font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5"
                         >
                             <span className="material-symbols-outlined text-base">directions</span>
                             Directions
@@ -819,7 +824,7 @@ const MapComponent = () => {
                         {selectedUser && (
                             <button
                                 onClick={() => setChatTarget(selectedUser)}
-                                className="flex-1 bg-white dark:bg-[#231f29] text-primary h-9 rounded-full font-bold text-xs border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                                className="flex-1 bg-white dark:bg-[#231f29] text-primary h-9 rounded-sq-lg font-bold text-xs border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-1.5"
                             >
                                 <span className="material-symbols-outlined text-base">chat</span>
                                 Chat
@@ -835,14 +840,14 @@ const MapComponent = () => {
             <div className={`
                 fixed z-[100] bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-500 ease-in-out
                 ${isNavigating ? 'translate-x-0 translate-y-0 opacity-100 pointer-events-auto' : 'md:-translate-x-[120%] translate-y-[120%] opacity-0 pointer-events-none'}
-                md:top-6 md:left-8 md:w-80 md:rounded-[28px] h-fit
-                bottom-0 left-0 right-0 w-full rounded-t-[28px]
+                md:top-6 md:left-8 md:w-80 md:rounded-sq-2xl h-fit
+                bottom-0 left-0 right-0 w-full rounded-t-sq-2xl
                 flex flex-col ring-1 ring-black/5
             `}>
                 {/* Header Only - Directions Removed */}
                 <div className="p-6 shrink-0 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center animate-pulse">
+                        <div className="w-10 h-10 rounded-sq-lg bg-green-500 text-white flex items-center justify-center animate-pulse">
                             <span className="material-symbols-outlined">navigation</span>
                         </div>
                         <div>
@@ -850,7 +855,7 @@ const MapComponent = () => {
                             <p className="text-xs font-bold text-gray-400 mt-1">Follow route on map</p>
                         </div>
                     </div>
-                    <button onClick={clearRoute} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full font-bold text-xs hover:bg-red-100 transition-colors cursor-pointer">
+                    <button onClick={clearRoute} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-sq-lg font-bold text-xs hover:bg-red-100 transition-colors cursor-pointer">
                         End Trip
                     </button>
                 </div>

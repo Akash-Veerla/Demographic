@@ -81,7 +81,7 @@ const Login = () => {
             <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border dark:border-white/10" style={{ borderRadius: '28px' }}>
 
                 <div className="flex flex-col items-center gap-3 mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-1">
+                    <div className="w-14 h-14 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-1">
                         <span className="material-symbols-outlined text-[32px]">share_location</span>
                     </div>
                     <h1 className="text-2xl font-bold text-primary tracking-tight">KON-NECT</h1>
@@ -228,7 +228,7 @@ const Login = () => {
                             <Typography sx={{ mb: 2, color: 'success.main', fontWeight: 'bold' }}>
                                 Temporary password generated successfully!
                             </Typography>
-                            <div className="bg-gray-100 dark:bg-[#2D2835] p-4 rounded-xl text-center font-mono text-lg font-bold mb-4 select-all flex items-center justify-between border border-gray-200 dark:border-gray-700">
+                            <div className="bg-gray-100 dark:bg-[#2D2835] p-4 rounded-sq-lg text-center font-mono text-lg font-bold mb-4 select-all flex items-center justify-between border border-gray-200 dark:border-gray-700">
                                 <span className="text-gray-800 dark:text-white">{tempPassword}</span>
                                 <IconButton onClick={() => {
                                     navigator.clipboard.writeText(tempPassword);
