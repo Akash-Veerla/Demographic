@@ -557,7 +557,7 @@ const MapComponent = () => {
 
             {/* A. Tips Carousel (Mobile: Top Left of Search, Desktop: Top Left) */}
             <div className={`absolute left-4 md:top-6 md:left-6 z-20 transition-all duration-500 ease-in-out ${currentTipIndex >= 0 ? 'block' : 'hidden'} top-24`}>
-                <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-sq-xl shadow-xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-opacity duration-500 ${isTipVisible ? 'opacity-100' : 'opacity-0'}`}>
+                <div className={`bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl px-4 py-2 rounded-sq-xl shadow-xl border-[0.5px] border-white/30 dark:border-white/10 flex items-center gap-3 transition-opacity duration-500 ${isTipVisible ? 'opacity-100' : 'opacity-0'}`}>
                     <span className="material-symbols-outlined text-primary text-xl animate-bounce">
                         {TIPS[currentTipIndex].icon}
                     </span>
@@ -602,7 +602,7 @@ const MapComponent = () => {
 
             {/* C. Top Right Controls (Global View) - Repositioned for mobile */}
             <div className="absolute top-24 right-4 md:top-6 md:right-6 z-20 flex gap-4">
-                <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-sq-xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3">
+                <div className="bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl px-4 py-3 rounded-sq-xl shadow-xl border-[0.5px] border-white/30 dark:border-white/10 flex items-center gap-3 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all">
                     <M3Switch
                         checked={isGlobalMode}
                         onChange={() => setIsGlobalMode(!isGlobalMode)}
@@ -662,11 +662,11 @@ const MapComponent = () => {
 
             {/* E. User / Pin Detail Panel */}
             <div className={`
-                absolute z-30 bg-white/95 dark:bg-[#141218]/95 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/5 transition-all duration-300 ease-in-out
+                absolute z-30 bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl shadow-2xl border-[0.5px] border-white/30 dark:border-white/10 transition-all duration-500 ease-in-out
                 ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
-                md:top-24 md:left-6 md:w-72 md:rounded-sq-2xl md:h-auto md:max-h-[calc(100%-7rem)]
+                md:top-24 md:left-6 md:w-80 md:rounded-sq-2xl md:h-auto md:max-h-[calc(100%-7rem)]
                 bottom-0 left-0 right-0 w-full rounded-t-sq-2xl max-h-[70vh]
-                flex flex-col overflow-hidden ring-1 ring-black/5
+                flex flex-col overflow-hidden ring-1 ring-black/5 hover:border-white/50 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]
             `}>
                 {/* Header */}
                 <div className="px-5 pt-5 pb-2 shrink-0 flex justify-between items-start">

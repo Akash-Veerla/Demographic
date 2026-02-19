@@ -49,32 +49,31 @@ const Home = () => {
     );
 
     const StatCard = ({ label, count, description, icon: Icon }) => (
-        <M3Card variant="outlined" className="flex flex-col items-center text-center justify-center h-full" padding="p-8">
-            <span className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-4 flex items-center gap-2">
+        <M3Card variant="elevated" className="flex flex-col items-center text-center justify-center h-full hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]" padding="p-8">
+            <span className="text-xs font-black tracking-widest text-[#915b55] dark:text-[#CAC4D0] uppercase mb-4 flex items-center gap-2">
                 <Icon size={14} /> {label}
             </span>
-            <div className="text-6xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">
+            <div className="text-6xl font-black text-[#1a100f] dark:text-white mb-2 tracking-tighter">
                 {loadingStats ? <M3LoadingIndicator size={40} className="mx-auto" /> : count}
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+            <p className="text-sm font-bold text-[#5e413d] dark:text-[#938F99]">{description}</p>
         </M3Card>
     );
 
     const PulseCard = ({ category, count, index }) => (
         <M3Card
-            variant="filled"
+            variant="elevated"
             interactive
             onClick={() => navigate(`/map?filter=${category}`)}
-            className="flex-shrink-0 w-64 bg-gradient-to-br from-primary/5 to-transparent dark:from-primary/10 border border-primary/10 relative overflow-hidden group hover:border-primary/30"
+            className="flex-shrink-0 w-64 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10 relative overflow-hidden group hover:border-white/60 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
             padding="p-6"
         >
-            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs animate-ping"></div>
-            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs"></div>
+            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
 
-            <h4 className="text-xl font-black text-gray-900 dark:text-white mb-1">{category}</h4>
-            <p className="text-sm text-primary font-bold">{count} Active Nearby</p>
-            <div className="mt-4 h-1 w-full bg-gray-100 dark:bg-white/10 rounded-sq-md overflow-hidden">
-                <div className="h-full bg-primary rounded-sq-md" style={{ width: '70%' }}></div>
+            <h4 className="text-xl font-black text-[#1a100f] dark:text-white mb-1">{category}</h4>
+            <p className="text-sm text-primary font-black uppercase tracking-tight">{count} Active Nearby</p>
+            <div className="mt-4 h-1.5 w-full bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-main-rgb),0.5)]" style={{ width: '70%' }}></div>
             </div>
         </M3Card>
     );
@@ -91,8 +90,8 @@ const Home = () => {
                     <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold mt-1">Ready to find some new connections?</p>
                 </div>
 
-                {/* 2. Navigation Cards (Row 1) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 2. Navigation Cards (Row 1) — Capped width to prevent stretching */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto md:mx-0">
                     <DashboardCard
                         title="Explore Map"
                         description="Discover people and places matching your vibe nearby."

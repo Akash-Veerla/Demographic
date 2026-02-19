@@ -62,35 +62,40 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
             position: 'absolute',
             bottom: 20,
             right: 20,
-            width: 300,
-            height: 400,
+            width: 320,
+            height: 480,
             display: 'flex',
             flexDirection: 'column',
             zIndex: 1000,
-            boxShadow: 6,
-            borderRadius: '24px', // M3 Large
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            borderRadius: '24px',
             overflow: 'hidden',
-            border: `1px solid ${theme.palette.divider}`
+            bgcolor: theme.palette.mode === 'dark' ? 'rgba(30,30,30,0.1)' : 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(24px)',
+            border: '0.5px solid rgba(255,255,255,0.3)',
+            animation: 'fadeInUp 0.3s ease-out'
         }}>
             {/* Header */}
             <Box sx={{
                 p: 2,
-                bgcolor: 'var(--md-sys-color-primary)',
-                color: 'var(--md-sys-color-on-primary)',
+                bgcolor: 'rgba(var(--primary-main-rgb), 0.2)',
+                backdropFilter: 'blur(10px)',
+                color: 'text.primary',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                borderBottom: '0.5px solid rgba(255,255,255,0.1)'
             }}>
-                <Typography variant="subtitle1" fontWeight="600">{targetUser.displayName || targetUser.name}</Typography>
-                <IconButton size="small" onClick={onClose} sx={{ color: 'inherit' }}>
+                <Typography variant="subtitle1" fontWeight="800" sx={{ letterSpacing: '-0.3px' }}>{targetUser.displayName || targetUser.name}</Typography>
+                <IconButton size="small" onClick={onClose} sx={{ color: 'text.primary' }}>
                     <X size={18} />
                 </IconButton>
             </Box>
 
             {/* Messages */}
-            <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: theme.palette.background.default }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: 'transparent' }}>
                 {messages.length === 0 && (
-                    <Typography variant="caption" color="textSecondary" align="center" display="block" sx={{ mt: 4 }}>
+                    <Typography variant="caption" color="textSecondary" align="center" display="block" sx={{ mt: 4, fontWeight: 'bold' }}>
                         Start the conversation!
                     </Typography>
                 )}
@@ -105,13 +110,15 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
                             <Paper sx={{
                                 p: '10px 16px',
                                 maxWidth: '80%',
-                                bgcolor: isMe ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',
-                                color: isMe ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)',
+                                bgcolor: isMe ? 'primary.main' : 'rgba(255,255,255,0.1)',
+                                color: isMe ? 'white' : 'text.primary',
+                                backdropFilter: isMe ? 'none' : 'blur(4px)',
                                 borderRadius: isMe ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                                boxShadow: 0
+                                boxShadow: isMe ? '0 4px 12px rgba(var(--primary-main-rgb),0.3)' : '0 2px 8px rgba(0,0,0,0.05)',
+                                border: isMe ? 'none' : '0.5px solid rgba(255,255,255,0.2)'
                             }}>
-                                {!isMe && <Typography variant="caption" display="block" sx={{ opacity: 0.7, mb: 0.5 }}>{msg.senderName}</Typography>}
-                                <Typography variant="body2">{msg.text}</Typography>
+                                {!isMe && <Typography variant="caption" display="block" sx={{ opacity: 0.8, mb: 0.5, fontWeight: 'black' }}>{msg.senderName}</Typography>}
+                                <Typography variant="body2" sx={{ fontWeight: '600' }}>{msg.text}</Typography>
                             </Paper>
                         </Box>
                     );
@@ -120,7 +127,7 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
             </Box>
 
             {/* Input */}
-            <Box sx={{ p: 2, display: 'flex', gap: 1, bgcolor: theme.palette.background.paper, borderTop: `1px solid ${theme.palette.divider}` }}>
+            <Box sx={{ p: 2, display: 'flex', gap: 1, bgcolor: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
                 <TextField
                     fullWidth
                     size="small"
@@ -130,8 +137,10 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                     sx={{
                         '& .MuiOutlinedInput-root': {
-                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : theme.palette.background.default,
-                            borderRadius: '16px'
+                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                            borderRadius: '16px',
+                            '& fieldset': { border: '0.5px solid rgba(255,255,255,0.2)' },
+                            '&:hover fieldset': { border: '0.5px solid rgba(255,255,255,0.4)' }
                         }
                     }}
                 />
@@ -142,8 +151,9 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
                     sx={{
                         bgcolor: 'primary.main',
                         color: 'white',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                        '&.Mui-disabled': { bgcolor: 'action.disabledBackground' }
+                        '&:hover': { bgcolor: 'primary.dark', transform: 'scale(1.05)' },
+                        '&.Mui-disabled': { bgcolor: 'action.disabledBackground' },
+                        transition: 'all 0.2s'
                     }}
                 >
                     <Send size={18} />

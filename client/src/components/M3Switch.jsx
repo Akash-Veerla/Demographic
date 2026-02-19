@@ -51,7 +51,7 @@ const M3Switch = memo(({
                 {/* Track — M3: 52x32dp */}
                 <div
                     className={`
-                        w-[52px] h-[32px] rounded-full
+                        w-[52px] h-[32px] rounded-sq-lg
                         transition-colors duration-200 ease-[cubic-bezier(0.2,0,0,1)]
                         border-2
                         ${checked
@@ -66,7 +66,8 @@ const M3Switch = memo(({
                 <div
                     className={`
                         absolute top-1/2 -translate-y-1/2
-                        rounded-full
+                        rounded-sq-md
+
                         flex items-center justify-center
                         transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)]
                         ${checked

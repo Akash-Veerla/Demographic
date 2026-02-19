@@ -31,20 +31,13 @@ const M3SegmentedButton = memo(({
 
     return (
         <div
-            className={`inline-flex ${className}`}
+            className={`inline-flex rounded-sq-xl overflow-hidden shadow-sm ${className}`}
             role="group"
         >
             {segments.map((segment, index) => {
                 const isSelected = segment.value === value;
                 const isFirst = index === 0;
-                const isLast = index === segments.length - 1;
-
-                // M3 spec: full round on ends, flat joins in middle
-                const borderRadius = isFirst
-                    ? 'rounded-l-full'
-                    : isLast
-                        ? 'rounded-r-full'
-                        : 'rounded-none';
+                // No individual border radius needed due to container overflow
 
                 return (
                     <button
@@ -55,13 +48,11 @@ const M3SegmentedButton = memo(({
                             ${heightClass} px-4
                             inline-flex items-center justify-center gap-2
                             text-sm font-bold tracking-wide
-                            border border-[#79747E] dark:border-[#938F99]
+                            border-r-[0.5px] border-white/20 last:border-r-0
                             transition-all duration-200 active:scale-[0.98]
-                            ${borderRadius}
-                            ${!isFirst ? '-ml-[1px]' : ''}
                             ${isSelected
-                                ? 'bg-primary/12 dark:bg-[#D0BCFF]/16 text-primary dark:text-[#D0BCFF] border-primary dark:border-[#D0BCFF] z-10 relative'
-                                : 'bg-transparent text-[#1a100f] dark:text-[#E6E1E5] hover:bg-[#1a100f]/8 dark:hover:bg-[#E6E1E5]/8'
+                                ? 'bg-primary/20 dark:bg-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF] z-10 relative backdrop-blur-xl shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]'
+                                : 'bg-white/5 dark:bg-white/5 text-[#1a100f] dark:text-[#E6E1E5] hover:bg-white/15 dark:hover:bg-white/10 backdrop-blur-md'
                             }
                         `}
                         aria-pressed={isSelected}

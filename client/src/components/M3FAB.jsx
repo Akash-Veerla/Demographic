@@ -64,11 +64,11 @@ const VARIANT_MAP = {
         hoverShadow: 'hover:shadow-[0_8px_15px_rgba(0,0,0,0.12)]',
     },
     surface: {
-        bg: 'bg-white/40 dark:bg-[#1C1B1F]/40 backdrop-blur-xl border border-white/20 dark:border-white/10',
+        bg: 'bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10',
         text: 'text-primary dark:text-[#D0BCFF]',
-        hover: 'hover:bg-white/60 dark:hover:bg-[#2B2930]/60',
-        shadow: 'shadow-[0_6px_10px_rgba(0,0,0,0.08),0_1px_18px_rgba(0,0,0,0.06)]',
-        hoverShadow: 'hover:shadow-[0_8px_15px_rgba(0,0,0,0.12)]',
+        hover: 'hover:bg-white/20 dark:hover:bg-[#1C1B1F]/20 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]',
+        shadow: 'shadow-xl',
+        hoverShadow: 'hover:shadow-2xl',
     },
 };
 

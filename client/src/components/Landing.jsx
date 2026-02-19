@@ -71,7 +71,7 @@ const Landing = () => {
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     <button
                         onClick={() => navigate('/register')}
-                        className="group relative px-8 py-4 rounded-full bg-primary text-white font-bold text-lg shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                        className="group relative px-8 py-4 rounded-sq-2xl bg-primary/90 text-white font-bold text-lg shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300 overflow-hidden backdrop-blur-sm"
                     >
                         <span className="relative z-10 flex items-center gap-2 justify-center">
                             Get Started Now
@@ -82,7 +82,7 @@ const Landing = () => {
 
                     <button
                         onClick={() => navigate('/login')}
-                        className="px-8 py-4 rounded-full bg-white/80 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 text-[#1a100f] dark:text-[#E6E1E5] font-bold text-lg hover:bg-white dark:hover:bg-white/10 transition-all duration-300"
+                        className="px-8 py-4 rounded-sq-2xl bg-white/10 dark:bg-white/5 backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10 text-[#1a100f] dark:text-[#E6E1E5] font-bold text-lg hover:bg-white/20 dark:hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all duration-300"
                     >
                         I have an account
                     </button>
@@ -95,7 +95,7 @@ const Landing = () => {
                         { icon: <Users size={24} />, title: "Interest Matching", desc: "Filter the map by shared hobbies and passions instantly." },
                         { icon: <Globe size={24} />, title: "Global & Local", desc: "Switch seamlessly between your neighborhood and the world." }
                     ].map((feature, i) => (
-                        <div key={i} className="p-5 md:p-6 rounded-sq-2xl bg-white/60 dark:bg-[#1f1b24]/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 group text-left">
+                        <div key={i} className="p-5 md:p-6 rounded-sq-2xl bg-white/10 dark:bg-white/5 backdrop-blur-2xl border-[0.5px] border-white/20 dark:border-white/10 shadow-xl hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:border-white/50 transition-all duration-500 hover:-translate-y-1 group text-left">
                             <div className="w-10 h-10 md:w-12 md:h-12 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-3 md:mb-4 group-hover:scale-110 transition-transform">
                                 {feature.icon}
                             </div>

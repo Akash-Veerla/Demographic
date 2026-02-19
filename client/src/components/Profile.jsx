@@ -106,7 +106,7 @@ const Profile = () => {
                     {/* Right Column: Account Security & Requests */}
                     <section className="lg:col-span-7 flex flex-col gap-6">
                         {/* Account Security */}
-                        <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 h-fit">
+                        <div className="bg-white/10 dark:bg-[#141218]/10 backdrop-blur-2xl rounded-[28px] p-8 shadow-xl border-[0.5px] border-white/30 dark:border-white/10 h-fit hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all">
                             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#be3627]/10 dark:border-white/5">
                                 <span className="material-symbols-outlined text-primary text-2xl">security</span>
                                 <h2 className="text-xl font-display font-bold text-[#1a100f] dark:text-[#E6E1E5]">Account Security</h2>
@@ -138,7 +138,7 @@ const Profile = () => {
                         </div>
 
                         {/* Requests */}
-                        <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 flex-grow">
+                        <div className="bg-white/10 dark:bg-[#141218]/10 backdrop-blur-2xl rounded-[28px] p-8 shadow-xl border-[0.5px] border-white/30 dark:border-white/10 flex-grow hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all">
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#be3627]/10 dark:border-white/5">
                                 <div className="flex items-center gap-3">
                                     <M3Badge count={0} showZero color="primary">

@@ -67,18 +67,19 @@ const M3SearchBar = memo(({
 
     return (
         <div ref={containerRef} className={`relative w-full ${className}`}>
-            {/* Search Bar Container — M3: 56dp height, full-round */}
+            {/* Search Bar Container — M3: 56dp height, squircle */}
             <div
                 className={`
                     flex items-center h-14 px-4 gap-3
-                    bg-white/40 dark:bg-[#1C1B1F]/40
-                    backdrop-blur-xl
-                    rounded-sq-2xl
-                    shadow-lg
-                    border transition-all duration-200
+                    bg-white/10 dark:bg-[#1C1B1F]/10
+                    backdrop-blur-2xl
+                    rounded-sq-xl
+                    shadow-xl
+                    border-[0.5px] border-white/30 dark:border-white/10
+                    transition-all duration-300
                     ${isFocused
-                        ? 'border-primary/50 dark:border-[#D0BCFF]/50 shadow-2xl'
-                        : 'border-white/20 dark:border-white/5 hover:shadow-xl'
+                        ? 'border-white/60 shadow-[0_0_20px_rgba(255,255,255,0.15)]'
+                        : 'hover:border-white/50 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]'
                     }
                 `}
                 style={hasSuggestions ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottom: 'none' } : {}}
@@ -98,11 +99,12 @@ const M3SearchBar = memo(({
                     placeholder={placeholder}
                     autoFocus={autoFocus}
                     className={`
-                        flex-1 bg-transparent border-none outline-none
+                        flex-1 bg-transparent border-none outline-none ring-0
                         text-base font-medium
                         text-[#1a100f] dark:text-[#E6E1E5]
                         placeholder-[#49454F] dark:placeholder-[#CAC4D0]
                         caret-primary dark:caret-[#D0BCFF]
+                        focus:ring-0 focus:outline-none focus:border-none
                     `}
                 />
 

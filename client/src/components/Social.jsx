@@ -128,7 +128,7 @@ const ConnectView = () => {
         });
 
         return (
-            <div key={u._id} className="bg-white/30 dark:bg-[#1f1b24]/30 backdrop-blur-2xl rounded-sq-2xl overflow-hidden shadow-lg border border-white/20 dark:border-white/5 group hover:shadow-xl transition-all duration-300 flex flex-col h-full ring-1 ring-black/5">
+            <div key={u._id} className="bg-white/10 dark:bg-[#1f1b24]/10 backdrop-blur-2xl rounded-sq-2xl overflow-hidden shadow-xl border-[0.5px] border-white/30 dark:border-white/10 group hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:border-white/60 transition-all duration-500 flex flex-col h-full ring-1 ring-black/5 hover:-translate-y-1">
                 <div className="p-6 flex flex-col items-center text-center flex-1">
                     <div className="relative mb-4 shrink-0">
                         <Avatar
@@ -137,7 +137,7 @@ const ConnectView = () => {
                             variant="rounded"
                         />
                         {isMatch && !isFriend && (
-                            <div className="absolute -top-2 -right-2 bg-green-500 text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-[#1f1b24]" title="Matched Interests">
+                            <div className="absolute -top-2 -right-2 bg-green-500 text-white p-1.5 rounded-sq-lg shadow-lg border-2 border-white dark:border-[#1f1b24]" title="Matched Interests">
                                 <span className="material-symbols-outlined text-sm font-bold block">star</span>
                             </div>
                         )}
@@ -239,7 +239,7 @@ const ConnectView = () => {
             <div className="max-w-[1600px] mx-auto space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Friend Requests */}
-                    <div className="bg-white/30 dark:bg-[#141218]/30 backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group ring-1 ring-black/5">
+                    <div className="bg-white/10 dark:bg-[#141218]/10 backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border-[0.5px] border-white/30 dark:border-white/10 min-h-[320px] flex flex-col group ring-1 ring-black/5 hover:ring-white/20 hover:shadow-2xl transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-sq-lg text-primary transition-transform group-hover:scale-110">
@@ -289,7 +289,7 @@ const ConnectView = () => {
                     </div>
 
                     {/* My Connections (Friends List) */}
-                    <div className="bg-white/30 dark:bg-[#141218]/30 backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group ring-1 ring-black/5">
+                    <div className="bg-white/10 dark:bg-[#141218]/10 backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border-[0.5px] border-white/30 dark:border-white/10 min-h-[320px] flex flex-col group ring-1 ring-black/5 hover:ring-white/20 hover:shadow-2xl transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-sq-lg text-primary transition-transform group-hover:scale-110">
@@ -361,8 +361,8 @@ const ConnectView = () => {
                             {matchedUsers.map(u => renderUserCard(u))}
                         </div>
                     ) : (
-                        <div className="text-center p-12 bg-white/50 dark:bg-[#141218]/50 rounded-sq-2xl border border-dashed border-gray-300 dark:border-gray-700">
-                            <p className="text-gray-500 dark:text-gray-400 font-bold">No matches nearby yet. Try adding more interests!</p>
+                        <div className="text-center p-12 bg-white/10 dark:bg-white/5 backdrop-blur-2xl rounded-sq-2xl border-[0.5px] border-white/30 dark:border-white/10 shadow-xl">
+                            <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">No matches nearby yet. Try adding more interests!</p>
                         </div>
                     )}
                 </div>
@@ -403,8 +403,8 @@ const Social = () => {
 
     return (
         <div className="flex flex-col h-full w-full relative transition-colors duration-300">
-            {/* Tab Navigation Bar — M3 Segmented Button */}
-            <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl border-b border-[#be3627]/10 dark:border-white/5 px-6 sticky top-0 z-30 flex justify-center h-14 items-center">
+            {/* Tab Navigation Bar — Glass Segmented Container */}
+            <div className="bg-transparent px-6 sticky top-0 z-30 flex justify-center h-16 items-center">
                 <M3SegmentedButton
                     segments={[
                         { value: 'map', label: 'Map View', icon: 'map' },

@@ -65,7 +65,7 @@ const M3IconButton = memo(({
             aria-label={ariaLabel || icon}
             className={`
                 ${sizeSpec.container}
-                rounded-full
+                rounded-sq-lg
                 inline-flex items-center justify-center
                 transition-all duration-200
                 active:scale-[0.92]

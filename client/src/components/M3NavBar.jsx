@@ -33,9 +33,9 @@ const M3NavBar = memo(({ items = [], className = '' }) => {
         <nav
             className={`
                 fixed bottom-0 left-0 right-0 z-[1000]
-                bg-white/90 dark:bg-[#1C1B1F]/90
+                bg-white/10 dark:bg-white/5
                 backdrop-blur-2xl
-                border-t border-gray-100/80 dark:border-[#49454F]/30
+                border-t border-white/20 dark:border-white/10
                 safe-area-bottom
                 ${className}
             `}

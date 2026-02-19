@@ -37,6 +37,8 @@ const Avatar = ({ user, sx = {}, ...props }) => {
         <MuiAvatar
             sx={{
                 bgcolor: stringToColor(displayName || 'User'),
+                border: '1.5px solid rgba(255,255,255,0.8)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 ...sx
             }}
             {...props}

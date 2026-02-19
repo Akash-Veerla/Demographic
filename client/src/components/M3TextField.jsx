@@ -80,7 +80,8 @@ const M3TextField = memo(({
                 <div
                     className={`
                         relative h-14 group
-                        bg-[#E7E0EC]/40 dark:bg-[#49454F]/30
+                        bg-white/10 dark:bg-white/5
+                        backdrop-blur-md
                         rounded-t-sq-xs
                         cursor-text
                         ${disabled ? 'opacity-38 cursor-not-allowed' : ''}
@@ -207,7 +208,7 @@ const M3TextField = memo(({
                         absolute transition-all duration-200 pointer-events-none z-10
                         ${leadingIcon ? 'left-11' : 'left-4'}
                         ${isFloating
-                            ? '-top-2.5 text-xs font-medium px-1 bg-white dark:bg-[#141218]'
+                            ? '-top-2.5 text-xs font-medium px-1 bg-white/40 dark:bg-[#141218]/40 backdrop-blur-md rounded-md'
                             : 'top-1/2 -translate-y-1/2 text-base font-normal'
                         }
                         ${labelColor}

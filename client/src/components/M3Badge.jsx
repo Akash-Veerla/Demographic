@@ -50,7 +50,7 @@ const M3Badge = memo(({
                             ? 'top-0 right-0 w-1.5 h-1.5 -translate-y-0.5 translate-x-0.5'
                             : '-top-1 -right-1 min-w-[18px] h-[18px] px-1 translate-x-1/3 -translate-y-1/3'
                         }
-                        rounded-full
+                        rounded-sq-md
                         flex items-center justify-center
                         ${colorClasses[color] || colorClasses.error}
                         ${!isDot ? 'text-[10px] font-bold leading-none' : ''}

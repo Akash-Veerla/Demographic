@@ -29,21 +29,21 @@ const M3Card = memo(({
 
     const variantClasses = {
         elevated: `
-            bg-white/80 dark:bg-[#1C1B1F]/80 backdrop-blur-xl
-            shadow-[0_1px_2px_rgba(0,0,0,0.3),0_1px_3px_1px_rgba(0,0,0,0.15)]
-            dark:shadow-[0_1px_2px_rgba(0,0,0,0.5),0_1px_3px_1px_rgba(0,0,0,0.3)]
-            border border-white/20 dark:border-white/5
-            ${isClickable ? 'hover:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_2px_6px_2px_rgba(0,0,0,0.15)] active:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_1px_3px_1px_rgba(0,0,0,0.15)] hover:bg-white/90 dark:hover:bg-[#1C1B1F]/90' : ''}
+            bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl
+            shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+            dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)]
+            border-[0.5px] border-white/30 dark:border-white/10
+            ${isClickable ? 'hover:shadow-[0_0_25px_rgba(255,255,255,0.15)] hover:border-white/50 active:scale-[0.98]' : ''}
         `,
         filled: `
-            bg-[#E7E0EC]/50 dark:bg-[#49454F]/50 backdrop-blur-lg
-            border border-transparent
-            ${isClickable ? 'hover:bg-[#E7E0EC]/70 dark:hover:bg-[#49454F]/70' : ''}
+            bg-[#E7E0EC]/15 dark:bg-[#49454F]/15 backdrop-blur-2xl
+            border-[0.5px] border-white/20 dark:border-white/5
+            ${isClickable ? 'hover:bg-white/20 hover:border-white/40 active:scale-[0.98]' : ''}
         `,
         outlined: `
-            bg-white/60 dark:bg-[#1C1B1F]/60 backdrop-blur-xl
-            border border-[#CAC4D0] dark:border-[#49454F]
-            ${isClickable ? 'hover:bg-white/80 dark:hover:bg-[#E6E1E5]/10 hover:border-[#79747E] dark:hover:border-[#938F99]' : ''}
+            bg-white/5 dark:bg-[#1C1B1F]/5 backdrop-blur-2xl
+            border-[0.5px] border-white/40 dark:border-[#49454F]/50
+            ${isClickable ? 'hover:bg-white/10 hover:border-white/60 active:scale-[0.98]' : ''}
         `,
     };
 
