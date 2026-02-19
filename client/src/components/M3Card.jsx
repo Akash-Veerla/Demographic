@@ -51,7 +51,7 @@ const M3Card = memo(({
         <Component
             onClick={onClick}
             className={`
-                rounded-sq-xl
+                squircle
                 ${padding}
                 transition-all duration-200
                 ${variantClasses[variant] || variantClasses.elevated}

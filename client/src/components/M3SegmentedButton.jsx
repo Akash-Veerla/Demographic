@@ -31,7 +31,7 @@ const M3SegmentedButton = memo(({
 
     return (
         <div
-            className={`inline-flex rounded-sq-lg overflow-hidden shadow-sm ${className}`}
+            className={`inline-flex squircle overflow-hidden shadow-sm bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 ${className}`}
             role="group"
         >
             {segments.map((segment, index) => {

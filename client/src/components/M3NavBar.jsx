@@ -7,15 +7,10 @@ import M3Badge from './M3Badge';
  * 
  * M3 Spec:
  * - Height: 80dp
- * - Active indicator: 64x32dp pill, secondary-container color
- * - Icon: 24dp, on-secondary-container when active, on-surface-variant when inactive
- * - Label: 12sp medium, always visible
- * - Max 5 destinations
- * - Active indicator animates with spring motion
-                    * 
- * @param { Array } items - Nav items: [{ label, icon, activeIcon, path, badge }]
-    * @param { string } className - Additional classes
-        */
+ * - Active indicator: 64x32dp pill (Squircle), secondary-container color
+ * - Icon: 24dp
+ * - Label: 12sp medium
+ */
 
 const M3NavBar = memo(({ items = [], className = '' }) => {
     const navigate = useNavigate();
@@ -33,16 +28,26 @@ const M3NavBar = memo(({ items = [], className = '' }) => {
         <nav
             className={`
                 fixed bottom-0 left-0 right-0 z-[1000]
-                bg-white dark:bg-white/5
-                dark:backdrop-blur-2xl
-                border-t border-white/20 dark:border-white/10
-                safe-area-bottom
+                pointer-events-none
+                flex justify-center
+                pb-4 md:pb-6
                 ${className}
             `}
             role="navigation"
             aria-label="Main navigation"
         >
-            <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2">
+            {/* Nav Container — Floating Squircle */}
+            <div className={`
+                pointer-events-auto
+                squircle-full
+                bg-white border border-gray-200 shadow-xl
+                dark:bg-white/5 dark:backdrop-blur-2xl dark:border-white/10 dark:shadow-none
+                h-20
+                px-2 md:px-6
+                flex items-center justify-between md:justify-center md:gap-8
+                w-full max-w-[90%] md:max-w-2xl
+                relative z-50
+            `}>
                 {items.map((item, index) => {
                     const isActive = index === activeIndex;
 
@@ -51,58 +56,60 @@ const M3NavBar = memo(({ items = [], className = '' }) => {
                             key={item.path}
                             type="button"
                             onClick={() => navigate(item.path)}
-                            className="
+                            className={`
+                                squircle-btn
                                 flex flex-col items-center justify-center
-                                min-w-[48px] w-full h-full
+                                w-full md:w-20 h-full
                                 gap-1
-                                transition-all duration-200
+                                transition-all duration-300
                                 group
                                 outline-none
-                            "
+                                relative
+                            `}
                             aria-label={item.label}
                             aria-current={isActive ? 'page' : undefined}
                         >
-                            {/* Icon container with M3 active indicator pill */}
-                            <div className="relative flex items-center justify-center h-8">
-                                {/* Active indicator pill — M3: 64x32dp, secondary-container */}
-                                <div
-                                    className={`
-                                        absolute inset-x-0 h-8 rounded-sq-lg
-                                        transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)]
-                                        ${isActive
-                                            ? 'bg-primary/12 dark:bg-[#D0BCFF]/16 w-16 -left-3 opacity-100 scale-100'
-                                            : 'w-8 opacity-0 scale-75 group-hover:opacity-60 group-hover:scale-100 bg-[#1a100f]/5 dark:bg-[#E6E1E5]/5'
-                                        }
-                                    `}
-                                    style={{ left: isActive ? 'calc(50% - 32px)' : 'calc(50% - 16px)' }}
-                                />
+                            {/* Active Indicator — Squircle shape */}
+                            <div className={`
+                                absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                                w-16 h-10
+                                squircle
+                                transition-all duration-300
+                                ${isActive
+                                    ? 'bg-primary/10 dark:bg-primary/20 opacity-100'
+                                    : 'opacity-0 scale-50'
+                                }
+                            `} />
 
-                                {/* Icon with optional badge */}
+                            {/* Icon container */}
+                            <div className="relative z-10 flex items-center justify-center">
                                 <M3Badge count={item.badge || 0} variant={item.badge > 0 ? 'standard' : 'dot'}>
                                     <span
                                         className={`
-                                            material-symbols-outlined text-[24px] relative z-10
-                                            transition-all duration-200
+                                            material-symbols-outlined text-[24px]
+                                            transition-all duration-300
                                             ${isActive
-                                                ? 'text-primary dark:text-[#D0BCFF] font-bold'
-                                                : 'text-[#49454F] dark:text-[#CAC4D0] group-hover:text-[#1a100f] dark:group-hover:text-[#E6E1E5]'
+                                                ? 'text-primary dark:text-[#D0BCFF] fill-1'
+                                                : 'text-gray-500 dark:text-[#CAC4D0] group-hover:text-primary dark:group-hover:text-[#D0BCFF]'
                                             }
                                         `}
-                                        style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 600" : "'FILL' 0, 'wght' 400" }}
+                                        style={{
+                                            fontVariationSettings: isActive ? "'FILL' 1, 'wght' 600" : "'FILL' 0, 'wght' 400"
+                                        }}
                                     >
                                         {isActive ? (item.activeIcon || item.icon) : item.icon}
                                     </span>
                                 </M3Badge>
                             </div>
 
-                            {/* Label — M3: 12sp medium */}
+                            {/* Label */}
                             <span
                                 className={`
-                                    text-xs font-bold leading-none tracking-wide
+                                    text-[11px] font-bold tracking-wide z-10
                                     transition-colors duration-200
                                     ${isActive
                                         ? 'text-primary dark:text-[#D0BCFF]'
-                                        : 'text-[#49454F] dark:text-[#CAC4D0] group-hover:text-[#1a100f] dark:group-hover:text-[#E6E1E5]'
+                                        : 'text-gray-500 dark:text-[#CAC4D0] group-hover:text-primary dark:group-hover:text-[#D0BCFF]'
                                     }
                                 `}
                             >

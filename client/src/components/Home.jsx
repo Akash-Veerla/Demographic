@@ -79,8 +79,8 @@ const Home = () => {
     );
 
     return (
-        <div className="min-h-full w-full bg-transparent p-4 md:p-8 font-display transition-colors duration-300 pb-8">
-            <div className="max-w-5xl mx-auto w-full px-4 space-y-8">
+        <div className="min-h-screen w-full bg-transparent flex flex-col items-center py-10 px-4 gap-8 font-display transition-colors duration-300">
+            <div className="w-full max-w-4xl space-y-8 flex-1">
 
                 {/* 1. Header / Greeting (Aligned) */}
                 <div className="mb-4 animate-fade-in">
@@ -142,9 +142,9 @@ const Home = () => {
                 )}
 
                 {/* 5. Info / Welcome Section (Row 4 - Glassmorphism) */}
-                <div className="bg-white dark:bg-white/5 dark:backdrop-blur-2xl rounded-sq-2xl p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
+                <div className="squircle-full bg-white dark:bg-white/5 dark:backdrop-blur-2xl p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                    <div className="max-w-4xl mx-auto relative z-10">
+                    <div className="w-full relative z-10">
                         <div className="mb-10 text-center md:text-left">
                             <h2 className="text-3xl font-black text-[#1a100f] dark:text-white mb-4 tracking-tight">Welcome to KON-NECT</h2>
                             <p className="text-[#5e413d] dark:text-[#CAC4D0] leading-relaxed font-medium text-lg">
@@ -198,7 +198,7 @@ const Home = () => {
                 </div>
 
                 {/* Footer */}
-                <footer className="text-center py-8">
+                <footer className="text-center py-4">
                     <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] font-black uppercase tracking-widest">© 2026 KON-NECT. All rights reserved.</p>
                 </footer>
 
