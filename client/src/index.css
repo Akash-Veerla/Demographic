@@ -75,9 +75,11 @@ body,
   margin: 0;
   padding: 0;
   font-size: 16px;
-  font-weight: 500;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  font-weight: 600;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
   /* overflow: hidden; Removed to allow scrolling */
 }
 

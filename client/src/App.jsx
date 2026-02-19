@@ -11,6 +11,7 @@ import Social from './components/Social';
 import Landing from './components/Landing';
 import Home from './components/Home';
 import ErrorBoundary from './components/ErrorBoundary';
+import M3LoadingIndicator from './components/M3LoadingIndicator';
 
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme } from './theme';
@@ -39,7 +40,7 @@ const ProtectedRoute = ({ children }) => {
                 </div>
                 {/* Spinner */}
                 <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
-                    <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-primary/20 border-t-primary" />
+                    <M3LoadingIndicator size={56} />
                 </div>
             </div>
         );
@@ -100,7 +101,7 @@ const AppContent = () => {
                 </div>
                 {/* Spinner */}
                 <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
-                    <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-primary/20 border-t-primary" />
+                    <M3LoadingIndicator size={56} />
                 </div>
             </div>
         );

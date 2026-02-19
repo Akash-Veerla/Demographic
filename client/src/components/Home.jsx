@@ -19,7 +19,7 @@ const Home = () => {
             try {
                 // Pass current coordinates directly for guaranteed accuracy
                 const res = await api.get('/api/stats/local', {
-                    params: { lat: userLocation.lat, lng: userLocation.lng }
+                    params: { lat: userLocation.lat, lng: userLocation.lng, radius: 20 }
                 });
                 setStats(res.data);
             } catch (err) {
@@ -65,7 +65,7 @@ const Home = () => {
             variant="elevated"
             interactive
             onClick={() => navigate(`/map?filter=${category}`)}
-            className="flex-shrink-0 w-64 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10 relative overflow-hidden group hover:border-white/60 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+            className="flex-shrink-0 w-64 bg-white dark:bg-white/5 dark:backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10 relative overflow-hidden group hover:border-white/60 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
             padding="p-6"
         >
             <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
@@ -128,7 +128,7 @@ const Home = () => {
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                                Live Pulse (50km)
+                                Live Pulse (20km)
                             </h3>
                         </div>
                         <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
@@ -142,7 +142,7 @@ const Home = () => {
                 )}
 
                 {/* 5. Info / Welcome Section (Row 4 - Glassmorphism) */}
-                <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-sq-2xl p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
+                <div className="bg-white dark:bg-white/5 dark:backdrop-blur-2xl rounded-sq-2xl p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                     <div className="max-w-4xl mx-auto relative z-10">
                         <div className="mb-10 text-center md:text-left">

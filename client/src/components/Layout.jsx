@@ -56,7 +56,7 @@ const Layout = ({ children }) => {
             }}>
                 {/* Mobile Top Bar */}
                 {isMobile && user && (
-                    <div className="flex items-center justify-between px-4 h-16 bg-white/10 dark:bg-[#141218]/10 backdrop-blur-2xl border-b border-white/30 dark:border-white/10 sticky top-0 z-50">
+                    <div className="flex items-center justify-between px-4 h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl border-b border-white/30 dark:border-white/10 sticky top-0 z-50">
                         <div className="flex items-center gap-2" onClick={() => navigate('/')}>
                             <div className="w-8 h-8 rounded-sq-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
                                 <Home size={18} className="text-primary" />
@@ -74,7 +74,7 @@ const Layout = ({ children }) => {
 
                 {/* Desktop / Tablet Navbar (In Flow) */}
                 {!isMobile && user && (
-                    <div className={`w-[90%] max-w-2xl mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-1' : 'mb-6'} h-16 bg-white/10 dark:bg-[#141218]/10 backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
+                    <div className={`w-[90%] max-w-2xl mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-1' : 'mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
                         {/* Brand */}
                         <div
                             className="flex items-center gap-3 cursor-pointer select-none"

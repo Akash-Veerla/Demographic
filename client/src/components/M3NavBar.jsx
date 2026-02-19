@@ -12,10 +12,10 @@ import M3Badge from './M3Badge';
  * - Label: 12sp medium, always visible
  * - Max 5 destinations
  * - Active indicator animates with spring motion
- * 
- * @param {Array} items - Nav items: [{ label, icon, activeIcon, path, badge }]
- * @param {string} className - Additional classes
- */
+                    * 
+ * @param { Array } items - Nav items: [{ label, icon, activeIcon, path, badge }]
+    * @param { string } className - Additional classes
+        */
 
 const M3NavBar = memo(({ items = [], className = '' }) => {
     const navigate = useNavigate();
@@ -33,8 +33,8 @@ const M3NavBar = memo(({ items = [], className = '' }) => {
         <nav
             className={`
                 fixed bottom-0 left-0 right-0 z-[1000]
-                bg-white/10 dark:bg-white/5
-                backdrop-blur-2xl
+                bg-white dark:bg-white/5
+                dark:backdrop-blur-2xl
                 border-t border-white/20 dark:border-white/10
                 safe-area-bottom
                 ${className}
