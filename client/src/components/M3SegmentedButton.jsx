@@ -51,8 +51,8 @@ const M3SegmentedButton = memo(({
                             border-r-[0.5px] border-white/20 last:border-r-0
                             transition-all duration-200 active:scale-[0.98]
                             ${isSelected
-                                ? 'bg-primary/20 dark:bg-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF] z-10 relative backdrop-blur-xl shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]'
-                                : 'bg-white/5 dark:bg-white/5 text-[#1a100f] dark:text-[#E6E1E5] hover:bg-white/15 dark:hover:bg-white/10 backdrop-blur-md'
+                                ? 'bg-primary/10 border-primary/20 dark:bg-primary/20 dark:border-transparent text-primary dark:text-[#D0BCFF] z-10 relative dark:backdrop-blur-xl shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]'
+                                : 'bg-gray-100 dark:bg-white/5 text-[#1a100f] dark:text-[#E6E1E5] hover:bg-gray-200 dark:hover:bg-white/10 dark:backdrop-blur-md'
                             }
                         `}
                         aria-pressed={isSelected}

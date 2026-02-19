@@ -279,10 +279,12 @@ const MapComponent = () => {
                 }),
                 text: isSelected ? new Text({
                     text: u.displayName,
-                    offsetY: -20,
+                    offsetY: 25, // Name below marker
                     fill: new Fill({ color: isDark ? '#fff' : '#000' }),
                     font: 'bold 12px Outfit',
-                    stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 })
+                    stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 }),
+                    padding: [2, 4, 2, 4],
+                    backgroundFill: new Fill({ color: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)' }), // Legibility background
                 }) : null,
                 zIndex: isFriend ? 50 : 10
             }));
@@ -292,7 +294,7 @@ const MapComponent = () => {
                 styles.push(new Style({
                     text: new Text({
                         text: u.isOnline ? '● Online' : '○ Offline',
-                        offsetY: -24,
+                        offsetY: -30, // Status above
                         font: 'bold 10px Outfit',
                         fill: new Fill({ color: u.isOnline ? (isDark ? '#D0BCFF' : '#be3627') : '#9ca3af' }),
                         backgroundFill: new Fill({ color: isDark ? '#1D1B20' : '#fff' }),
@@ -304,7 +306,7 @@ const MapComponent = () => {
                 styles.push(new Style({
                     text: new Text({
                         text: `★ ${u.matchScore || u.sharedInterests.length}`,
-                        offsetY: -24,
+                        offsetY: -30, // Star above
                         font: 'bold 10px Outfit',
                         fill: new Fill({ color: isDark ? '#86EFAC' : '#166534' }),
                         backgroundFill: new Fill({ color: isDark ? '#14532D' : '#DCFCE7' }),
@@ -827,7 +829,7 @@ const MapComponent = () => {
                         {selectedUser && selectedUser.isFriend && (
                             <button
                                 onClick={() => setChatTarget(selectedUser)}
-                                className="flex-1 bg-white dark:bg-[#231f29] text-primary h-9 rounded-sq-lg font-bold text-xs border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                                className="flex-1 bg-white dark:bg-white/10 dark:backdrop-blur-xl text-primary dark:text-[#D0BCFF] h-9 rounded-sq-lg font-bold text-xs border border-primary/20 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/20 transition-all active:scale-95 flex items-center justify-center gap-1.5"
                             >
                                 <span className="material-symbols-outlined text-base">chat</span>
                                 Chat
