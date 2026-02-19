@@ -22,6 +22,8 @@ const M3Switch = memo(({
     onChange,
     disabled = false,
     showIcons = false,
+    iconOn,
+    iconOff,
     label,
     className = '',
 }) => {
@@ -75,14 +77,14 @@ const M3Switch = memo(({
                     `}
                 >
                     {/* Icon inside thumb */}
-                    {showIcons && checked && (
+                    {(showIcons || iconOn) && checked && (
                         <span className="material-symbols-outlined text-[14px] text-primary dark:text-[#D0BCFF] font-bold">
-                            check
+                            {iconOn || 'check'}
                         </span>
                     )}
-                    {showIcons && !checked && (
+                    {(showIcons || iconOff) && !checked && (
                         <span className="material-symbols-outlined text-[14px] text-white dark:text-[#1C1B1F] font-bold">
-                            close
+                            {iconOff || 'close'}
                         </span>
                     )}
                 </div>

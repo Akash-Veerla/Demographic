@@ -814,33 +814,45 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
         // 1. Friends Online Nearby (mutual friends within 20km)
         let activeNearby = 0;
         if (userFriends.length > 0) {
-            activeNearby = await User.countDocuments({
-                _id: { $in: userFriends },
-                location: {
-                    $near: {
-                        $geometry: { type: 'Point', coordinates: centerCoords },
-                        $maxDistance: maxDistance
+            const result = await User.aggregate([
+                {
+                    $geoNear: {
+                        near: { type: 'Point', coordinates: centerCoords },
+                        distanceField: "dist.calculated",
+                        maxDistance: maxDistance,
+                        query: {
+                            _id: { $in: userFriends },
+                            'location.coordinates': { $ne: [0, 0] },
+                            lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+                        },
+                        spherical: true
                     }
                 },
-                'location.coordinates': { $ne: [0, 0] },
-                lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-            });
+                { $count: "count" }
+            ]);
+            activeNearby = result[0]?.count || 0;
         }
 
         // 2. Matched Interests Count (all users within 20km with shared interests)
         let matchedInterestsNearby = 0;
         if (userInterests.length > 0) {
-            matchedInterestsNearby = await User.countDocuments({
-                location: {
-                    $near: {
-                        $geometry: { type: 'Point', coordinates: centerCoords },
-                        $maxDistance: maxDistance
+            const result = await User.aggregate([
+                {
+                    $geoNear: {
+                        near: { type: 'Point', coordinates: centerCoords },
+                        distanceField: "dist.calculated",
+                        maxDistance: maxDistance,
+                        query: {
+                            _id: { $ne: new mongoose.Types.ObjectId(userId) }, // Exclude self
+                            'location.coordinates': { $ne: [0, 0] },
+                            interests: { $in: userInterests }
+                        },
+                        spherical: true
                     }
                 },
-                'location.coordinates': { $ne: [0, 0] },
-                interests: { $in: userInterests },
-                _id: { $ne: userId }
-            });
+                { $count: "count" }
+            ]);
+            matchedInterestsNearby = result[0]?.count || 0;
         }
 
         // 3. Top Interests Pulse (50km Radius)
@@ -854,9 +866,8 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
                     query: {
                         'location.coordinates': { $ne: [0, 0] },
                         isActive: { $ne: false },
-                        _id: { $ne: userId } // Exclude self
+                        _id: { $ne: new mongoose.Types.ObjectId(userId) } // Exclude self
                     },
-                    includeLocs: "dist.location",
                     spherical: true
                 }
             },
