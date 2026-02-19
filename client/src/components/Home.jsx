@@ -146,7 +146,10 @@ const Home = () => {
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                     <div className="w-full relative z-10">
                         <div className="mb-10 text-center md:text-left">
-                            <h2 className="text-3xl font-black text-[#1a100f] dark:text-white mb-4 tracking-tight">Welcome to KON-NECT</h2>
+                            <h2 className="text-3xl font-black text-[#1a100f] dark:text-white mb-4 tracking-tight flex items-center justify-center md:justify-start gap-3">
+                                <img src="/logo.svg" alt="App Logo" className="w-10 h-10 object-contain drop-shadow-md" />
+                                Welcome to KON-NECT
+                            </h2>
                             <p className="text-[#5e413d] dark:text-[#CAC4D0] leading-relaxed font-medium text-lg">
                                 KON-NECT helps you discover and connect with people near you who share your passions. Whether it's tech, travel, music, or art — find your tribe on the map, send a friend request, and start real conversations. No algorithms, no endless scrolling — just genuine connections based on what you love.
                             </p>

@@ -83,8 +83,8 @@ const Login = () => {
             <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white dark:bg-white/5 dark:backdrop-blur-2xl shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border-[0.5px] border-white/30 dark:border-white/10 mb-8" style={{ borderRadius: '28px' }}>
 
                 <div className="flex flex-col items-center gap-3 mb-6">
-                    <div className="w-14 h-14 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-1">
-                        <span className="material-symbols-outlined text-[32px]">share_location</span>
+                    <div className="w-16 h-16 flex items-center justify-center mb-2">
+                        <img src="/logo.svg" alt="App Logo" className="w-full h-full object-contain drop-shadow-md" />
                     </div>
                     <h1 className="text-2xl font-bold text-primary tracking-tight">KON-NECT</h1>
                 </div>
