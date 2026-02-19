@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useContext } from 'react';
 import { ColorModeContext } from '../App';
-import { Sun, Moon } from 'lucide-react';
+import M3TextField from './M3TextField';
+import M3IconButton from './M3IconButton';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -42,14 +43,14 @@ const Register = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/95 dark:via-background-dark/60 dark:to-background-dark/95"></div>
             </div>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle — M3 */}
             <div className="absolute top-6 right-6 z-50">
-                <button
+                <M3IconButton
+                    icon={mode === 'dark' ? 'light_mode' : 'dark_mode'}
+                    variant="tonal"
                     onClick={toggleColorMode}
-                    className="p-2 rounded-full bg-white/80 dark:bg-[#141218]/80 backdrop-blur-md shadow-md hover:scale-110 transition-transform text-[#5e413d] dark:text-[#E6E1E5]"
-                >
-                    {mode === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
-                </button>
+                    ariaLabel="Toggle theme"
+                />
             </div>
 
             <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border dark:border-white/10" style={{ borderRadius: '28px' }}>
@@ -74,72 +75,46 @@ const Register = () => {
                 )}
 
                 <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
-                    <div className="flex flex-col gap-1.5">
-                        <label htmlFor="displayName" className="text-[#1a100f] dark:text-[#E6E1E5] text-sm font-semibold ml-1">Full Name</label>
-                        <div className="relative group">
-                            <input
-                                id="displayName"
-                                name="displayName"
-                                type="text"
-                                value={formData.displayName}
-                                onChange={handleChange}
-                                required
-                                autoComplete="name"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
-                                placeholder="John Doe"
-                                style={{ borderRadius: '12px' }}
-                            />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">person</span>
-                        </div>
-                    </div>
+                    <M3TextField
+                        label="Full Name"
+                        name="displayName"
+                        type="text"
+                        value={formData.displayName}
+                        onChange={handleChange}
+                        required
+                        leadingIcon="person"
+                        autoComplete="name"
+                        placeholder="John Doe"
+                        variant="filled"
+                    />
 
-                    <div className="flex flex-col gap-1.5">
-                        <label htmlFor="email" className="text-[#1a100f] dark:text-[#E6E1E5] text-sm font-semibold ml-1">Email Address</label>
-                        <div className="relative group">
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                                autoComplete="email"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
-                                placeholder="user@example.com"
-                                style={{ borderRadius: '12px' }}
-                            />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">mail</span>
-                        </div>
-                    </div>
+                    <M3TextField
+                        label="Email Address"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        leadingIcon="mail"
+                        autoComplete="email"
+                        placeholder="user@example.com"
+                        variant="filled"
+                    />
 
-                    <div className="flex flex-col gap-1.5">
-                        <label htmlFor="password" className="text-[#1a100f] dark:text-[#E6E1E5] text-sm font-semibold ml-1">Password (Min 8 chars)</label>
-                        <div className="relative group">
-                            <input
-                                id="password"
-                                name="password"
-                                type={showPassword ? "text" : "password"}
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                minLength={8}
-                                autoComplete="new-password"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
-                                placeholder="••••••••"
-                                style={{ borderRadius: '12px' }}
-                            />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">lock</span>
-                            <button
-                                type="button"
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] hover:text-primary dark:hover:text-primary transition-colors focus:outline-none"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                <span className="material-symbols-outlined text-[20px]">
-                                    {showPassword ? 'visibility' : 'visibility_off'}
-                                </span>
-                            </button>
-                        </div>
-                    </div>
+                    <M3TextField
+                        label="Password (Min 8 chars)"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        leadingIcon="lock"
+                        trailingIcon={showPassword ? 'visibility' : 'visibility_off'}
+                        onTrailingIconClick={() => setShowPassword(!showPassword)}
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                        variant="filled"
+                    />
 
                     <button
                         type="submit"

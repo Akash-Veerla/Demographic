@@ -5,6 +5,8 @@ import { Box, Card, CardContent, Typography, Avatar, Chip, Button } from '@mui/m
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare } from 'lucide-react';
 import M3LoadingIndicator from './M3LoadingIndicator';
+import M3Chip, { M3ChipSet } from './M3Chip';
+import M3SegmentedButton from './M3SegmentedButton';
 
 const ConnectView = () => {
     const [users, setUsers] = useState([]);
@@ -147,23 +149,20 @@ const ConnectView = () => {
                             </span>
                         ) : null}
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-center">
+                    <M3ChipSet className="justify-center">
                         {u.interests?.slice(0, 5).map((int, i) => {
                             const intStr = typeof int === 'string' ? int : int.name;
                             const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
                             return (
-                                <span
+                                <M3Chip
                                     key={i}
-                                    className={`px-3 py-1 rounded-sq-md text-[10px] font-black uppercase tracking-widest border transition-colors ${isShared
-                                        ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
-                                        : 'bg-[#f2e9e9] dark:bg-[#231f29] border-transparent text-[#915b55] dark:text-[#938F99]'
-                                        }`}
-                                >
-                                    {isShared && '★ '}{intStr}
-                                </span>
+                                    label={isShared ? `★ ${intStr}` : intStr}
+                                    type="suggestion"
+                                    highlighted={isShared}
+                                />
                             );
                         })}
-                    </div>
+                    </M3ChipSet>
 
                     <div className="flex gap-2 w-full mt-2">
                         {isFriend ? (
@@ -389,22 +388,16 @@ const Social = () => {
 
     return (
         <div className="flex flex-col h-full w-full relative transition-colors duration-300">
-            {/* Tab Navigation Bar - Sticky, squircle buttons */}
+            {/* Tab Navigation Bar — M3 Segmented Button */}
             <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl border-b border-[#be3627]/10 dark:border-white/5 px-6 sticky top-0 z-30 flex justify-center h-14 items-center">
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-sq-xl p-1 border border-slate-200 dark:border-slate-700/50">
-                    <button
-                        onClick={() => setActiveTab('map')}
-                        className={`px-8 py-2 rounded-sq-lg text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'map' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
-                    >
-                        Map View
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('connect')}
-                        className={`px-8 py-2 rounded-sq-lg text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'connect' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
-                    >
-                        Connect
-                    </button>
-                </div>
+                <M3SegmentedButton
+                    segments={[
+                        { value: 'map', label: 'Map View', icon: 'map' },
+                        { value: 'connect', label: 'Connect', icon: 'group' },
+                    ]}
+                    value={activeTab}
+                    onChange={setActiveTab}
+                />
             </div>
 
             {/* Content Area */}

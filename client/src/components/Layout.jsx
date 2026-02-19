@@ -1,9 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { Box, IconButton, useMediaQuery, useTheme, BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { ColorModeContext } from '../App';
-import { LogOut, Home, Users, User, Sun, Moon } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Avatar from './Avatar';
+import M3NavBar from './M3NavBar';
+import M3IconButton from './M3IconButton';
+import M3SegmentedButton from './M3SegmentedButton';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Layout = ({ children }) => {
@@ -20,9 +23,9 @@ const Layout = ({ children }) => {
     };
 
     const navItems = [
-        { label: 'Home', icon: <Home size={20} />, path: '/' },
-        { label: 'Social', icon: <Users size={20} />, path: '/social' },
-        { label: 'Profile', icon: <User size={20} />, path: '/profile' },
+        { label: 'Home', icon: 'home', activeIcon: 'home', path: '/' },
+        { label: 'Social', icon: 'group', activeIcon: 'group', path: '/social' },
+        { label: 'Profile', icon: 'person', activeIcon: 'person', path: '/profile' },
     ];
 
     return (
@@ -85,28 +88,27 @@ const Layout = ({ children }) => {
                             <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
                         </div>
 
-                        {/* Center Toggles */}
-                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-sq-xl p-1 border border-slate-200 dark:border-slate-700/50">
-                            <button
-                                onClick={() => navigate('/')}
-                                className={`px-4 py-1.5 rounded-sq-lg text-sm font-medium transition-all ${location.pathname === '/' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
-                            >
-                                Home
-                            </button>
-                            <button
-                                onClick={() => navigate('/social')}
-                                className={`px-4 py-1.5 rounded-sq-lg text-sm font-medium transition-all ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-[#5e413d] dark:text-[#CAC4D0] hover:text-[#1a100f] dark:hover:text-[#E6E1E5]'}`}
-                            >
-                                Social
-                            </button>
-                        </div>
+                        {/* Center Toggles — M3 Segmented Button */}
+                        <M3SegmentedButton
+                            className="hidden md:inline-flex"
+                            segments={[
+                                { value: '/', label: 'Home', icon: 'home' },
+                                { value: '/social', label: 'Social', icon: 'group' },
+                            ]}
+                            value={location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? '/social' : '/'}
+                            onChange={(val) => navigate(val)}
+                        />
 
                         {/* Right Profile & Actions */}
                         <div className="flex items-center gap-3">
-                            {/* Theme Toggle */}
-                            <IconButton onClick={toggleColorMode} className="text-[#5e413d] dark:text-[#CAC4D0] hover:text-primary transition-colors">
-                                {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                            </IconButton>
+                            {/* Theme Toggle — M3 Icon Button */}
+                            <M3IconButton
+                                icon={mode === 'dark' ? 'light_mode' : 'dark_mode'}
+                                variant="tonal"
+                                onClick={toggleColorMode}
+                                ariaLabel="Toggle theme"
+                                size="default"
+                            />
 
                             <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/profile')}>
                                 <div className="text-right hidden lg:block">
@@ -114,9 +116,14 @@ const Layout = ({ children }) => {
                                 </div>
                                 <Avatar user={user} sx={{ width: 40, height: 40, border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
                             </div>
-                            <IconButton onClick={handleLogout} className="text-[#5e413d] dark:text-[#CAC4D0] hover:text-red-500 transition-colors">
-                                <LogOut size={20} />
-                            </IconButton>
+                            {/* Logout — M3 Icon Button */}
+                            <M3IconButton
+                                icon="logout"
+                                variant="standard"
+                                onClick={handleLogout}
+                                ariaLabel="Log out"
+                                size="default"
+                            />
                         </div>
                     </div>
                 )}
@@ -127,31 +134,9 @@ const Layout = ({ children }) => {
                 </Box>
             </Box>
 
-            {/* Mobile Bottom Nav */}
+            {/* Mobile Bottom Nav — M3 Navigation Bar */}
             {isMobile && user && (
-                <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000, bgcolor: theme.palette.mode === 'dark' ? 'rgba(20, 18, 24, 0.9)' : 'rgba(248, 246, 246, 0.9)', backdropFilter: 'blur(10px)', borderTop: `1px solid ${theme.palette.divider} ` }} elevation={3}>
-                    <BottomNavigation
-                        showLabels
-                        value={location.pathname === '/' ? '/' : location.pathname.startsWith('/social') ? '/social' : location.pathname}
-                        onChange={(event, newValue) => {
-                            navigate(newValue);
-                        }}
-                        sx={{ bgcolor: 'transparent', height: 70 }}
-                    >
-                        {navItems.map((item) => (
-                            <BottomNavigationAction
-                                key={item.label}
-                                label={item.label}
-                                value={item.path}
-                                icon={item.icon}
-                                sx={{
-                                    color: theme.palette.text.secondary,
-                                    '&.Mui-selected': { color: theme.palette.primary.main }
-                                }}
-                            />
-                        ))}
-                    </BottomNavigation>
-                </Paper>
+                <M3NavBar items={navItems} />
             )}
         </Box>
     );

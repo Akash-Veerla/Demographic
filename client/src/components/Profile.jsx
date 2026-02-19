@@ -1,8 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Modal, Box, Typography, TextField, Button } from '@mui/material';
 import api from '../utils/api';
+import M3Dialog from './M3Dialog';
+import M3TextField from './M3TextField';
+import M3Badge from './M3Badge';
 
 const Profile = () => {
     const { user, logout } = useAuth();
@@ -139,10 +141,11 @@ const Profile = () => {
                         <div className="bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-[28px] p-8 shadow-xl border border-white/20 dark:border-white/5 flex-grow">
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#be3627]/10 dark:border-white/5">
                                 <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-primary text-2xl">people</span>
+                                    <M3Badge count={0} showZero color="primary">
+                                        <span className="material-symbols-outlined text-primary text-2xl">people</span>
+                                    </M3Badge>
                                     <h2 className="text-xl font-display font-bold text-[#1a100f] dark:text-[#E6E1E5]">Friend Requests</h2>
                                 </div>
-                                <span className="bg-primary/20 text-primary text-xs font-bold px-3 py-1 rounded-full">0</span>
                             </div>
                             <div className="flex flex-col items-center justify-center py-8 text-center h-full min-h-[150px]">
                                 <div className="w-16 h-16 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99]">
@@ -159,65 +162,64 @@ const Profile = () => {
                 <p>© 2026 KON-NECT. All rights reserved.</p>
             </footer>
 
-            {/* Change Password Modal */}
-            <Modal open={isPassModalOpen} onClose={() => setIsPassModalOpen(false)}>
-                <Box sx={{
-                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                    width: 400, bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
-                    border: '1px solid', borderColor: 'divider'
-                }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Change Password</Typography>
-
-                    {passSuccess ? (
-                        <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-center font-bold">
-                            {passSuccess}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-4">
-                            <TextField
-                                label="Current Password"
-                                type="password"
-                                fullWidth
-                                value={passData.currentPassword}
-                                onChange={(e) => setPassData({ ...passData, currentPassword: e.target.value })}
-                            />
-                            <TextField
-                                label="New Password"
-                                type="password"
-                                fullWidth
-                                value={passData.newPassword}
-                                onChange={(e) => setPassData({ ...passData, newPassword: e.target.value })}
-                            />
-                            {passError && <Typography color="error" variant="caption">{passError}</Typography>}
-                            <div className="flex justify-end gap-2 mt-2">
-                                <Button onClick={() => setIsPassModalOpen(false)} color="inherit">Cancel</Button>
-                                <Button onClick={handleChangePassword} variant="contained" sx={{ bgcolor: 'primary.main' }}>Update</Button>
-                            </div>
-                        </div>
-                    )}
-                </Box>
-            </Modal>
-
-            {/* Delete Account Modal */}
-            <Modal open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-                <Box sx={{
-                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                    width: 400, bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
-                    border: '1px solid', borderColor: 'divider'
-                }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'error.main' }}>Delete Account</Typography>
-                    <Typography variant="body2" sx={{ mb: 3 }}>
-                        Are you sure you want to delete your account? This action cannot be undone.
-                    </Typography>
-
-                    {deleteError && <Typography color="error" variant="caption" display="block" sx={{ mb: 2 }}>{deleteError}</Typography>}
-
-                    <div className="flex justify-end gap-2 mt-2">
-                        <Button onClick={() => setIsDeleteModalOpen(false)} color="inherit">Cancel</Button>
-                        <Button onClick={handleDeleteAccount} variant="contained" color="error">Delete</Button>
+            {/* Change Password Dialog — M3 */}
+            <M3Dialog
+                open={isPassModalOpen}
+                onClose={() => setIsPassModalOpen(false)}
+                icon="lock_reset"
+                headline="Change Password"
+                actions={
+                    passSuccess ? [
+                        { label: 'Done', variant: 'filled', onClick: () => setIsPassModalOpen(false) }
+                    ] : [
+                        { label: 'Cancel', onClick: () => setIsPassModalOpen(false) },
+                        { label: 'Update', variant: 'filled', onClick: handleChangePassword },
+                    ]
+                }
+            >
+                {passSuccess ? (
+                    <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-3 rounded-sq-lg text-center font-bold">
+                        {passSuccess}
                     </div>
-                </Box>
-            </Modal>
+                ) : (
+                    <div className="flex flex-col gap-4">
+                        <M3TextField
+                            label="Current Password"
+                            type="password"
+                            value={passData.currentPassword}
+                            onChange={(e) => setPassData({ ...passData, currentPassword: e.target.value })}
+                            leadingIcon="lock"
+                            variant="outlined"
+                        />
+                        <M3TextField
+                            label="New Password"
+                            type="password"
+                            value={passData.newPassword}
+                            onChange={(e) => setPassData({ ...passData, newPassword: e.target.value })}
+                            leadingIcon="lock"
+                            variant="outlined"
+                            error={passError || undefined}
+                        />
+                    </div>
+                )}
+            </M3Dialog>
+
+            {/* Delete Account Dialog — M3 */}
+            <M3Dialog
+                open={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                icon="warning"
+                headline="Delete Account"
+                actions={[
+                    { label: 'Cancel', onClick: () => setIsDeleteModalOpen(false) },
+                    { label: 'Delete', variant: 'filled', onClick: handleDeleteAccount },
+                ]}
+            >
+                <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+                {deleteError && (
+                    <p className="mt-2 text-error text-xs font-medium">{deleteError}</p>
+                )}
+            </M3Dialog>
         </div>
     );
 };

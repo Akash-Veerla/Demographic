@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Map, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
 import api from '../utils/api';
 import M3LoadingIndicator from './M3LoadingIndicator';
+import M3Card from './M3Card';
 
 const Home = () => {
     const { user, userLocation } = useAuth();
@@ -31,22 +32,24 @@ const Home = () => {
         fetchStats();
     }, [userLocation?.lat, userLocation?.lng]); // Stable primitive deps
 
-    // Card Component for consistency
+    // Card Component for consistency — now using M3Card
     const DashboardCard = ({ title, description, icon: Icon, onClick, className = "" }) => (
-        <div
+        <M3Card
+            variant="elevated"
             onClick={onClick}
-            className={`bg-white dark:bg-[#141218] p-6 rounded-sq-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all duration-200 hover:shadow-md hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group ${className}`}
+            interactive
+            className={`flex flex-col items-center text-center group ${className}`}
         >
             <div className="w-12 h-12 bg-primary/10 rounded-sq-xl flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                 <Icon size={24} />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{description}</p>
-        </div>
+        </M3Card>
     );
 
     const StatCard = ({ label, count, description, icon: Icon }) => (
-        <div className="bg-white dark:bg-[#141218] p-8 rounded-sq-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center justify-center h-full">
+        <M3Card variant="outlined" className="flex flex-col items-center text-center justify-center h-full" padding="p-8">
             <span className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-4 flex items-center gap-2">
                 <Icon size={14} /> {label}
             </span>
@@ -54,14 +57,16 @@ const Home = () => {
                 {loadingStats ? <M3LoadingIndicator size={40} className="mx-auto" /> : count}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
-        </div>
+        </M3Card>
     );
 
     const PulseCard = ({ category, count, index }) => (
-        <div
-            className="flex-shrink-0 w-64 bg-gradient-to-br from-primary/5 to-transparent dark:from-primary/10 p-6 rounded-sq-2xl border border-primary/10 relative overflow-hidden group cursor-pointer hover:border-primary/30 transition-all"
+        <M3Card
+            variant="filled"
+            interactive
             onClick={() => navigate(`/map?filter=${category}`)}
-            style={{ animationDelay: `${index * 100}ms` }}
+            className="flex-shrink-0 w-64 bg-gradient-to-br from-primary/5 to-transparent dark:from-primary/10 border border-primary/10 relative overflow-hidden group hover:border-primary/30"
+            padding="p-6"
         >
             <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs animate-ping"></div>
             <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs"></div>
@@ -71,7 +76,7 @@ const Home = () => {
             <div className="mt-4 h-1 w-full bg-gray-100 dark:bg-white/10 rounded-sq-md overflow-hidden">
                 <div className="h-full bg-primary rounded-sq-md" style={{ width: '70%' }}></div>
             </div>
-        </div>
+        </M3Card>
     );
 
     return (

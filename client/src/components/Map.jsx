@@ -14,6 +14,11 @@ import { useAuth } from '../context/AuthContext';
 import io from 'socket.io-client';
 import api from '../utils/api';
 import ChatOverlay from './ChatOverlay';
+import M3SearchBar from './M3SearchBar';
+import M3FAB from './M3FAB';
+import M3Chip from './M3Chip';
+import M3Switch from './M3Switch';
+import M3Snackbar from './M3Snackbar';
 import { useTheme } from '@mui/material';
 
 const TIPS = [
@@ -565,58 +570,55 @@ const MapComponent = () => {
                 </div>
             </div>
 
-            {/* B. Top Search Bar */}
+            {/* B. Top Search Bar — M3 Search Component */}
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4 transition-all duration-300">
-                <div className="relative">
-                    <div className="flex items-center bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-2xl p-1 shadow-2xl border border-white/20 dark:border-white/5">
-                        <div className="flex-1 flex items-center pl-4">
-                            <span className="material-symbols-outlined text-gray-400 mr-2">search</span>
-                            <input
-                                type="text"
-                                placeholder={searchQuery === 'SHOW-CLUSTER-CENTERS' ? "Activating Easter Egg..." : "Search places"}
-                                className="bg-transparent border-none focus:ring-0 text-[#1a100f] dark:text-white font-bold text-sm w-full placeholder-gray-400"
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setShowSuggestions(true);
-                                }}
-                                onFocus={() => setShowSuggestions(true)}
-                            />
-                        </div>
-                        {searchQuery && (
-                            <button onClick={() => setSearchQuery('')} className="p-2 text-gray-400 hover:text-gray-600">
-                                <span className="material-symbols-outlined text-lg">close</span>
-                            </button>
-                        )}
-                    </div>
-                    {/* Suggestions */}
-                    {showSuggestions && searchResults.length > 0 && (
-                        <div className="absolute top-full text-left mt-2 w-full bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-xl rounded-sq-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                            {searchResults.map((place) => (
-                                <button key={place.place_id} onClick={() => handleSearchSelect(place)} className="w-full text-left px-4 py-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0">
-                                    <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{place.display_name.split(',')[0]}</p>
-                                    <p className="text-xs text-gray-500 truncate">{place.display_name}</p>
-                                </button>
-                            ))}
-                        </div>
+                <M3SearchBar
+                    value={searchQuery}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onClear={() => setSearchQuery('')}
+                    placeholder={searchQuery === 'SHOW-CLUSTER-CENTERS' ? 'Activating Easter Egg...' : 'Search places'}
+                    suggestions={searchResults}
+                    showSuggestions={showSuggestions && searchResults.length > 0}
+                    onSuggestionSelect={(place) => handleSearchSelect(place)}
+                    renderSuggestion={(place, index, onSelect) => (
+                        <button
+                            key={place.place_id}
+                            onClick={onSelect}
+                            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-primary/8 dark:hover:bg-[#D0BCFF]/8 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-xl text-[#49454F] dark:text-[#CAC4D0]">location_on</span>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] truncate">{place.display_name.split(',')[0]}</p>
+                                <p className="text-xs text-[#49454F] dark:text-[#CAC4D0] truncate">{place.display_name}</p>
+                            </div>
+                        </button>
                     )}
-                </div>
+                />
             </div>
 
             {/* C. Top Right Controls (Global View only) */}
             <div className="absolute top-6 right-6 z-20 flex gap-4 hidden md:flex">
                 <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-sq-xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" checked={isGlobalMode} onChange={() => setIsGlobalMode(!isGlobalMode)} />
-                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                    </label>
-                    <span className="text-[#1a100f] dark:text-white font-bold text-xs">Global View</span>
+                    <M3Switch
+                        checked={isGlobalMode}
+                        onChange={() => setIsGlobalMode(!isGlobalMode)}
+                        showIcons
+                        label="Global View"
+                    />
                 </div>
             </div>
 
-            {/* D. Map Controls (Bottom Right) */}
+            {/* D. Map Controls (Bottom Right) — M3 FABs */}
             <div className="absolute bottom-5 right-5 z-20 flex flex-col gap-2">
-                <button
+                <M3FAB
+                    icon="my_location"
+                    size="small"
+                    variant="surface"
+                    ariaLabel="Locate Me"
                     onClick={() => {
                         if (navigator.geolocation && map) {
                             navigator.geolocation.getCurrentPosition((pos) => {
@@ -625,38 +627,33 @@ const MapComponent = () => {
                             });
                         }
                     }}
-                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-lg shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
-                    title="Locate Me"
-                >
-                    <span className="material-symbols-outlined text-xl">my_location</span>
-                </button>
-                <button
+                />
+                <M3FAB
+                    icon="add"
+                    size="small"
+                    variant="surface"
+                    ariaLabel="Zoom In"
                     onClick={() => map && map.getView().animate({ zoom: map.getView().getZoom() + 1, duration: 300 })}
-                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-lg shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
-                    title="Zoom In"
-                >
-                    <span className="material-symbols-outlined text-xl">add</span>
-                </button>
-                <button
+                />
+                <M3FAB
+                    icon="remove"
+                    size="small"
+                    variant="surface"
+                    ariaLabel="Zoom Out"
                     onClick={() => map && map.getView().animate({ zoom: map.getView().getZoom() - 1, duration: 300 })}
-                    className="w-10 h-10 bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl rounded-sq-lg shadow-xl border border-white/20 dark:border-white/5 text-[#1a100f] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center"
-                    title="Zoom Out"
-                >
-                    <span className="material-symbols-outlined text-xl">remove</span>
-                </button>
+                />
             </div>
 
 
-            {/* Alert Message Toast */}
-            {alertMessage && (
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 pointer-events-none">
-                    <div className="bg-primary text-white px-6 py-3 rounded-sq-xl shadow-2xl flex items-center gap-3 border border-white/20 pointer-events-auto">
-                        <span className="material-symbols-outlined fill-current">directions_car</span>
-                        <span className="font-bold text-sm">{alertMessage}</span>
-                        <button onClick={() => setAlertMessage(null)} className="ml-2 hover:opacity-80"><span className="material-symbols-outlined text-sm">close</span></button>
-                    </div>
-                </div>
-            )}
+            {/* Alert Message Snackbar — M3 */}
+            <M3Snackbar
+                message={alertMessage}
+                icon="directions_car"
+                show={!!alertMessage}
+                variant="info"
+                duration={6000}
+                onDismiss={() => setAlertMessage(null)}
+            />
 
             {/* ----------------------------------------------------------------------- */}
             {/* UI PANELS: Detail View vs Navigation View */}
@@ -720,20 +717,26 @@ const MapComponent = () => {
                             {selectedUser.interests && (
                                 <div className="flex flex-col gap-1.5">
                                     <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Interests</span>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-1.5">
                                         {selectedUser.interests.slice(0, 10).map((int, i) => {
                                             const interestStr = typeof int === 'string' ? int : int.name;
                                             const isShared = selectedUser.sharedInterests?.some(si => si.toLowerCase() === interestStr.toLowerCase());
                                             return (
-                                                <span key={i} className={`text-xs font-bold px-2.5 py-1 rounded-sq-sm border ${isShared ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-primary/5 text-primary border-primary/10'}`}>
-                                                    {isShared && '★ '}{interestStr}
-                                                </span>
+                                                <M3Chip
+                                                    key={i}
+                                                    label={isShared ? `★ ${interestStr}` : interestStr}
+                                                    type="suggestion"
+                                                    highlighted={isShared}
+                                                    className="!h-7 !text-xs !px-2.5"
+                                                />
                                             );
                                         })}
                                         {selectedUser.interests.length > 10 && (
-                                            <span className="text-xs font-bold px-2.5 py-1 rounded-sq-sm bg-gray-100 dark:bg-white/10 text-gray-500">
-                                                +{selectedUser.interests.length - 10} more
-                                            </span>
+                                            <M3Chip
+                                                label={`+${selectedUser.interests.length - 10} more`}
+                                                type="suggestion"
+                                                className="!h-7 !text-xs !px-2.5 opacity-60"
+                                            />
                                         )}
                                     </div>
                                 </div>

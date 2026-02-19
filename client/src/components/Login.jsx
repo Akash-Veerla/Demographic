@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Modal, Box, Typography, Button, TextField, IconButton } from '@mui/material';
 import { useContext } from 'react';
 import { ColorModeContext } from '../App';
-import { Sun, Moon, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
+import M3TextField from './M3TextField';
+import M3Dialog from './M3Dialog';
+import M3IconButton from './M3IconButton';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -68,14 +70,14 @@ const Login = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/95 dark:via-background-dark/60 dark:to-background-dark/95"></div>
             </div>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle — M3 Icon Button */}
             <div className="absolute top-6 right-6 z-50">
-                <button
+                <M3IconButton
+                    icon={mode === 'dark' ? 'light_mode' : 'dark_mode'}
+                    variant="tonal"
                     onClick={toggleColorMode}
-                    className="p-2 rounded-full bg-white/80 dark:bg-[#141218]/80 backdrop-blur-md shadow-md hover:scale-110 transition-transform text-[#5e413d] dark:text-[#E6E1E5]"
-                >
-                    {mode === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
-                </button>
+                    ariaLabel="Toggle theme"
+                />
             </div>
 
             <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white dark:bg-[#141218] shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border dark:border-white/10" style={{ borderRadius: '28px' }}>
@@ -101,53 +103,34 @@ const Login = () => {
                 )}
 
                 <form className="w-full flex flex-col gap-5" onSubmit={handleSubmit}>
-                    <div className="flex flex-col gap-1.5">
-                        <label htmlFor="email" className="text-[#1a100f] dark:text-white text-sm font-semibold ml-1">Email Address</label>
-                        <div className="relative group">
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                                autoComplete="email"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
-                                placeholder="user@example.com"
-                                style={{ borderRadius: '12px' }}
-                            />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">mail</span>
-                        </div>
-                    </div>
+                    <M3TextField
+                        label="Email Address"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        leadingIcon="mail"
+                        autoComplete="email"
+                        placeholder="user@example.com"
+                        variant="filled"
+                    />
 
-                    <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center ml-1">
-                            <label htmlFor="password" className="text-[#1a100f] dark:text-[#E6E1E5] text-sm font-semibold">Password</label>
-                        </div>
-                        <div className="relative group">
-                            <input
-                                id="password"
-                                name="password"
-                                type={showPassword ? "text" : "password"}
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                autoComplete="current-password"
-                                className="w-full bg-[#f2e9e9] dark:bg-[#231f29] text-[#1a100f] dark:text-[#E6E1E5] border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] h-12 px-4 pl-11 placeholder:text-[#915b55]/70 dark:placeholder:text-[#938F99] transition-all duration-200 ease-in-out"
-                                placeholder="••••••••"
-                                style={{ borderRadius: '12px' }}
-                            />
-                            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] group-focus-within:text-primary dark:group-focus-within:text-primary transition-colors text-[20px]">lock</span>
-                            <button
-                                type="button"
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#915b55] dark:text-[#CAC4D0] hover:text-primary dark:hover:text-primary transition-colors focus:outline-none"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                <span className="material-symbols-outlined text-[20px]">
-                                    {showPassword ? 'visibility' : 'visibility_off'}
-                                </span>
-                            </button>
-                        </div>
+                    <div className="flex flex-col gap-1">
+                        <M3TextField
+                            label="Password"
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                            leadingIcon="lock"
+                            trailingIcon={showPassword ? 'visibility' : 'visibility_off'}
+                            onTrailingIconClick={() => setShowPassword(!showPassword)}
+                            autoComplete="current-password"
+                            placeholder="••••••••"
+                            variant="filled"
+                        />
                         <div className="flex justify-end mt-1">
                             <button
                                 type="button"
@@ -195,64 +178,61 @@ const Login = () => {
                 </p>
             </div>
 
-            {/* Forgot Password Modal */}
-            <Modal open={isForgotModalOpen} onClose={closeForgotModal}>
-                <Box sx={{
-                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                    width: 400, bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
-                    border: '1px solid', borderColor: 'divider'
-                }}>
-                    <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold', fontFamily: 'Outfit' }}>
-                        Forgot Password
-                    </Typography>
-
-                    {!tempPassword ? (
-                        <>
-                            <Typography sx={{ mb: 2, color: 'text.secondary' }}>Enter your email to receive a temporary password.</Typography>
-                            <TextField
-                                fullWidth
-                                label="Email Address"
-                                variant="outlined"
-                                value={forgotEmail}
-                                onChange={(e) => setForgotEmail(e.target.value)}
-                                sx={{ mb: 2 }}
-                            />
-                            {forgotError && <Typography color="error" variant="caption" display="block" sx={{ mb: 2 }}>{forgotError}</Typography>}
-                            <div className="flex justify-end gap-2">
-                                <Button onClick={closeForgotModal} color="inherit">Cancel</Button>
-                                <Button variant="contained" onClick={handleForgotPassword} sx={{ bgcolor: 'primary.main', fontWeight: 'bold' }}>Generate Password</Button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <Typography sx={{ mb: 2, color: 'success.main', fontWeight: 'bold' }}>
-                                Temporary password generated successfully!
-                            </Typography>
-                            <div className="bg-gray-100 dark:bg-[#2D2835] p-4 rounded-sq-lg text-center font-mono text-lg font-bold mb-4 select-all flex items-center justify-between border border-gray-200 dark:border-gray-700">
-                                <span className="text-gray-800 dark:text-white">{tempPassword}</span>
-                                <IconButton onClick={() => {
+            {/* Forgot Password Dialog — M3 */}
+            <M3Dialog
+                open={isForgotModalOpen}
+                onClose={closeForgotModal}
+                icon="lock_reset"
+                headline="Forgot Password"
+                actions={
+                    !tempPassword
+                        ? [
+                            { label: 'Cancel', onClick: closeForgotModal },
+                            { label: 'Generate Password', variant: 'filled', onClick: handleForgotPassword },
+                        ]
+                        : [
+                            { label: 'Close & Login', variant: 'filled', onClick: closeForgotModal },
+                        ]
+                }
+            >
+                {!tempPassword ? (
+                    <>
+                        <p className="mb-4">Enter your email to receive a temporary password.</p>
+                        <M3TextField
+                            label="Email Address"
+                            type="email"
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                            leadingIcon="mail"
+                            variant="outlined"
+                            error={forgotError || undefined}
+                        />
+                    </>
+                ) : (
+                    <>
+                        <p className="text-green-600 dark:text-green-400 font-bold mb-3">
+                            Temporary password generated successfully!
+                        </p>
+                        <div className="bg-gray-100 dark:bg-[#2D2835] p-4 rounded-sq-lg text-center font-mono text-lg font-bold mb-4 select-all flex items-center justify-between border border-gray-200 dark:border-gray-700">
+                            <span className="text-gray-800 dark:text-white">{tempPassword}</span>
+                            <M3IconButton
+                                icon={copied ? 'check' : 'content_copy'}
+                                variant={copied ? 'tonal' : 'standard'}
+                                selected={copied}
+                                onClick={() => {
                                     navigator.clipboard.writeText(tempPassword);
                                     setCopied(true);
                                     setTimeout(() => setCopied(false), 2000);
-                                }}>
-                                    {copied ? <Check size={20} className="text-green-500" /> : <Copy size={20} className="text-gray-500 hover:text-primary" />}
-                                </IconButton>
-                            </div>
-                            <Typography variant="caption" display="block" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.5 }}>
-                                Please copy this password and login. You can change it later in your profile.
-                            </Typography>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                onClick={closeForgotModal}
-                                sx={{ bgcolor: 'primary.main', fontWeight: 'bold', borderRadius: '12px', py: 1.5 }}
-                            >
-                                Close & Login
-                            </Button>
-                        </>
-                    )}
-                </Box>
-            </Modal>
+                                }}
+                                ariaLabel="Copy password"
+                            />
+                        </div>
+                        <p className="text-xs text-[#49454F] dark:text-[#CAC4D0] leading-relaxed">
+                            Please copy this password and login. You can change it later in your profile.
+                        </p>
+                    </>
+                )}
+            </M3Dialog>
         </div>
     );
 };
