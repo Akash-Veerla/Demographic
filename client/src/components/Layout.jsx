@@ -54,6 +54,24 @@ const Layout = ({ children }) => {
                 position: 'relative',
                 zIndex: 1 // Content above background
             }}>
+                {/* Mobile Top Bar */}
+                {isMobile && user && (
+                    <div className="flex items-center justify-between px-4 h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl border-b border-white/20 dark:border-white/5 sticky top-0 z-50">
+                        <div className="flex items-center gap-2" onClick={() => navigate('/')}>
+                            <div className="w-8 h-8 rounded-sq-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
+                                <Home size={18} className="text-primary" />
+                            </div>
+                            <span className="font-display font-bold text-lg tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
+                        </div>
+                        <M3Switch
+                            checked={mode === 'dark'}
+                            onChange={toggleColorMode}
+                            iconOn="dark_mode"
+                            iconOff="light_mode"
+                        />
+                    </div>
+                )}
+
                 {/* Desktop / Tablet Navbar (In Flow) */}
                 {!isMobile && user && (
                     <div className={`w-[90%] max-w-2xl mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-1' : 'mb-6'} h-16 bg-white/80 dark:bg-[#141218]/80 backdrop-blur-xl rounded-sq-2xl shadow-lg flex items-center px-6 justify-between border border-white/20 dark:border-white/5 shrink-0 transition-all duration-300`}>

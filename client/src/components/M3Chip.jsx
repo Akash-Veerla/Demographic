@@ -43,29 +43,30 @@ const M3Chip = memo(({
         border outline-none
         active:scale-[0.97]
         disabled:opacity-38 disabled:cursor-not-allowed
+        backdrop-blur-sm
     `;
 
-    // Type-specific styling per M3 spec
+    // Type-specific styling per M3 spec (Glass variants)
     const typeClasses = {
         assist: isActive
-            ? 'bg-primary/12 dark:bg-[#D0BCFF]/16 border-primary/20 dark:border-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF]'
-            : 'bg-transparent border-gray-300 dark:border-[#49454F] text-[#1a100f] dark:text-[#CAC4D0] hover:bg-[#1a100f]/8 dark:hover:bg-[#CAC4D0]/8',
+            ? 'bg-primary/15 dark:bg-[#D0BCFF]/20 border-primary/20 dark:border-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF]'
+            : 'bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 text-[#1a100f] dark:text-[#CAC4D0] hover:bg-white/20 dark:hover:bg-white/10',
 
         filter: isActive
-            ? 'bg-primary/12 dark:bg-[#D0BCFF]/16 border-primary dark:border-[#D0BCFF] text-primary dark:text-[#D0BCFF]'
-            : 'bg-transparent border-gray-300 dark:border-[#49454F] text-[#1a100f] dark:text-[#CAC4D0] hover:bg-[#1a100f]/8 dark:hover:bg-[#CAC4D0]/8',
+            ? 'bg-primary/15 dark:bg-[#D0BCFF]/20 border-primary dark:border-[#D0BCFF] text-primary dark:text-[#D0BCFF]'
+            : 'bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 text-[#1a100f] dark:text-[#CAC4D0] hover:bg-white/20 dark:hover:bg-white/10',
 
         input: isActive
-            ? 'bg-primary/12 dark:bg-[#D0BCFF]/16 border-primary/30 dark:border-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF]'
-            : 'bg-transparent border-gray-300 dark:border-[#49454F] text-[#1a100f] dark:text-[#CAC4D0] hover:bg-[#1a100f]/8 dark:hover:bg-[#CAC4D0]/8',
+            ? 'bg-primary/15 dark:bg-[#D0BCFF]/20 border-primary/30 dark:border-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF]'
+            : 'bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 text-[#1a100f] dark:text-[#CAC4D0] hover:bg-white/20 dark:hover:bg-white/10',
 
         suggestion: isActive
-            ? 'bg-primary/12 dark:bg-[#D0BCFF]/16 border-primary/20 dark:border-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF]'
-            : 'bg-transparent border-gray-300 dark:border-[#49454F] text-[#1a100f] dark:text-[#CAC4D0] hover:bg-[#1a100f]/8 dark:hover:bg-[#CAC4D0]/8',
+            ? 'bg-primary/15 dark:bg-[#D0BCFF]/20 border-primary/20 dark:border-[#D0BCFF]/30 text-primary dark:text-[#D0BCFF]'
+            : 'bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 text-[#1a100f] dark:text-[#CAC4D0] hover:bg-white/20 dark:hover:bg-white/10',
     };
 
     const highlightClasses = highlighted
-        ? 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400'
+        ? 'bg-green-100/80 dark:bg-green-900/40 border-green-300/50 dark:border-green-700/50 text-green-800 dark:text-green-300 font-bold'
         : '';
 
     const elevationClass = elevated && !isActive

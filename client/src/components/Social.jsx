@@ -118,8 +118,17 @@ const ConnectView = () => {
         const isMatch = checkInterestMatch(u);
         const isFriend = friends.some(f => f._id === u._id);
 
+        // Sort interests: Shared first
+        const sortedInterests = [...(u.interests || [])].sort((a, b) => {
+            const aName = typeof a === 'string' ? a : a.name;
+            const bName = typeof b === 'string' ? b : b.name;
+            const aShared = u.sharedInterests?.some(si => si.toLowerCase() === aName.toLowerCase());
+            const bShared = u.sharedInterests?.some(si => si.toLowerCase() === bName.toLowerCase());
+            return (bShared ? 1 : 0) - (aShared ? 1 : 0);
+        });
+
         return (
-            <div key={u._id} className="bg-white/80 dark:bg-[#1f1b24]/80 backdrop-blur-xl rounded-sq-2xl overflow-hidden shadow-lg border border-white/20 dark:border-white/5 group hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+            <div key={u._id} className="bg-white/30 dark:bg-[#1f1b24]/30 backdrop-blur-2xl rounded-sq-2xl overflow-hidden shadow-lg border border-white/20 dark:border-white/5 group hover:shadow-xl transition-all duration-300 flex flex-col h-full ring-1 ring-black/5">
                 <div className="p-6 flex flex-col items-center text-center flex-1">
                     <div className="relative mb-4 shrink-0">
                         <Avatar
@@ -144,9 +153,9 @@ const ConnectView = () => {
 
                     {/* MATCHED INTERESTS BADGE / TEXT */}
                     {isMatch ? (
-                        <div className="bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full mb-4 border border-green-200 dark:border-green-800 shrink-0">
-                            <p className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-widest flex items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-sm">stars</span>
+                        <div className="bg-green-100/80 dark:bg-green-900/40 px-3 py-1.5 rounded-full mb-4 border border-green-200 dark:border-green-800 shrink-0 backdrop-blur-sm">
+                            <p className="text-xs font-black text-green-800 dark:text-green-300 uppercase tracking-widest flex items-center justify-center gap-1">
+                                <span className="material-symbols-outlined text-sm font-bold">stars</span>
                                 {u.sharedInterests?.length || 0} SHARED INTERESTS
                             </p>
                         </div>
@@ -155,32 +164,32 @@ const ConnectView = () => {
                     )}
 
                     <M3ChipSet className="justify-center mb-4 min-h-[40px] flex-wrap">
-                        {u.interests?.slice(0, 3).map((int, i) => {
+                        {sortedInterests.slice(0, 4).map((int, i) => {
                             const intStr = typeof int === 'string' ? int : int.name;
                             const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
                             return (
                                 <M3Chip
                                     key={i}
-                                    label={intStr}
-                                    type="assist"
+                                    label={isShared ? `★ ${intStr}` : intStr}
+                                    type={isShared ? "suggestion" : "assist"}
                                     highlighted={isShared}
-                                    className="scale-90"
+                                    className={`scale-90 ${isShared ? 'font-bold ring-2 ring-green-500/20' : ''}`}
                                 />
                             );
                         })}
-                        {(u.interests?.length || 0) > 3 && (
-                            <span className="text-xs text-gray-400 font-bold self-center">+{u.interests.length - 3}</span>
+                        {(sortedInterests.length || 0) > 4 && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-bold self-center">+{sortedInterests.length - 4}</span>
                         )}
                     </M3ChipSet>
 
                     <div className="w-full mt-auto pt-2">
                         {isFriend ? (
-                            <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm">
+                            <div className="w-full bg-primary/20 dark:bg-[#D0BCFF]/20 text-primary dark:text-[#D0BCFF] font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm backdrop-blur-md">
                                 <span className="material-symbols-outlined text-lg">group</span>
                                 Friends
                             </div>
                         ) : u.friendRequestSent ? (
-                            <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm cursor-not-allowed">
+                            <button disabled className="w-full bg-gray-100/50 dark:bg-white/10 text-gray-500 font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm cursor-not-allowed backdrop-blur-md">
                                 <span className="material-symbols-outlined text-lg">schedule_send</span>
                                 Request Sent
                             </button>
@@ -188,7 +197,7 @@ const ConnectView = () => {
                             <button
                                 onClick={() => handleAcceptRequest(u._id)}
                                 disabled={actionLoading === u._id}
-                                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-10 rounded-sq-lg shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-50 transition-all active:scale-95"
+                                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-10 rounded-sq-lg shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-50 transition-all active:scale-95 shimmer"
                             >
                                 <span className="material-symbols-outlined text-lg">person_add</span>
                                 Accept
@@ -230,7 +239,7 @@ const ConnectView = () => {
             <div className="max-w-[1600px] mx-auto space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Friend Requests */}
-                    <div className="bg-white dark:bg-[#141218] rounded-sq-2xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
+                    <div className="bg-white/30 dark:bg-[#141218]/30 backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group ring-1 ring-black/5">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-sq-lg text-primary transition-transform group-hover:scale-110">
@@ -280,7 +289,7 @@ const ConnectView = () => {
                     </div>
 
                     {/* My Connections (Friends List) */}
-                    <div className="bg-white dark:bg-[#141218] rounded-sq-2xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group">
+                    <div className="bg-white/30 dark:bg-[#141218]/30 backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border border-white/20 dark:border-white/5 min-h-[320px] flex flex-col group ring-1 ring-black/5">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-sq-lg text-primary transition-transform group-hover:scale-110">

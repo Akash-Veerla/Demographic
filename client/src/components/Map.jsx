@@ -555,8 +555,8 @@ const MapComponent = () => {
                 }}
             />
 
-            {/* A. Tips Carousel (Top Left of Search) */}
-            <div className="absolute top-6 left-6 z-20 hidden lg:block transition-all duration-500 ease-in-out">
+            {/* A. Tips Carousel (Mobile: Top Left of Search, Desktop: Top Left) */}
+            <div className={`absolute left-4 md:top-6 md:left-6 z-20 transition-all duration-500 ease-in-out ${currentTipIndex >= 0 ? 'block' : 'hidden'} top-24`}>
                 <div className={`bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-sq-xl shadow-xl border border-white/20 dark:border-white/5 flex items-center gap-3 transition-opacity duration-500 ${isTipVisible ? 'opacity-100' : 'opacity-0'}`}>
                     <span className="material-symbols-outlined text-primary text-xl animate-bounce">
                         {TIPS[currentTipIndex].icon}
@@ -600,8 +600,8 @@ const MapComponent = () => {
                 />
             </div>
 
-            {/* C. Top Right Controls (Global View only) */}
-            <div className="absolute top-6 right-6 z-20 flex gap-4 hidden md:flex">
+            {/* C. Top Right Controls (Global View) - Repositioned for mobile */}
+            <div className="absolute top-24 right-4 md:top-6 md:right-6 z-20 flex gap-4">
                 <div className="bg-white/90 dark:bg-[#141218]/90 backdrop-blur-xl px-4 py-2 rounded-sq-xl shadow-2xl border border-white/20 dark:border-white/5 flex items-center gap-3">
                     <M3Switch
                         checked={isGlobalMode}
@@ -824,7 +824,7 @@ const MapComponent = () => {
                             <span className="material-symbols-outlined text-base">directions</span>
                             Directions
                         </button>
-                        {selectedUser && (
+                        {selectedUser && selectedUser.isFriend && (
                             <button
                                 onClick={() => setChatTarget(selectedUser)}
                                 className="flex-1 bg-white dark:bg-[#231f29] text-primary h-9 rounded-sq-lg font-bold text-xs border border-primary/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95 flex items-center justify-center gap-1.5"

@@ -71,13 +71,13 @@ const M3SearchBar = memo(({
             <div
                 className={`
                     flex items-center h-14 px-4 gap-3
-                    bg-white/90 dark:bg-[#1C1B1F]/90
+                    bg-white/40 dark:bg-[#1C1B1F]/40
                     backdrop-blur-xl
                     rounded-sq-2xl
                     shadow-lg
                     border transition-all duration-200
                     ${isFocused
-                        ? 'border-primary/30 dark:border-[#D0BCFF]/30 shadow-xl ring-2 ring-primary/10 dark:ring-[#D0BCFF]/10'
+                        ? 'border-primary/50 dark:border-[#D0BCFF]/50 shadow-2xl'
                         : 'border-white/20 dark:border-white/5 hover:shadow-xl'
                     }
                 `}

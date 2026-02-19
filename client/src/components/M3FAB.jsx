@@ -43,30 +43,30 @@ const SIZE_MAP = {
 // M3 color variants
 const VARIANT_MAP = {
     primary: {
-        bg: 'bg-primary dark:bg-[#D0BCFF]',
+        bg: 'bg-primary/90 dark:bg-[#D0BCFF]/90 backdrop-blur-md',
         text: 'text-white dark:text-[#381E72]',
-        hover: 'hover:brightness-110 dark:hover:brightness-90',
+        hover: 'hover:bg-primary hover:brightness-110 dark:hover:bg-[#D0BCFF] dark:hover:brightness-90',
         shadow: 'shadow-[0_6px_10px_rgba(0,0,0,0.14),0_1px_18px_rgba(0,0,0,0.12),0_3px_5px_rgba(0,0,0,0.2)]',
         hoverShadow: 'hover:shadow-[0_8px_15px_rgba(0,0,0,0.16),0_3px_24px_rgba(0,0,0,0.14),0_5px_8px_rgba(0,0,0,0.22)]',
     },
     secondary: {
-        bg: 'bg-[#E8DEF8] dark:bg-[#4A4458]',
+        bg: 'bg-[#E8DEF8]/90 dark:bg-[#4A4458]/90 backdrop-blur-md',
         text: 'text-[#1D192B] dark:text-[#E8DEF8]',
         hover: 'hover:brightness-95 dark:hover:brightness-110',
         shadow: 'shadow-[0_6px_10px_rgba(0,0,0,0.08),0_1px_18px_rgba(0,0,0,0.06)]',
         hoverShadow: 'hover:shadow-[0_8px_15px_rgba(0,0,0,0.12)]',
     },
     tertiary: {
-        bg: 'bg-[#FFD8E4] dark:bg-[#633B48]',
+        bg: 'bg-[#FFD8E4]/90 dark:bg-[#633B48]/90 backdrop-blur-md',
         text: 'text-[#31111D] dark:text-[#FFD8E4]',
         hover: 'hover:brightness-95 dark:hover:brightness-110',
         shadow: 'shadow-[0_6px_10px_rgba(0,0,0,0.08),0_1px_18px_rgba(0,0,0,0.06)]',
         hoverShadow: 'hover:shadow-[0_8px_15px_rgba(0,0,0,0.12)]',
     },
     surface: {
-        bg: 'bg-white/90 dark:bg-[#1C1B1F]/90 backdrop-blur-xl',
+        bg: 'bg-white/40 dark:bg-[#1C1B1F]/40 backdrop-blur-xl border border-white/20 dark:border-white/10',
         text: 'text-primary dark:text-[#D0BCFF]',
-        hover: 'hover:bg-white dark:hover:bg-[#2B2930]',
+        hover: 'hover:bg-white/60 dark:hover:bg-[#2B2930]/60',
         shadow: 'shadow-[0_6px_10px_rgba(0,0,0,0.08),0_1px_18px_rgba(0,0,0,0.06)]',
         hoverShadow: 'hover:shadow-[0_8px_15px_rgba(0,0,0,0.12)]',
     },
