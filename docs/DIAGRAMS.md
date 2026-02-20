@@ -50,8 +50,9 @@ This shows how users, friends, and interests are organized and connected.
 erDiagram
     USER ||--o{ FRIEND-REQUEST : "Sends/Receives"
     USER ||--o{ CUSTOM-INTEREST : "Creates Tags"
-    USER ||--o{ FRIENDSHIP : "Connects to"
-    FRIENDSHIP }o--|| USER : "Mutual Link"
+    USER ||--o{ FRIENDSHIP : "Mutual Link"
+    USER ||--o{ MESSAGE : "History"
+    FRIENDSHIP }o--|| USER : "Connects to"
 
     USER {
         String ID PK
@@ -68,8 +69,16 @@ erDiagram
         String ID PK
         String From FK
         String To FK
-        String Status "Pending / Accepted"
+        String Status "Pending / Cancelled"
         Date TimeSent
+    }
+
+    MESSAGE {
+        String ID PK
+        String RoomID "Private Chat"
+        String Sender FK
+        String Content "Persistent Text"
+        Boolean Read "Status notification"
     }
 
     CUSTOM-INTEREST {
@@ -138,22 +147,25 @@ How the app finds and displays people around you.
 
 ```mermaid
 graph LR
-    Start([Update My Location]) --> Hub[Stats Hub]
+    Start([Live Location Update]) --> Hub[Stats Hub]
     Hub --> Search[Search Local Area]
-    Search --> Filter[Apply 20km Filter]
+    Search --> Range[Follow Within 20km]
     
-    subgraph "Refining Results"
+    subgraph "Intelligent Checks"
+        ReverseGeo["Reverse Geocode (Places)"]
         Match{Match Interests?}
         Global{Global View?}
     end
     
-    Filter --> Match
+    Range --> Match
     Global -- "On" --> ShowAll[Show All Users]
     Match -- "Yes" --> Calc[Determine Best Matches]
     
     Calc --> Sort[Sort Results]
-    Sort --> MapPins([Update Pins on Map])
+    Sort --> MapPins([Live Pins on Map])
     ShowAll --> MapPins
+    
+    MapPins --> ReverseGeo
     
     MapPins --> Groups["Group by Interests"]
 ```
@@ -191,20 +203,22 @@ sequenceDiagram
     participant Hub as Central Hub
     participant Peer as Nearby Person
 
-    Me->>Hub: Online Session Start
-    Peer->>Hub: Online Session Start
+    Me->>Hub: Live Tracking Start (Watch)
+    Peer->>Hub: Live Tracking Start (Watch)
 
     rect rgba(200, 200, 200, 0.1)
-    Note over Me, Hub: Location Sync
-    Me->>Hub: Share My Current GPS
-    Hub->>Hub: Scan Local Neighbors
-    Hub->>Me: Update Map Display
+    Note over Me, Hub: Dynamic Route Tailing
+    Me->>Hub: Movement Updates
+    Hub->>Hub: Slice Route Line Behind User
+    Hub->>Me: Redraw Active Path
     end
 
     rect rgba(0, 100, 255, 0.1)
-    Note over Me, Peer: Instant Chat
-    Me->>Hub: Send Private Message
-    Hub->>Peer: Deliver Message Instantly
+    Note over Me, Peer: Persistent Messaging
+    Me->>Hub: Send Message (Save to DB)
+    Hub->>Peer: Direct Notification
+    Peer->>Hub: Mark as Read
+    Hub->>Me: Read Confirmation
     end
 ```
 
