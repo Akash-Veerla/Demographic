@@ -673,7 +673,7 @@ const MapComponent = () => {
                 {/* Header */}
                 <div className="px-5 pt-5 pb-2 shrink-0 flex justify-between items-start">
                     <div className="min-w-0 flex-1 mr-3">
-                        <h3 className="text-2xl font-black tracking-tight text-[#1a100f] dark:text-white truncate">
+                        <h3 className="text-2xl font-black tracking-tight text-[#1a100f] dark:text-white break-words">
                             {selectedUser ? selectedUser.displayName : (destinationPin ? 'Dropped Pin' : 'Details')}
                         </h3>
                         <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">
@@ -797,7 +797,7 @@ const MapComponent = () => {
                 </div>
 
                 {/* Actions Footer */}
-                <div className="px-4 py-3 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-2">
+                <div className="px-4 py-3 bg-white/50 dark:bg-transparent border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-2">
                     {selectedUser && !selectedUser.isFriend && (
                         selectedUser.friendRequestSent ? (
                             <button
