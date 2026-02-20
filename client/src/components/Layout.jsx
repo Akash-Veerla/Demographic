@@ -75,7 +75,7 @@ const Layout = ({ children }) => {
 
                 {/* Desktop / Tablet Navbar (In Flow) */}
                 {!isMobile && user && (
-                    <div className={`w-[96%] max-w-5xl mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-1' : 'mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
+                    <div className={`w-[98%] max-w-[1400px] mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-1' : 'mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
                         {/* Brand */}
                         <div
                             className="flex items-center gap-3 cursor-pointer select-none"
@@ -105,7 +105,7 @@ const Layout = ({ children }) => {
                             <div className="w-10 h-10 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
                                 <Home size={20} className="text-primary" />
                             </div>
-                            <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
+                            <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5] whitespace-nowrap">KON-NECT</span>
                         </div>
 
                         <M3SegmentedButton

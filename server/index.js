@@ -767,7 +767,7 @@ app.post('/api/friend-request/send', requireAuth, async (req, res) => {
         if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
         // Check if already friends
-        const currentUser = await User.findById(fromId).select('friends');
+        const currentUser = await User.findById(fromId).select('friends displayName');
         if (currentUser.friends.map(f => f.toString()).includes(toUserId)) {
             return res.status(400).json({ error: 'Already friends' });
         }
@@ -802,7 +802,12 @@ app.post('/api/friend-request/send', requireAuth, async (req, res) => {
             return res.json({ message: 'Friend request re-sent', status: 'pending' });
         }
 
-        await FriendRequest.create({ from: fromId, to: toUserId });
+        await FriendRequest.create({
+            from: fromId,
+            fromName: currentUser.displayName,
+            to: toUserId,
+            toName: targetUser.displayName
+        });
         res.json({ message: 'Friend request sent', status: 'pending' });
     } catch (err) {
         console.error('Friend request send error:', err);
