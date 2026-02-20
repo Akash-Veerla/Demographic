@@ -136,10 +136,10 @@ const M3SearchBar = memo(({
                 <div
                     className="
                         absolute left-0 right-0 top-full z-50
-                        bg-white/60 dark:bg-[#1C1B1F]/10
+                        bg-white/10 dark:bg-[#1C1B1F]/10
                         backdrop-blur-2xl
                         shadow-2xl
-                        border border-t-0 border-white/40 dark:border-white/5
+                        border-[0.5px] border-t-0 border-white/30 dark:border-white/10
                         overflow-hidden
                         animate-in fade-in slide-in-from-top-1
                         max-h-[320px] overflow-y-auto
