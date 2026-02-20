@@ -8,7 +8,19 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Feature } from 'ol';
 import { Point, LineString, Circle as GeomCircle } from 'ol/geom';
-import { Style, Circle as StyleCircle, Fill, Stroke, Text } from 'ol/style';
+import { Style, Circle as StyleCircle, Fill, Stroke, Text, Icon } from 'ol/style';
+
+const SVG_PATHS = {
+    person_pin: "M480-40 360-160H200q-33 0-56.5-23.5T120-240v-560q0-33 23.5-56.5T200-880h560q33 0 56.5 23.5T840-800v560q0 33-23.5 56.5T760-160H600L480-40ZM200-286q54-53 125.5-83.5T480-400q83 0 154.5 30.5T760-286v-514H200v514Zm379-235q41-41 41-99t-41-99q-41-41-99-41t-99 41q-41 41-41 99t41 99q41 41 99 41t99-41ZM280-240h400v-10q-42-35-93-52.5T480-320q-56 0-107 17.5T280-250v10Zm157.5-337.5Q420-595 420-620t17.5-42.5Q455-680 480-680t42.5 17.5Q540-645 540-620t-17.5 42.5Q505-560 480-560t-42.5-17.5ZM480-543Z",
+    person_pin_circle: "M581-387.5q45-27.5 71-72.5-35-29-79-44.5T480-520q-49 0-93 15.5T308-460q26 45 71 72.5T480-360q56 0 101-27.5ZM480-560q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0 374q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z",
+    pin_drop: "M480-301q99-80 149.5-154T680-594q0-90-56-148t-144-58q-88 0-144 58t-56 148q0 65 50.5 139T480-301Zm0 101Q339-304 269.5-402T200-594q0-125 78-205.5T480-880q124 0 202 80.5T760-594q0 94-69.5 192T480-200Zm0-320q33 0 56.5-23.5T560-600q0-33-23.5-56.5T480-680q-33 0-56.5 23.5T400-600q0 33 23.5 56.5T480-520ZM200-80v-80h560v80H200Zm280-520Z",
+    place: "M536.5-503.5Q560-527 560-560t-23.5-56.5Q513-640 480-640t-56.5 23.5Q400-593 400-560t23.5 56.5Q447-480 480-480t56.5-23.5ZM480-186q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z"
+};
+
+const createSvgIcon = (pathName, color) => {
+    const rawSvg = `<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path fill="${color}" d="${SVG_PATHS[pathName]}"/></svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(rawSvg);
+};
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { useAuth } from '../context/AuthContext';
 import io from 'socket.io-client';
@@ -179,14 +191,14 @@ const MapComponent = () => {
                 const dark = document.documentElement.classList.contains('dark');
 
                 pinFeature.setStyle(new Style({
-                    image: new StyleCircle({
-                        radius: 9,
-                        fill: new Fill({ color: '#3b82f6' }), // Blue marker
-                        stroke: new Stroke({ color: '#fff', width: 3 })
+                    image: new Icon({
+                        src: createSvgIcon('pin_drop', '#3b82f6'),
+                        scale: 0.85,
+                        anchor: [0.5, 1]
                     }),
                     text: new Text({
                         text: placeName,
-                        offsetY: 20,
+                        offsetY: 10,
                         fill: new Fill({ color: dark ? '#fff' : '#000' }),
                         font: 'bold 12px Outfit',
                         stroke: new Stroke({ color: dark ? '#000' : '#fff', width: 3 })
@@ -301,17 +313,14 @@ const MapComponent = () => {
             // Base Marker Style
             const isSelected = selectedUser?._id === u._id;
             styles.push(new Style({
-                image: new StyleCircle({
-                    radius: isSelected ? 12 : (isFriend ? 10 : 8),
-                    fill: new Fill({ color: markerColor }),
-                    stroke: new Stroke({
-                        color: isFriend && u.isOnline ? (isDark ? '#D0BCFF' : '#be3627') : '#fff',
-                        width: isFriend && u.isOnline ? 4 : 2
-                    })
+                image: new Icon({
+                    src: createSvgIcon(isSelected ? 'person_pin_circle' : 'person_pin', markerColor),
+                    scale: isSelected ? 0.95 : 0.8,
+                    anchor: [0.5, 1]
                 }),
                 text: isSelected ? new Text({
                     text: u.displayName,
-                    offsetY: 25, // Name below marker
+                    offsetY: 10, // Name below marker
                     fill: new Fill({ color: isDark ? '#fff' : '#000' }),
                     font: 'bold 12px Outfit',
                     stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 }),
@@ -326,7 +335,7 @@ const MapComponent = () => {
                 styles.push(new Style({
                     text: new Text({
                         text: u.isOnline ? '● Online' : '○ Offline',
-                        offsetY: -30, // Status above
+                        offsetY: -45, // Status above
                         font: 'bold 10px Outfit',
                         fill: new Fill({ color: u.isOnline ? (isDark ? '#D0BCFF' : '#be3627') : '#9ca3af' }),
                         backgroundFill: new Fill({ color: isDark ? '#1D1B20' : '#fff' }),
@@ -338,7 +347,7 @@ const MapComponent = () => {
                 styles.push(new Style({
                     text: new Text({
                         text: `★ ${u.matchScore || u.sharedInterests.length}`,
-                        offsetY: -30, // Star above
+                        offsetY: -45, // Star above
                         font: 'bold 10px Outfit',
                         fill: new Fill({ color: isDark ? '#86EFAC' : '#166534' }),
                         backgroundFill: new Fill({ color: isDark ? '#14532D' : '#DCFCE7' }),
@@ -612,14 +621,14 @@ const MapComponent = () => {
         });
         const dark = document.documentElement.classList.contains('dark');
         pinFeature.setStyle(new Style({
-            image: new StyleCircle({
-                radius: 9,
-                fill: new Fill({ color: '#3b82f6' }),
-                stroke: new Stroke({ color: '#fff', width: 3 })
+            image: new Icon({
+                src: createSvgIcon('place', '#3b82f6'),
+                scale: 0.85,
+                anchor: [0.5, 1]
             }),
             text: new Text({
                 text: placeName,
-                offsetY: 20,
+                offsetY: 10,
                 fill: new Fill({ color: dark ? '#fff' : '#000' }),
                 font: 'bold 12px Outfit',
                 stroke: new Stroke({ color: dark ? '#000' : '#fff', width: 3 })
