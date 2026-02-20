@@ -59,9 +59,7 @@ const Layout = ({ children }) => {
                 {isMobile && user && (
                     <div className="flex items-center justify-between px-4 h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl border-b border-white/30 dark:border-white/10 sticky top-0 z-50">
                         <div className="flex items-center gap-2" onClick={() => navigate('/')}>
-                            <div className="w-8 h-8 rounded-sq-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
-                                <Home size={18} className="text-primary" />
-                            </div>
+                            <img src="/logo.svg" alt="App Logo" className="w-8 h-8 rounded-2xl shadow-sm drop-shadow-sm" />
                             <span className="font-display font-bold text-lg tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
                         </div>
                         <M3Switch
@@ -102,9 +100,7 @@ const Layout = ({ children }) => {
                             }}
                             onTouchEnd={() => clearTimeout(window.logoPressTimer)}
                         >
-                            <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary shadow-sm hover:scale-105 transition-transform">
-                                <MapPin size={20} className="text-primary" />
-                            </div>
+                            <img src="/logo.svg" alt="App Logo" className="w-10 h-10 rounded-2xl shadow-sm hover:scale-105 transition-transform drop-shadow-md" />
                             <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5] whitespace-nowrap">KON-NECT</span>
                         </div>
 

@@ -33,9 +33,7 @@ const Landing = () => {
             {/* Navigation Bar */}
             <nav className="relative z-20 w-full px-6 py-5 flex justify-between items-center max-w-7xl mx-auto shrink-0 transition-all duration-300">
                 <div className="flex items-center gap-3 group cursor-pointer z-30" onClick={() => navigate('/')}>
-                    <div className="w-12 h-12 rounded-2xl bg-white/70 dark:bg-black/50 backdrop-blur-xl flex items-center justify-center text-primary border border-white/50 dark:border-white/10 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                        <MapPin size={24} className="text-primary drop-shadow-[0_0_8px_rgba(103,80,164,0.5)]" />
-                    </div>
+                    <img src="/logo.svg" alt="KON-NECT App Icon" className="w-12 h-12 rounded-2xl shadow-lg border border-white/50 dark:border-white/10 group-hover:scale-105 transition-transform duration-300" />
                     <span className="font-black text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-[#1a100f] to-[#5e413d] dark:from-white dark:to-gray-400">KON-NECT</span>
                 </div>
                 <div className="flex items-center gap-4 z-30">
@@ -106,7 +104,7 @@ const Landing = () => {
                         </div>
 
                         {/* Feature 2 */}
-                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-primary/10 dark:bg-primary/20 backdrop-blur-3xl border border-primary/20 dark:border-primary/10 shadow-2xl hover:bg-primary/20 transition-all duration-500 flex flex-col group">
+                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 flex flex-col group">
                             <div className="w-12 h-12 rounded-2xl bg-white/50 dark:bg-black/30 flex items-center justify-center text-primary mb-auto">
                                 <Users size={24} strokeWidth={2.5} />
                             </div>
@@ -128,7 +126,7 @@ const Landing = () => {
                         </div>
 
                         {/* Feature 4 - New */}
-                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-[#5e413d]/10 dark:bg-tertiary/20 backdrop-blur-3xl border border-white/50 dark:border-tertiary/10 shadow-2xl hover:bg-[#5e413d]/20 dark:hover:bg-tertiary/30 transition-all duration-500 flex flex-col group">
+                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 flex flex-col group">
                             <div className="w-12 h-12 rounded-2xl bg-white/50 dark:bg-black/30 flex items-center justify-center text-[#1a100f] dark:text-tertiary mb-auto">
                                 <Sparkles size={24} strokeWidth={2.5} />
                             </div>
@@ -142,7 +140,7 @@ const Landing = () => {
 
                 {/* Wide Feature: Global Heatmaps - Spans below both columns */}
                 <div className="w-full max-w-6xl mx-auto mt-6">
-                    <div className="w-full p-6 md:p-8 rounded-3xl bg-tertiary/10 dark:bg-tertiary/20 backdrop-blur-3xl border border-tertiary/20 dark:border-tertiary/10 shadow-2xl hover:bg-tertiary/20 transition-all duration-500 overflow-hidden relative group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                    <div className="w-full p-6 md:p-8 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 overflow-hidden relative group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                         <div className="relative z-10 w-full sm:w-2/3">
                             <h3 className="text-2xl font-black text-tertiary mb-2">Global Heatmaps</h3>
                             <p className="text-sm font-bold text-tertiary/70">Observe live social pulses and trending interests bubbling up in neighboring continents in real-time. Navigate global interests dynamically through intelligent spatial visualizations built on real traffic.</p>
