@@ -88,137 +88,101 @@ const Friends = () => {
     }
 
     return (
-        <div className="h-full w-full p-4 space-y-8 animate-fade-in relative z-10 pb-24">
-            <div className="max-w-4xl mx-auto space-y-6">
+        <div className="h-full w-full p-4 md:p-8 animate-fade-in relative z-10 pb-24 max-w-3xl mx-auto">
 
-                {/* 1. Header Area */}
-                <div className="bg-white dark:bg-white/5 dark:backdrop-blur-xl rounded-sq-xl p-4 shadow-sm border border-black/5 dark:border-white/5 mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary rounded-sq-lg flex items-center justify-center text-white shadow-lg shadow-primary/30">
-                            <span className="material-symbols-outlined text-xl font-bold">diversity_3</span>
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-black text-[#1a100f] dark:text-white tracking-tight leading-none">Friends Network</h2>
-                            <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">Manage Connections & Chat</p>
-                        </div>
+            {/* 1. Header Area */}
+            <div className="flex flex-col mb-8 pt-4">
+                <h2 className="text-3xl font-black text-[#1a100f] dark:text-white tracking-tight">Messages</h2>
+                <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mt-1">Connect with your friends</p>
+            </div>
+
+            {/* Friend Requests (Horizontal scrolling like Instagram Stories) */}
+            {pendingRequests.length > 0 && (
+                <div className="mb-10">
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-[#1a100f]">Friend Requests</h3>
+                        <span className="text-[10px] font-black text-white bg-primary px-2.5 py-0.5 rounded-full">{pendingRequests.length}</span>
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Friend Requests */}
-                    <div className="bg-white dark:bg-white/5 dark:backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border-[0.5px] border-white/30 dark:border-white/10 min-h-[320px] flex flex-col group ring-1 ring-black/5">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-sq-lg text-primary transition-transform">
-                                    <span className="material-symbols-outlined text-2xl font-bold">inbox</span>
-                                </div>
-                                <h2 className="text-xl font-black text-[#1a100f] dark:text-white tracking-tight">Requests</h2>
-                            </div>
-                            <span className="text-xs font-black bg-primary/10 text-primary px-4 py-1.5 rounded-sq-md uppercase tracking-wider">{pendingRequests.length}</span>
-                        </div>
-                        {pendingRequests.length === 0 ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-sq-xl bg-secondary/5 dark:bg-white/5">
-                                <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">Inbox is empty</p>
-                                <p className="text-xs text-[#915b55] dark:text-[#938F99] mt-1 font-medium italic">No new requests</p>
-                            </div>
-                        ) : (
-                            <div className="flex-1 space-y-3 overflow-y-auto max-h-[400px] custom-scrollbar">
-                                {pendingRequests.map(req => (
-                                    <div key={req._id} className="flex items-center gap-3 p-3 rounded-sq-xl bg-secondary/5 dark:bg-white/5 border border-white/10 dark:border-white/5">
-                                        <Avatar src={req.from?.profilePhoto} sx={{ width: 48, height: 48, borderRadius: '16px' }} variant="rounded" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{req.from?.displayName}</p>
-                                        </div>
-                                        <div className="flex gap-2 shrink-0">
-                                            <button
-                                                onClick={() => handleAcceptRequest(req._id)}
-                                                disabled={actionLoading === req._id}
-                                                className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-sq-md text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
-                                            >
-                                                Accept
-                                            </button>
-                                            <button
-                                                onClick={() => handleRejectRequest(req._id)}
-                                                disabled={actionLoading === req._id}
-                                                className="px-3 py-2 bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300 rounded-sq-md text-xs font-bold hover:bg-gray-300 dark:hover:bg-white/20 transition-all active:scale-95 disabled:opacity-50"
-                                            >
-                                                Decline
-                                            </button>
-                                        </div>
+                    <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+                        {pendingRequests.map(req => (
+                            <div key={req._id} className="snap-start min-w-[220px] max-w-[240px] flex gap-3 p-3.5 rounded-[24px] bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm shrink-0 items-center ring-1 ring-black/5 hover:ring-primary/30 transition-shadow">
+                                <Avatar src={req.from?.profilePhoto} sx={{ width: 44, height: 44, borderRadius: '14px' }} variant="rounded" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-black text-[#1a100f] dark:text-white truncate pb-0.5">{req.from?.displayName || req.fromName}</p>
+                                    <div className="flex gap-1.5 mt-1">
+                                        <button onClick={() => handleAcceptRequest(req._id)} disabled={actionLoading === req._id} className="flex-1 py-1.5 bg-primary hover:bg-primary/90 text-white text-[11px] font-black rounded-xl transition-transform active:scale-95 disabled:opacity-50 tracking-wide uppercase">Accept</button>
+                                        <button onClick={() => handleRejectRequest(req._id)} disabled={actionLoading === req._id} className="flex-1 py-1.5 bg-gray-100/80 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-600 dark:text-gray-300 text-[11px] font-black rounded-xl transition-transform active:scale-95 disabled:opacity-50 tracking-wide uppercase">Decline</button>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* My Connections (Friends List) with Chat Buttons */}
-                    <div className="bg-white dark:bg-white/5 dark:backdrop-blur-2xl rounded-sq-2xl p-8 shadow-xl border-[0.5px] border-white/30 dark:border-white/10 min-h-[320px] flex flex-col group ring-1 ring-black/5">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded-sq-lg text-primary transition-transform">
-                                    <span className="material-symbols-outlined text-2xl font-bold">group</span>
                                 </div>
-                                <h2 className="text-xl font-black text-[#1a100f] dark:text-white tracking-tight">Connections</h2>
                             </div>
-                            <span className="text-xs font-black bg-primary/10 text-primary px-4 py-1.5 rounded-sq-md uppercase tracking-wider">{friends.length}</span>
-                        </div>
-
-                        {friends.length === 0 ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-sq-xl bg-secondary/5 dark:bg-white/5">
-                                <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">No connections yet</p>
-                                <p className="text-xs text-[#915b55] dark:text-[#938F99] mt-1 font-medium italic">Discover people on the map</p>
-                            </div>
-                        ) : (
-                            <div className="flex-1 space-y-3 overflow-y-auto max-h-[400px] custom-scrollbar">
-                                {friends.map(friend => {
-                                    const unread = unreadCounts[friend._id] || 0;
-                                    return (
-                                        <div key={friend._id} className="flex items-center gap-3 p-3 rounded-sq-xl bg-secondary/5 dark:bg-white/5 border border-white/10 dark:border-white/5 relative group/item">
-                                            <div className="relative">
-                                                <Avatar src={friend.profilePhoto} sx={{ width: 48, height: 48, borderRadius: '16px', border: friend.isOnline ? '2px solid' : 'none', borderColor: 'var(--color-primary)' }} variant="rounded" />
-                                                <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-sq-xs border-2 border-white dark:border-[#141218] ${friend.isOnline ? 'bg-primary dark:bg-[#D0BCFF]' : 'bg-gray-400'}`} />
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-[#1a100f] dark:text-white truncate">{friend.displayName}</p>
-                                                <p className={`text-xs font-bold leading-tight ${unread > 0 ? 'text-green-500' : 'text-gray-400'}`}>
-                                                    {unread > 0 ? `${unread} new messages` : 'No new messages'}
-                                                </p>
-                                            </div>
-
-                                            <div className="flex gap-2 shrink-0">
-                                                {/* Start Persistent Chat */}
-                                                <button
-                                                    onClick={() => handleChatClick(friend)}
-                                                    className="p-2.5 bg-primary hover:bg-primary/90 text-white rounded-sq-md transition-all active:scale-95 shadow-md flex items-center justify-center relative"
-                                                    title="Chat"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm font-bold">chat</span>
-                                                    {unread > 0 && (
-                                                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                                        </span>
-                                                    )}
-                                                </button>
-
-                                                {/* Remove Friend */}
-                                                <button
-                                                    onClick={() => handleRemoveFriend(friend._id)}
-                                                    disabled={actionLoading === friend._id}
-                                                    className="p-2.5 bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sq-md transition-all active:scale-95"
-                                                    title="Remove friend"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm">person_remove</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        )}
+                        ))}
                     </div>
                 </div>
+            )}
+
+            {/* My Connections (Instagram Messages List Style) */}
+            <div className="space-y-1">
+                {friends.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center p-12 bg-white/40 dark:bg-white/5 backdrop-blur-xl rounded-[32px] border border-black/5 dark:border-white/10 shadow-sm ring-1 ring-black/5">
+                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 shadow-inner">
+                            <span className="material-symbols-outlined text-3xl">maps_ugc</span>
+                        </div>
+                        <p className="text-xl font-black text-[#1a100f] dark:text-white tracking-tight">No active chats</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium max-w-[260px] mt-2 leading-relaxed">Find people on the map and send connection requests to start chatting.</p>
+                        <button onClick={() => navigate('/map')} className="mt-8 px-8 py-3.5 bg-primary text-white rounded-full font-black text-sm uppercase tracking-wide shadow-lg hover:shadow-xl hover:scale-105 transition-all shadow-primary/30">Explore Map</button>
+                    </div>
+                ) : (
+                    friends.map(friend => {
+                        const unread = unreadCounts[friend._id] || 0;
+                        return (
+                            <div
+                                key={friend._id}
+                                onClick={() => handleChatClick(friend)}
+                                className="group flex items-center gap-4 p-3 hover:bg-white dark:hover:bg-white/5 rounded-[24px] hover:shadow-md border border-transparent hover:border-black/5 dark:hover:border-white/5 transition-all cursor-pointer relative"
+                            >
+                                <div className="relative shrink-0">
+                                    <Avatar src={friend.profilePhoto} sx={{ width: 64, height: 64, borderRadius: '22px' }} variant="rounded" />
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-[#f8f6f6] group-hover:border-white dark:group-hover:border-[#1e1c22] dark:border-[#141218] transition-colors ${friend.isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                </div>
+
+                                <div className="flex-1 min-w-0 pr-4">
+                                    <div className="flex justify-between items-baseline mb-0.5">
+                                        <p className={`text-base truncate ${unread > 0 ? 'font-black text-[#1a100f] dark:text-white' : 'font-extrabold text-[#1a100f] dark:text-[#E6E1E5]'}`}>
+                                            {friend.displayName}
+                                        </p>
+                                    </div>
+                                    <div className="flex justify-between items-center transition-all">
+                                        <p className={`text-sm truncate pr-20 ${unread > 0 ? 'font-bold text-[#1a100f] dark:text-white' : 'font-medium text-gray-500 dark:text-gray-400'}`}>
+                                            {unread > 0 ? `${unread} new message${unread > 1 ? 's' : ''}` : friend.isOnline ? 'Active now' : 'Offline'}
+                                        </p>
+                                        {unread > 0 && (
+                                            <div className="w-2.5 h-2.5 bg-primary rounded-full shrink-0 shadow-[0_0_8px_var(--color-primary)] absolute right-6"></div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right-side Action Buttons */}
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-300">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleChatClick(friend); }}
+                                        className="w-12 h-12 bg-primary text-white rounded-[16px] flex items-center justify-center shadow-md hover:scale-105 hover:shadow-lg transition-all"
+                                        title="Chat"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">chat</span>
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveFriend(friend._id); }}
+                                        disabled={actionLoading === friend._id}
+                                        className="w-12 h-12 bg-gray-100 dark:bg-white/10 text-gray-500 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40 dark:hover:text-red-400 rounded-[16px] flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50"
+                                        title="Unfriend"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )
+                    })
+                )}
             </div>
         </div>
     );
