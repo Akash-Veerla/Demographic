@@ -15,7 +15,7 @@ const ConnectView = () => {
     const [friends, setFriends] = useState([]);
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
-    const { user, userLocation } = useAuth();
+    const { user, userLocation, updateInterests } = useAuth();
 
     // Fetch Global Users (Discover), Friend Requests, Friends
     const fetchAll = useCallback(async () => {
@@ -74,6 +74,18 @@ const ConnectView = () => {
             await fetchMatches();
         } catch (err) {
             console.error('Failed to send friend request', err);
+        }
+        setActionLoading(null);
+    };
+
+    const handleCancelRequest = async (toUserId) => {
+        setActionLoading(toUserId);
+        try {
+            await api.post('/api/friend-request/cancel', { toUserId });
+            await fetchAll();
+            await fetchMatches();
+        } catch (err) {
+            console.error('Failed to cancel request', err);
         }
         setActionLoading(null);
     };
@@ -163,10 +175,38 @@ const ConnectView = () => {
                         <div className="h-8 mb-4 shrink-0"></div>
                     )}
 
-                    <M3ChipSet className="justify-center mb-4 min-h-[40px] flex-wrap">
+                    <M3ChipSet className="justify-center mb-4 min-h-[40px] flex-wrap items-center">
                         {sortedInterests.slice(0, 4).map((int, i) => {
                             const intStr = typeof int === 'string' ? int : int.name;
                             const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
+                            const canAdd = !isShared && (isFriend || u.friendRequestSent || u.friendRequestReceived);
+
+                            if (canAdd) {
+                                return (
+                                    <button
+                                        key={`add_${i}`}
+                                        onClick={async () => {
+                                            try {
+                                                const currentArr = user.interests || [];
+                                                if (!currentArr.includes(intStr)) {
+                                                    await updateInterests([...currentArr, intStr]);
+                                                    await fetchAll();
+                                                    await fetchMatches();
+                                                }
+                                            } catch (e) {
+                                                console.error(e);
+                                            }
+                                        }}
+                                        className="group h-7 px-2 border border-primary/30 inline-flex items-center gap-1 hover:bg-primary/10 transition-colors mx-0.5"
+                                        style={{ borderRadius: '8px' }}
+                                        title={`Add ${intStr} to your profile`}
+                                    >
+                                        <span className="material-symbols-outlined text-[14px] text-primary group-hover:block hidden">add</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{intStr}</span>
+                                    </button>
+                                );
+                            }
+
                             return (
                                 <M3Chip
                                     key={i}
@@ -184,14 +224,30 @@ const ConnectView = () => {
 
                     <div className="w-full mt-auto pt-2">
                         {isFriend ? (
-                            <div className="w-full bg-primary/20 dark:bg-[#D0BCFF]/20 text-primary dark:text-[#D0BCFF] font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm backdrop-blur-md">
-                                <span className="material-symbols-outlined text-lg">group</span>
-                                Friends
-                            </div>
+                            <button
+                                onClick={() => {
+                                    if (window.confirm(`Unfriend ${u.displayName}?`)) {
+                                        handleRemoveFriend(u._id)
+                                    }
+                                }}
+                                disabled={actionLoading === u._id}
+                                className="w-full bg-primary/20 hover:bg-red-50 dark:bg-[#D0BCFF]/20 dark:hover:bg-red-900/40 text-primary dark:text-[#D0BCFF] hover:text-red-500 dark:hover:text-red-400 font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm backdrop-blur-md transition-colors group disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-lg group-hover:hidden">group</span>
+                                <span className="material-symbols-outlined text-lg hidden group-hover:block">person_remove</span>
+                                <span className="group-hover:hidden">Friends</span>
+                                <span className="hidden group-hover:block">Unfriend</span>
+                            </button>
                         ) : u.friendRequestSent ? (
-                            <button disabled className="w-full bg-gray-100/50 dark:bg-white/10 text-gray-500 font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm cursor-not-allowed backdrop-blur-md">
-                                <span className="material-symbols-outlined text-lg">schedule_send</span>
-                                Request Sent
+                            <button
+                                onClick={() => handleCancelRequest(u._id)}
+                                disabled={actionLoading === u._id}
+                                className="w-full bg-gray-100/50 hover:bg-red-50 dark:bg-white/10 dark:hover:bg-red-900/40 text-gray-500 hover:text-red-500 dark:hover:text-red-400 font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm backdrop-blur-md transition-colors group disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-lg group-hover:hidden">schedule_send</span>
+                                <span className="material-symbols-outlined text-lg hidden group-hover:block">cancel</span>
+                                <span className="group-hover:hidden">Request Sent</span>
+                                <span className="hidden group-hover:block">Cancel Request</span>
                             </button>
                         ) : u.friendRequestReceived ? (
                             <button

@@ -30,7 +30,7 @@ const TIPS = [
 ];
 
 const MapComponent = () => {
-    const { user, userLocation: storedLocation } = useAuth();
+    const { user, userLocation: storedLocation, updateInterests } = useAuth();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const mapRef = useRef();
@@ -723,6 +723,38 @@ const MapComponent = () => {
                                         {selectedUser.interests.slice(0, 10).map((int, i) => {
                                             const interestStr = typeof int === 'string' ? int : int.name;
                                             const isShared = selectedUser.sharedInterests?.some(si => si.toLowerCase() === interestStr.toLowerCase());
+                                            const canAdd = !isShared && (selectedUser.isFriend || selectedUser.friendRequestSent || selectedUser.friendRequestReceived);
+
+                                            // Make chip clickable if canAdd
+                                            if (canAdd) {
+                                                return (
+                                                    <button
+                                                        key={`add_${i}`}
+                                                        onClick={async () => {
+                                                            try {
+                                                                const currentArr = user.interests || [];
+                                                                if (!currentArr.includes(interestStr)) {
+                                                                    await updateInterests([...currentArr, interestStr]);
+                                                                    setAlertMessage(`Added ${interestStr} to your interests!`);
+                                                                    // Soft update local profile viewer to show as shared
+                                                                    setSelectedUser(prev => ({
+                                                                        ...prev,
+                                                                        sharedInterests: [...(prev.sharedInterests || []), interestStr]
+                                                                    }));
+                                                                }
+                                                            } catch (e) {
+                                                                setAlertMessage("Failed to add interest.");
+                                                            }
+                                                        }}
+                                                        className="group h-7 px-2.5 rounded-sq-sm border border-primary/30 inline-flex items-center gap-1 hover:bg-primary/10 transition-colors"
+                                                        title={`Add ${interestStr} to your profile`}
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px] text-primary group-hover:block hidden">add</span>
+                                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{interestStr}</span>
+                                                    </button>
+                                                );
+                                            }
+
                                             return (
                                                 <M3Chip
                                                     key={i}
@@ -768,9 +800,23 @@ const MapComponent = () => {
                 <div className="px-4 py-3 bg-white/50 dark:bg-[#141218]/50 backdrop-blur-md border-t border-gray-100 dark:border-white/5 shrink-0 flex flex-col gap-2">
                     {selectedUser && !selectedUser.isFriend && (
                         selectedUser.friendRequestSent ? (
-                            <button disabled className="w-full bg-gray-100 dark:bg-white/10 text-gray-500 h-9 rounded-sq-lg font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
-                                <span className="material-symbols-outlined text-base">schedule_send</span>
-                                Request Sent
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        await api.post('/api/friend-request/cancel', { toUserId: selectedUser._id });
+                                        setSelectedUser(prev => ({ ...prev, friendRequestSent: false }));
+                                        setAlertMessage('Request cancelled');
+                                        fetchNearbyUsers();
+                                    } catch (err) {
+                                        setAlertMessage(err.response?.data?.error || 'Failed to cancel request');
+                                    }
+                                }}
+                                className="w-full bg-gray-100 hover:bg-red-50 dark:bg-white/10 dark:hover:bg-red-900/40 text-gray-500 hover:text-red-500 h-9 rounded-sq-lg font-bold text-xs flex items-center justify-center gap-2 transition-colors group"
+                            >
+                                <span className="material-symbols-outlined text-base group-hover:hidden">schedule_send</span>
+                                <span className="material-symbols-outlined text-base hidden group-hover:block">cancel</span>
+                                <span className="group-hover:hidden">Request Sent</span>
+                                <span className="hidden group-hover:block">Cancel Request</span>
                             </button>
                         ) : selectedUser.friendRequestReceived ? (
                             <button
@@ -813,9 +859,29 @@ const MapComponent = () => {
                         )
                     )}
                     {selectedUser && selectedUser.isFriend && (
-                        <div className="w-full bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] h-9 rounded-sq-lg font-bold text-xs flex items-center justify-center gap-2">
-                            <span className="material-symbols-outlined text-base">group</span>
-                            Friends
+                        <div className="flex gap-2 w-full">
+                            <div className="flex-1 bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF] h-9 rounded-sq-lg font-bold text-xs flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined text-base">group</span>
+                                Friends
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm(`Unfriend ${selectedUser.displayName}?`)) {
+                                        try {
+                                            await api.delete(`/api/friends/${selectedUser._id}`);
+                                            setSelectedUser(prev => ({ ...prev, isFriend: false }));
+                                            setAlertMessage(`Unfriended ${selectedUser.displayName}`);
+                                            fetchNearbyUsers();
+                                        } catch (e) {
+                                            setAlertMessage('Failed to unfriend');
+                                        }
+                                    }
+                                }}
+                                className="w-9 h-9 shrink-0 flex items-center justify-center bg-gray-100 hover:bg-red-50 dark:bg-white/10 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-500 rounded-sq-lg transition-colors"
+                                title="Unfriend"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                            </button>
                         </div>
                     )}
                     <div className="flex gap-2">

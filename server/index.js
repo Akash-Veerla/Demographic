@@ -582,15 +582,44 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'At least one interest is required' });
         }
 
+        // Helper to capitalize custom interests
+        const capitalizeWords = (str) => {
+            return str.split(' ').filter(Boolean).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+        };
+
         // Sanitize: trim whitespace, remove empties, cap at 20
         const sanitized = interests
             .map(i => (typeof i === 'string' ? i.trim() : ''))
             .filter(Boolean)
             .slice(0, 20);
 
-        // Identify custom interests (not in the 12 standard ones)
+        const finalizedInterests = [];
         const standardLower = STANDARD_INTERESTS.map(s => s.toLowerCase());
-        const customOnes = sanitized.filter(i => !standardLower.includes(i.toLowerCase()));
+
+        for (let name of sanitized) {
+            const lowerName = name.toLowerCase();
+            const baseIndex = standardLower.indexOf(lowerName);
+
+            if (baseIndex !== -1) {
+                // Use Standard Interest exactly as defined
+                finalizedInterests.push(STANDARD_INTERESTS[baseIndex]);
+            } else {
+                // Check if it already exists in CustomInterests
+                const existing = await CustomInterest.findOne({ name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
+                if (existing) {
+                    finalizedInterests.push(existing.name);
+                } else {
+                    const capitalized = capitalizeWords(name);
+                    finalizedInterests.push(capitalized);
+                }
+            }
+        }
+
+        // Deduplicate locally
+        const uniqueFinalized = [...new Set(finalizedInterests)];
+
+        // Identify custom interests (not in the 12 standard ones)
+        const customOnes = uniqueFinalized.filter(i => !standardLower.includes(i.toLowerCase()));
 
         // Persist new custom interests to MongoDB (upsert, ignore duplicates)
         if (customOnes.length > 0) {
@@ -611,7 +640,7 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
-            { interests: sanitized },
+            { interests: uniqueFinalized },
             { new: true }
         ).select('-password');
         res.send(updatedUser);
@@ -621,20 +650,12 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
     }
 });
 
-// Interests API — serves 12 standard + all user-contributed custom from MongoDB
+// Interests API — serves ONLY 12 standard (Custom interests loaded locally via peers/friends profiles)
 console.log(`Standard interests loaded: ${STANDARD_INTERESTS.length} items`);
 
 app.get('/api/interests', requireAuth, async (req, res) => {
     try {
-        const customInterests = await CustomInterest.find({}).select('name -_id').lean();
-        const customNames = customInterests.map(c => c.name);
-
-        // Merge: standard first, then custom (deduplicated, case-insensitive)
-        const standardLower = STANDARD_INTERESTS.map(s => s.toLowerCase());
-        const uniqueCustom = customNames.filter(c => !standardLower.includes(c.toLowerCase()));
-        const allInterests = [...STANDARD_INTERESTS, ...uniqueCustom.sort()];
-
-        res.json(allInterests);
+        res.json(STANDARD_INTERESTS);
     } catch (err) {
         console.error('Error fetching interests:', err);
         // Fallback to standard only if DB fails
@@ -795,6 +816,29 @@ app.post('/api/friend-request/reject', requireAuth, async (req, res) => {
     }
 });
 
+// Cancel a sent friend request
+app.post('/api/friend-request/cancel', requireAuth, async (req, res) => {
+    try {
+        const { toUserId } = req.body;
+        if (!toUserId) return res.status(400).json({ error: 'toUserId is required' });
+
+        const request = await FriendRequest.findOneAndDelete({
+            from: req.user.id,
+            to: toUserId,
+            status: 'pending'
+        });
+
+        if (!request) {
+            return res.status(404).json({ error: 'Friend request not found or already processed' });
+        }
+
+        res.json({ message: 'Friend request cancelled' });
+    } catch (err) {
+        console.error('Cancel friend request error:', err);
+        res.status(500).json({ error: 'Failed to cancel friend request' });
+    }
+});
+
 // Get pending incoming friend requests
 app.get('/api/friend-requests/pending', requireAuth, async (req, res) => {
     try {
@@ -831,10 +875,10 @@ app.get('/api/friends', requireAuth, async (req, res) => {
 });
 
 // Remove a friend (unfriend)
-app.post('/api/friends/remove', requireAuth, async (req, res) => {
+app.delete('/api/friends/:friendId', requireAuth, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { friendId } = req.body;
+        const friendId = req.params.friendId;
         if (!friendId) return res.status(400).json({ error: 'Friend ID required' });
 
         // Remove from both users' friends arrays
