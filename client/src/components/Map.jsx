@@ -164,7 +164,8 @@ const MapComponent = () => {
                 destinationSource.clear();
                 const pinFeature = new Feature({
                     geometry: new Point(coord),
-                    type: 'destination'
+                    type: 'destination',
+                    placeName: placeName
                 });
                 // Using document class check or theme check via hack to avoid map re-init
                 const dark = document.documentElement.classList.contains('dark');
@@ -381,7 +382,10 @@ const MapComponent = () => {
                 setDestinationPin(null);
 
                 routeSource.clear();
-                const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
+                const routeFeature = new Feature({
+                    geometry: new LineString(coordinates.map(coord => fromLonLat(coord))),
+                    isUserRoute: isUser
+                });
 
                 const dark = document.documentElement.classList.contains('dark');
                 let routeColor = isUser ? (dark ? '#D0BCFF' : '#ef4444') : '#3b82f6';
@@ -546,7 +550,8 @@ const MapComponent = () => {
         destinationSource.clear();
         const pinFeature = new Feature({
             geometry: new Point(coord3857),
-            type: 'destination'
+            type: 'destination',
+            placeName: placeName
         });
         const dark = document.documentElement.classList.contains('dark');
         pinFeature.setStyle(new Style({
@@ -604,6 +609,40 @@ const MapComponent = () => {
         return () => window.removeEventListener('select_map_user', handleSelect);
     }, [map]);
 
+    // Dynamic Theme Routing Updates
+    useEffect(() => {
+        if (!map) return;
+
+        // Update route colors
+        routeSource.getFeatures().forEach(feature => {
+            const isUser = feature.get('isUserRoute');
+            if (isUser !== undefined) {
+                let routeColor = isUser ? (isDark ? '#D0BCFF' : '#ef4444') : '#3b82f6';
+                feature.setStyle(new Style({
+                    stroke: new Stroke({ color: routeColor, width: 6 })
+                }));
+            }
+        });
+
+        // Update destination pin text colors
+        destinationSource.getFeatures().forEach(feature => {
+            const placeName = feature.get('placeName') || 'Dropped Pin';
+            feature.setStyle(new Style({
+                image: new StyleCircle({
+                    radius: 9,
+                    fill: new Fill({ color: '#3b82f6' }),
+                    stroke: new Stroke({ color: '#fff', width: 3 })
+                }),
+                text: new Text({
+                    text: placeName,
+                    offsetY: 20,
+                    fill: new Fill({ color: isDark ? '#fff' : '#000' }),
+                    font: 'bold 12px Outfit',
+                    stroke: new Stroke({ color: isDark ? '#000' : '#fff', width: 3 })
+                })
+            }));
+        });
+    }, [isDark, map, routeSource, destinationSource]);
 
     return (
         <div className="relative h-full w-full bg-transparent p-2 overflow-hidden">
@@ -970,24 +1009,25 @@ const MapComponent = () => {
             {/* F. Navigation Panel (Replaces Detail Panel when navigating) */}
             {/* F. Navigation Panel (Replaces Detail Panel when navigating) */}
             <div className={`
-                fixed z-[100] bg-white dark:bg-[#1C1B1F]/10 dark:backdrop-blur-2xl shadow-2xl border border-white/20 dark:border-white/10 transition-all duration-500 ease-in-out
-                ${isNavigating ? 'translate-x-0 translate-y-0 opacity-100 pointer-events-auto' : 'md:-translate-x-[120%] translate-y-[120%] opacity-0 pointer-events-none'}
-                md:top-6 md:left-8 md:w-80 md:rounded-sq-2xl h-fit
-                bottom-0 left-0 right-0 w-full rounded-t-sq-2xl
+                absolute z-40 bg-white/90 dark:bg-[#1C1B1F]/20 backdrop-blur-2xl shadow-2xl border border-white/40 dark:border-white/10 transition-all duration-500 ease-in-out
+                ${isNavigating ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-[150%] opacity-0 pointer-events-none'}
+                bottom-8 left-1/2 -translate-x-1/2
+                w-[90%] md:w-auto md:min-w-[400px]
+                rounded-sq-2xl h-fit
                 flex flex-col ring-1 ring-black/5
             `}>
                 {/* Header Only - Directions Removed */}
-                <div className="p-6 shrink-0 flex justify-between items-center">
+                <div className="p-4 shrink-0 flex justify-between items-center gap-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-sq-lg bg-green-500 text-white flex items-center justify-center animate-pulse">
+                        <div className="w-10 h-10 rounded-sq-lg bg-green-500 text-white flex items-center justify-center animate-pulse shrink-0">
                             <span className="material-symbols-outlined">navigation</span>
                         </div>
-                        <div>
+                        <div className="flex flex-col">
                             <h3 className="text-lg font-black text-[#1a100f] dark:text-white leading-none">Navigating</h3>
-                            <p className="text-xs font-bold text-gray-400 mt-1">Follow route on map</p>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">Follow route on map</p>
                         </div>
                     </div>
-                    <button onClick={clearRoute} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-sq-lg font-bold text-xs hover:bg-red-100 transition-colors cursor-pointer">
+                    <button onClick={clearRoute} className="px-4 py-2 bg-red-100/50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-sq-lg font-bold text-xs transition-colors cursor-pointer shrink-0 border border-red-200/50 dark:border-red-500/20">
                         End Trip
                     </button>
                 </div>
