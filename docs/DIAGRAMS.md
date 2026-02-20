@@ -1,212 +1,231 @@
 # KON-NECT: Project Architecture & System Diagrams
 
-This document provides a comprehensive visual breakdown of how the KON-NECT application works, explaining the technology and logic for everyone.
+This document provides a comprehensive visual breakdown of how the KON-NECT application works, explaining the logic for everyone in a simple way.
 
 ---
 
-## 🏗️ 1. How KON-NECT Works (System Map)
-This map shows how the App, the Server, and external services like Google and Maps work together.
+## 🏗️ 1. How the System Works
+This map shows how the App, the Brain (Back-end), and the Data interact to provide a seamless experience.
 
 ```mermaid
 graph TD
-    User((fa:fa-user User))
+    User((User))
     
-    subgraph "The App (Your Phone/Browser)"
-        UI[fa:fa-desktop Beautiful Interface]
-        Map[fa:fa-map-marked-alt Interactive Map]
-        SIO_C[fa:fa-plug Real-time Connection]
-        Auth_C[fa:fa-key Account Settings]
+    subgraph "The App (Your Device)"
+        UI[Main Interface]
+        Map[Interactive Map]
+        Route[Navigation Guide]
+        LiveLink[Real-time Connection]
     end
     
-    subgraph "The Server (The Brain)"
-        API[fa:fa-route Data Gateway]
-        SIO_S[fa:fa-comments Chat System]
-        Passport{{fa:fa-id-badge Secure Login Handler}}
-        Matching[fa:fa-microchip Smart Matching Logic]
+    subgraph "The Brain (Central Logic)"
+        Gateway[Data Gateway]
+        ChatHost[Chat System]
+        SecureAuth[Secure Login Handler]
+        SmartMatch[Interest Link Engine]
     end
     
-    subgraph "Storage & External"
-        DB[(fa:fa-database Database)]
-        Google((fa:fa-google Google Account Server))
-        OSRM((fa:fa-directions Travel Routes))
+    subgraph "Storage & External Services"
+        Database[(Primary Database)]
+        PlaceSearch((Location Search))
+        RouteSvc((Map Route Service))
     end
     
     User <--> UI
     UI --> Map
-    SIO_C <--> SIO_S
-    Auth_C <--> API
-    Map <--> OSRM
-    API <--> Matching
-    Matching <--> DB
-    API <--> Passport
-    Passport <--> Google
+    LiveLink <--> ChatHost
+    Map <--> RouteSvc
+    Map <--> PlaceSearch
+    Gateway <--> SmartMatch
+    SmartMatch <--> Database
+    Gateway <--> SecureAuth
 ```
 
 ---
 
-## 💾 2. Database: How Information is Stored
-This shows how users, friends, and interests are connected together in our data storage.
+## 💾 2. Information Structure
+This shows how users, friends, and interests are organized and connected.
 
 ```mermaid
 erDiagram
-    USER ||--o{ FRIEND-REQUEST : "Sends/Receives Requests"
-    USER ||--o{ CUSTOM-INTEREST : "Adds New Interests"
-    USER ||--o{ FRIENDSHIP : "Has many"
-    FRIENDSHIP }o--|| USER : "Connects to"
+    USER ||--o{ FRIEND-REQUEST : "Sends/Receives"
+    USER ||--o{ CUSTOM-INTEREST : "Creates Tags"
+    USER ||--o{ FRIENDSHIP : "Connects to"
+    FRIENDSHIP }o--|| USER : "Mutual Link"
 
     USER {
-        ObjectId ID PK
-        String Name "Visible Display Name"
+        String ID PK
+        String Name "Visible Name"
         String Email UK
-        String Photo "Profile Picture URL"
+        String Photo "Profile Picture"
         String Bio "Personal Description"
-        String[] Interests "List of Tags"
-        Point Location "GPS [Long, Lat]"
+        String[] Interests "Hobbies & Tags"
+        Point Location "GPS Coordinates"
         Date LastActive
     }
 
     FRIEND-REQUEST {
-        ObjectId ID PK
-        ObjectId From FK
-        ObjectId To FK
-        String Status "Pending / Accepted / Rejected"
+        String ID PK
+        String From FK
+        String To FK
+        String Status "Pending / Accepted"
         Date TimeSent
     }
 
     CUSTOM-INTEREST {
-        ObjectId ID PK
-        String Name UK
-        ObjectId CreatedBy FK
+        String ID PK
+        String Name "Custom Tag"
+        String CreatedBy FK
     }
 ```
 
 ---
 
-## 🔐 3. How You Sign In (Secure Login)
-This explains the step-by-step process of logging in securely using Google.
+## 🔐 3. Secure Login Process
+A simple step-by-step guide on how you sign in securely.
 
 ```mermaid
 sequenceDiagram
-    participant U as fa:fa-user User
-    participant C as fa:fa-laptop Your App
-    participant S as fa:fa-server Main Server
-    participant G as fa:fa-google Google Login
-    participant DB as fa:fa-database Database
+    participant U as User
+    participant A as App
+    participant L as Login Service
+    participant I as Identity Provider
+    participant D as Database
 
-    U->>C: Click "Login with Google"
-    C->>S: Request Google Login
-    S->>G: Check Identity
-    G-->>S: Return Your Profile
-    S->>DB: Save/Find User Record
-    DB-->>S: User Account Found
-    S->>S: Create Login Session
-    S-->>C: Redirect Back to App
-    C->>C: Remember Login Status
-    Note over C,S: You stay logged in for your session
+    U->>A: Click Login
+    A->>L: Request Secure Entry
+    L->>I: Verify Identity
+    I-->>L: Confirm User Info
+    L->>D: Find Account Record
+    D-->>L: Profile Found
+    L->>L: Start Secure Session
+    L-->>A: Redirect to Dashboard
+    A->>A: Save Login State
+    Note over A, L: You stay logged in for your session
 ```
 
 ---
 
-## 🧠 4. The Compatibility Brain (Smart Matching)
-The logic that determines if two people are a good match for each other.
+## 🧠 4. Compatibility Logic
+The intelligence that determines if two people are a good match.
 
 ```mermaid
 graph TD
-    U1["fa:fa-user User A Profile"] --> Data["Read Interests & GPS"]
-    U2["fa:fa-user User B Profile"] --> Data
+    U1[Person A Profile] --> Data[Analyze Interests & GPS]
+    U2[Person B Profile] --> Data
     
-    Data --> Dist["Check Distance Between Users"]
-    Dist --> Nearby{Is it within 20km?}
+    Data --> Distance[Check Current Distance]
+    Distance --> Range{Within 20km?}
     
-    Nearby -- "Yes" --> Edge["Build Social Connection"]
-    Nearby -- "No" --> NoMatch([fa:fa-times Too Far Away])
+    Range -- "Yes" --> Link[Create Connection Path]
+    Range -- "No" --> NoMatch([Too Far Apart])
     
-    Edge --> GNN["Apply Matching Algorithm"]
-    GNN --> Embed["Calculate Compatibility"]
-    Embed --> ResultLogic{Final Decision}
+    Link --> Algorithm[Process Matching Algorithm]
+    Algorithm --> Score[Calculate Match Level]
+    Score --> Logic{Final Decision}
     
-    Data --> Shared{Any Shared Interests?}
-    Shared -- "Yes" --> ResultLogic
-    Shared -- "No" --> NoMatch
+    Data --> Common{Shared Interests?}
+    Common -- "Yes" --> Logic
+    Common -- "No" --> NoMatch
     
-    ResultLogic --> Match([fa:fa-check Found a Match!])
+    Logic --> Match([Found a Match!])
 ```
 
 ---
 
-## 🔍 5. Finding People Near You
-How the app scans the map to show people within walking distance.
+## 🔍 5. People Discovery Flow
+How the app finds and displays people around you.
 
 ```mermaid
 graph LR
-    Start([Update My Location]) --> Search[fa:fa-search Search Radius]
-    Search --> Range[Find Users Within 20km]
-    Range --> Interests{Match My Interests?}
-    Interests -- "No" --> Skip[Skip User]
-    Interests -- "Yes" --> Calc[Calculate Match Level]
-    Calc --> Display[Sort by Best Match]
-    Display --> UI([Update Pins on the Map])
+    Start([Update My Location]) --> Hub[Stats Hub]
+    Hub --> Search[Search Local Area]
+    Search --> Filter[Apply 20km Filter]
+    
+    subgraph "Refining Results"
+        Match{Match Interests?}
+        Global{Global View?}
+    end
+    
+    Filter --> Match
+    Global -- "On" --> ShowAll[Show All Users]
+    Match -- "Yes" --> Calc[Determine Best Matches]
+    
+    Calc --> Sort[Sort Results]
+    Sort --> MapPins([Update Pins on Map])
+    ShowAll --> MapPins
+    
+    MapPins --> Groups["Group by Interests"]
 ```
 
 ---
 
-## 🤝 6. Connecting with Others
-The simple workflow of sending, accepting, or declining a friend request.
+## 🤝 6. Connecting with Friends
+The workflow of managing your social connections.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> RequestSent : I send a request
-    RequestSent --> Friends : They Accept
-    RequestSent --> Denied : They Reject
-    Denied --> RequestSent : Try again later
-    Friends --> Connected : We can now chat!
-    Connected --> [*] : Unfriend or Delete
+    [*] --> StartRequest : Send Friend Request
+    
+    state StartRequest {
+        direction TB
+        Sent --> Accepted : Friend Clicks Accept
+        Sent --> Rejected : Friend Clicks Denies
+        Sent --> Cancelled : You Click Withdraw
+    }
+    
+    Accepted --> Connected : Dual Link in System
+    Rejected --> Sent : You can resend later
+    
+    Connected --> [*] : Unfriend or Delete Account
 ```
 
 ---
 
-## 💬 7. Real-time Chat & Updates
-How messages and location updates fly instantly between users without saving them forever (Privacy first).
+## 💬 7. Instant Updates & Chat
+How messages and location updates travel instantly while respecting privacy.
 
 ```mermaid
 sequenceDiagram
-    participant A as fa:fa-user You
-    participant S as fa:fa-hub KON-NECT Server
-    participant B as fa:fa-user Nearby Person
+    participant Me as You
+    participant Hub as Central Hub
+    participant Peer as Nearby Person
 
-    A->>S: Connect to Server
-    B->>S: Connect to Server
+    Me->>Hub: Online Session Start
+    Peer->>Hub: Online Session Start
 
-    rect rgba(255, 255, 255, 0.05)
-    Note over A, S: GPS Sync (Private)
-    A->>S: Share My Current Location
-    S->>S: Check Who Is Close
-    S->>A: Update Map with People
+    rect rgba(200, 200, 200, 0.1)
+    Note over Me, Hub: Location Sync
+    Me->>Hub: Share My Current GPS
+    Hub->>Hub: Scan Local Neighbors
+    Hub->>Me: Update Map Display
     end
 
-    rect rgba(0, 150, 255, 0.1)
-    Note over A, B: Instant Chat
-    A->>S: Send a Private Message
-    S->>B: Deliver Message Instantly
+    rect rgba(0, 100, 255, 0.1)
+    Note over Me, Peer: Instant Chat
+    Me->>Hub: Send Private Message
+    Hub->>Peer: Deliver Message Instantly
     end
 ```
 
 ---
 
-## 🗺️ 8. Application Navigation Map
-How the different screens and settings are organized inside the app.
+## 🗺️ 8. App Navigation Map
+The simple structure of the app screens.
 
 ```mermaid
 graph TD
-    App[fa:fa-code App Home] --> Logic[fa:fa-layer-group App Settings]
-    Logic --> Account[fa:fa-user-lock Account Info]
-    Logic --> Theme[fa:fa-palette Dark/Light Mode]
+    App[App Home] --> Settings[Settings & Sync]
+    Settings --> Account[Account Security]
+    Settings --> Display[Theme & Appearance]
     
-    App --> Screens[fa:fa-random App Screens]
-    Screens --> Start[fa:fa-door-open Welcome Screen]
-    Screens --> Login[fa:fa-sign-in-alt Login Screen]
-    Screens --> Main[fa:fa-map Map & Social View]
+    App --> Flow[App Screens]
+    Flow --> Landing[Welcome Screen]
+    Flow --> Login[Entry Gate]
+    Flow --> Explorer[Main Exploratory Hub]
     
-    Main --> MapView[fa:fa-location-arrow Social Map]
-    Main --> ChatUI[fa:fa-comment-alt Chat Window]
+    Explorer --> SocialMap[Live Social Map]
+    Explorer --> FriendsList[My Connections]
+    Explorer --> Navigation[Direction Guide]
+    Explorer --> ChatBox[Chat Interface]
 ```
