@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import io from 'socket.io-client';
 import api from '../utils/api';
 
 const AuthContext = createContext(null);
@@ -16,9 +17,37 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userLocation, setUserLocation] = useState(null); // { lat, lng } — single source of truth for geolocation
 
-    // Check localStorage OR URL query param for token to set initial loading state
     const [loading, setLoading] = useState(!!localStorage.getItem('token') || window.location.search.includes('token='));
     const [error, setError] = useState(null);
+    const [socket, setSocket] = useState(null);
+    const socketRef = useRef(null);
+
+    // Initial Socket Bootup logic
+    useEffect(() => {
+        if (isAuthenticated && user && !socketRef.current) {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const newSocket = io(apiUrl, { withCredentials: true });
+            socketRef.current = newSocket;
+
+            newSocket.on('connect', () => {
+                newSocket.emit('register_user', user._id || user.id);
+                // Also update location blindly if already fetched
+                if (user.location?.coordinates && user.location.coordinates[0] !== 0) {
+                    newSocket.emit('update_location', {
+                        lng: user.location.coordinates[0],
+                        lat: user.location.coordinates[1]
+                    });
+                }
+            });
+
+            setSocket(newSocket);
+        }
+
+        // Cleanup on unmount or logout
+        return () => {
+            // Leave cleanup logic strictly to actual unmount to avoid churn, or handled in logout
+        };
+    }, [isAuthenticated, user]);
 
     // --- Actions ---
 
@@ -41,6 +70,11 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('token');
             setUser(null);
             setIsAuthenticated(false);
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = null;
+                setSocket(null);
+            }
             setError(null); // Don't show error on initial load failure
         } finally {
             setLoading(false);
@@ -133,8 +167,14 @@ export const AuthProvider = ({ children }) => {
                 const { latitude, longitude } = position.coords;
                 try {
                     await api.post('/api/user/location', { lat: latitude, lng: longitude });
-                    // Update both user object and standalone location
                     setUserLocation({ lat: latitude, lng: longitude });
+
+                    // Broadcast globally
+                    if (socketRef.current) {
+                        socketRef.current.emit('update_location', { lat: latitude, lng: longitude });
+                    }
+
+                    // Update UI lightly for preferences
                     setUser(prev => {
                         if (!prev) return prev;
                         return {
@@ -192,7 +232,8 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         updateLocation,
         forgotPassword,
-        fetchCurrentUser
+        fetchCurrentUser,
+        socket
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

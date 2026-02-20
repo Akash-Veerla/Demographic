@@ -11,7 +11,7 @@ require('./auth/google'); // Import Google Strategy Config
 const User = require('./models/User');
 const CustomInterest = require('./models/CustomInterest');
 const FriendRequest = require('./models/FriendRequest');
-const Message = require('./models/Message');
+const Conversation = require('./models/Message');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
@@ -183,14 +183,16 @@ io.on('connection', (socket) => {
         if (!userId || !receiverId) return;
 
         try {
-            const msg = new Message({
-                sender: userId,
-                receiver: receiverId,
-                roomId: roomId,
-                content: message,
-                read: false
-            });
-            await msg.save();
+            const conv = await Conversation.findOneAndUpdate(
+                { roomId },
+                {
+                    $setOnInsert: { participants: [userId, receiverId] },
+                    $push: { messages: { sender: userId, receiver: receiverId, content: message, read: false } }
+                },
+                { upsert: true, new: true }
+            );
+
+            const msg = conv.messages[conv.messages.length - 1];
 
             // Emit to the room (or specific user if room isn't joined by receiver yet)
             io.to(roomId).emit('receive_message', {
@@ -216,9 +218,10 @@ io.on('connection', (socket) => {
         const receiverId = socketToUser.get(socket.id);
         if (!receiverId) return;
         try {
-            await Message.updateMany(
-                { roomId, sender: senderId, receiver: receiverId, read: false },
-                { $set: { read: true } }
+            await Conversation.updateOne(
+                { roomId },
+                { $set: { "messages.$[elem].read": true } },
+                { arrayFilters: [{ "elem.sender": senderId, "elem.read": false }] }
             );
             // Notify sender that messages were read
             io.to(senderId).emit('messages_read', { roomId, readerId: receiverId });
@@ -950,13 +953,17 @@ app.delete('/api/friends/:friendId', requireAuth, async (req, res) => {
 app.get('/api/messages/:roomId', requireAuth, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const messages = await Message.find({ roomId }).sort({ createdAt: 1 });
+        const conv = await Conversation.findOne({ roomId });
+        const messages = conv ? conv.messages : [];
 
         // Mark as read if the current user is the receiver
-        await Message.updateMany(
-            { roomId, receiver: req.user.id, read: false },
-            { $set: { read: true } }
-        );
+        if (conv) {
+            await Conversation.updateOne(
+                { roomId },
+                { $set: { "messages.$[elem].read": true } },
+                { arrayFilters: [{ "elem.receiver": req.user.id, "elem.read": false }] }
+            );
+        }
 
         res.json(messages);
     } catch (err) {
@@ -967,9 +974,11 @@ app.get('/api/messages/:roomId', requireAuth, async (req, res) => {
 
 app.get('/api/messages/unread/count', requireAuth, async (req, res) => {
     try {
-        const unreadCounts = await Message.aggregate([
-            { $match: { receiver: new mongoose.Types.ObjectId(req.user.id), read: false } },
-            { $group: { _id: "$sender", count: { $sum: 1 } } }
+        const unreadCounts = await Conversation.aggregate([
+            { $match: { participants: new mongoose.Types.ObjectId(req.user.id) } },
+            { $unwind: "$messages" },
+            { $match: { "messages.receiver": new mongoose.Types.ObjectId(req.user.id), "messages.read": false } },
+            { $group: { _id: "$messages.sender", count: { $sum: 1 } } }
         ]);
 
         const formattedCounts = {};

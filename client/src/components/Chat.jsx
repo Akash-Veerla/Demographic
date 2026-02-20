@@ -11,7 +11,7 @@ const Chat = () => {
     const { roomId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, socket } = useAuth();
 
     // The friend object passed from the Friends page state
     const [friend, setFriend] = useState(location.state?.friend || null);
@@ -19,7 +19,6 @@ const Chat = () => {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
 
-    const socketRef = useRef(null);
     const messagesEndRef = useRef(null);
 
     // If friend wasn't passed in state, we should fetch basic friend details... 
@@ -34,29 +33,6 @@ const Chat = () => {
             try {
                 const res = await api.get(`/api/messages/${roomId}`);
                 setMessages(res.data);
-
-                // Once history is fetched, connect to socket
-                socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
-                    withCredentials: true
-                });
-
-                socketRef.current.on('connect', () => {
-                    socketRef.current.emit('register_user', user._id);
-                    // Join specific room
-                    socketRef.current.emit('accept_chat', { roomId });
-
-                    // Mark messages as read right now
-                    socketRef.current.emit('mark_read', { roomId, senderId: friend?._id });
-                });
-
-                socketRef.current.on('receive_message', (msg) => {
-                    setMessages(prev => [...prev, msg]);
-                    // Mark read immediately if we are looking at it
-                    if (friend && msg.senderId === friend._id) {
-                        socketRef.current.emit('mark_read', { roomId, senderId: friend._id });
-                    }
-                });
-
             } catch (err) {
                 console.error("Failed to load chat history", err);
             } finally {
@@ -65,11 +41,28 @@ const Chat = () => {
         };
 
         if (roomId) fetchHistory();
+    }, [roomId]);
+
+    // Connect to global socket for chat
+    useEffect(() => {
+        if (!socket || !friend) return;
+
+        socket.emit('accept_chat', { roomId });
+        socket.emit('mark_read', { roomId, senderId: friend._id });
+
+        const handleReceive = (msg) => {
+            setMessages(prev => [...prev, msg]);
+            if (msg.senderId === friend._id || msg.sender === friend._id) {
+                socket.emit('mark_read', { roomId, senderId: friend._id });
+            }
+        };
+
+        socket.on('receive_message', handleReceive);
 
         return () => {
-            if (socketRef.current) socketRef.current.disconnect();
+            socket.off('receive_message', handleReceive);
         };
-    }, [roomId, user, friend]);
+    }, [socket, roomId, friend]);
 
     // Scroll to bottom when messages update
     useEffect(() => {
@@ -78,9 +71,9 @@ const Chat = () => {
 
     const handleSend = (e) => {
         e.preventDefault();
-        if (!newMessage.trim() || !socketRef.current || !friend) return;
+        if (!newMessage.trim() || !socket || !friend) return;
 
-        socketRef.current.emit('send_message', {
+        socket.emit('send_message', {
             roomId,
             message: newMessage,
             receiverId: friend._id

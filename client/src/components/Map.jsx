@@ -25,7 +25,7 @@ import { fromLonLat, toLonLat } from 'ol/proj';
 import { useAuth } from '../context/AuthContext';
 import io from 'socket.io-client';
 import api from '../utils/api';
-import ChatOverlay from './ChatOverlay';
+import { useNavigate } from 'react-router-dom';
 import M3SearchBar from './M3SearchBar';
 import M3FAB from './M3FAB';
 import M3Chip from './M3Chip';
@@ -42,10 +42,11 @@ const TIPS = [
 ];
 
 const MapComponent = () => {
-    const { user, userLocation: storedLocation, updateInterests } = useAuth();
+    const { user, userLocation: storedLocation, updateInterests, socket } = useAuth();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const mapRef = useRef();
+    const navigate = useNavigate();
     const [map, setMap] = useState(null);
 
     // Sources
@@ -77,8 +78,6 @@ const MapComponent = () => {
     // Tips Carousel State
     const [currentTipIndex, setCurrentTipIndex] = useState(0);
     const [isTipVisible, setIsTipVisible] = useState(true);
-
-    const socketRef = useRef();
 
     // -------------------------------------------------------------------------
     // 0. Tips Carousel Effect (Smooth Transition)
@@ -122,9 +121,8 @@ const MapComponent = () => {
             const center = fromLonLat([storedLocation.lng, storedLocation.lat]);
             setUserLocation(center);
             initialMap.getView().animate({ center, zoom: 14, duration: 300 });
-            // Also emit to socket for nearby user broadcast
-            if (socketRef.current) {
-                socketRef.current.emit('update_location', { lat: storedLocation.lat, lng: storedLocation.lng });
+            if (socket) {
+                socket.emit('update_location', { lat: storedLocation.lat, lng: storedLocation.lng });
             }
         }
 
@@ -142,8 +140,8 @@ const MapComponent = () => {
                     isFirstFix = false;
 
                     setUserLocation(center);
-                    if (socketRef.current) {
-                        socketRef.current.emit('update_location', { lat: latitude, lng: longitude });
+                    if (socket) {
+                        socket.emit('update_location', { lat: latitude, lng: longitude });
                     }
                 },
                 (error) => console.error("Geolocation error:", error),
@@ -457,8 +455,8 @@ const MapComponent = () => {
             getDirections(destinationPin.coordinates, false);
         } else if (selectedUser) {
             // Notify via socket
-            if (socketRef.current) {
-                socketRef.current.emit('getting_directions', { targetUserId: selectedUser._id });
+            if (socket) {
+                socket.emit('getting_directions', { targetUserId: selectedUser._id });
             }
             getDirections(selectedUser.location.coordinates, true);
         }
@@ -581,27 +579,15 @@ const MapComponent = () => {
     // 6. Socket & Search Helpers
     // -------------------------------------------------------------------------
     useEffect(() => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        socketRef.current = io(apiUrl, { withCredentials: true });
-        setSocketReady(true);
-        if (user) {
-            socketRef.current.emit('register_user', user._id || user.id);
-            if (user.location?.coordinates && (user.location.coordinates[0] !== 0)) {
-                socketRef.current.emit('update_location', {
-                    lng: user.location.coordinates[0],
-                    lat: user.location.coordinates[1]
-                });
-            }
-        }
-        socketRef.current.on('chat_request', ({ from, fromName, roomId }) => {
-            setChatTarget({ _id: from, displayName: fromName || 'User', roomId: roomId });
-            socketRef.current.emit('accept_chat', { roomId });
-        });
-        socketRef.current.on('directions_alert', ({ message }) => {
+        if (!socket) return;
+        const handleDirectionsAlert = ({ message }) => {
             setAlertMessage(message);
-        });
-        return () => socketRef.current.disconnect();
-    }, [user]);
+        };
+        socket.on('directions_alert', handleDirectionsAlert);
+        return () => {
+            socket.off('directions_alert', handleDirectionsAlert);
+        };
+    }, [socket]);
 
     const handleSearchSelect = (place) => {
         const coords = [parseFloat(place.lon), parseFloat(place.lat)];
@@ -833,7 +819,7 @@ const MapComponent = () => {
                 absolute z-30 bg-white dark:bg-[#1C1B1F]/10 dark:backdrop-blur-2xl shadow-2xl border-[0.5px] border-white/30 dark:border-white/10 transition-all duration-500 ease-in-out
                 ${(selectedUser || destinationPin) && !isNavigating ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-[120%] opacity-0 pointer-events-none'}
                 md:top-24 md:left-6 md:w-80 md:rounded-sq-2xl md:h-auto md:max-h-[calc(100%-7rem)]
-                bottom-0 left-0 right-0 w-full rounded-t-sq-2xl h-fit max-h-[60vh]
+                bottom-0 left-0 right-0 w-full rounded-t-sq-2xl h-fit max-h-[60vh] pb-24 md:pb-0
                 flex flex-col overflow-hidden ring-1 ring-black/5 hover:border-white/50 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]
             `}>
                 {/* Header */}
@@ -1060,7 +1046,10 @@ const MapComponent = () => {
                         </button>
                         {selectedUser && selectedUser.isFriend && (
                             <button
-                                onClick={() => setChatTarget(selectedUser)}
+                                onClick={() => {
+                                    const roomId = [user._id, selectedUser._id].sort().join('_');
+                                    navigate(`/chat/${roomId}`, { state: { friend: selectedUser } });
+                                }}
                                 className="flex-1 bg-white dark:bg-white/10 dark:backdrop-blur-xl text-primary dark:text-[#D0BCFF] h-9 rounded-sq-lg font-bold text-xs border border-primary/20 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/20 transition-all active:scale-95 flex items-center justify-center gap-1.5"
                             >
                                 <span className="material-symbols-outlined text-base">chat</span>
@@ -1099,16 +1088,7 @@ const MapComponent = () => {
                 </div>
             </div>
 
-            {/* Chat Overlay */}
-            {chatTarget && socketReady && (
-                <ChatOverlay
-                    socket={socketRef.current}
-                    user={user}
-                    targetUser={chatTarget}
-                    onClose={() => setChatTarget(null)}
-                />
-            )}
-        </div >
+        </div>
     );
 };
 
