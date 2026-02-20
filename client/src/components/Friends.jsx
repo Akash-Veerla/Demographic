@@ -72,6 +72,18 @@ const Friends = () => {
         setActionLoading(null);
     };
 
+    const handleBlockUser = async (userId) => {
+        if (!window.confirm("Are you sure you want to block this user?")) return;
+        setActionLoading(userId);
+        try {
+            await api.post('/api/users/block', { targetId: userId });
+            await fetchAll();
+        } catch (err) {
+            console.error('Failed to block user', err);
+        }
+        setActionLoading(null);
+    };
+
     const handleChatClick = (friend) => {
         // Room ID deterministic generation
         const roomId = [user._id, friend._id].sort().join('_');
@@ -112,6 +124,9 @@ const Friends = () => {
                                     <div className="flex gap-1.5 mt-1">
                                         <button onClick={() => handleAcceptRequest(req._id)} disabled={actionLoading === req._id} className="flex-1 py-1.5 bg-primary hover:bg-primary/90 text-white text-[11px] font-black rounded-xl transition-transform active:scale-95 disabled:opacity-50 tracking-wide uppercase">Accept</button>
                                         <button onClick={() => handleRejectRequest(req._id)} disabled={actionLoading === req._id} className="flex-1 py-1.5 bg-gray-100/80 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-600 dark:text-gray-300 text-[11px] font-black rounded-xl transition-transform active:scale-95 disabled:opacity-50 tracking-wide uppercase">Decline</button>
+                                        <button onClick={() => handleBlockUser(req.from?._id || req.from)} disabled={actionLoading === (req.from?._id || req.from)} className="px-2 py-1.5 bg-red-100/80 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-[11px] font-black rounded-xl transition-transform active:scale-95 flex items-center justify-center disabled:opacity-50" title="Block User">
+                                            <span className="material-symbols-outlined text-[14px]">block</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>

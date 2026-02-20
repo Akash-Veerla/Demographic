@@ -124,6 +124,17 @@ const Profile = () => {
                                     </button>
                                 </div>
 
+                                <div>
+                                    <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] mb-3">Blocked Users</label>
+                                    <button
+                                        onClick={() => navigate('/blocked-users')}
+                                        className="w-full py-4 px-4 rounded-sq-xl border-2 border-[#1a100f]/20 dark:border-white/20 text-[#1a100f] dark:text-[#E6E1E5] font-bold hover:bg-[#1a100f]/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center gap-2 group"
+                                    >
+                                        <span className="material-symbols-outlined group-hover:scale-110 transition-transform">block</span>
+                                        Manage Blocked list
+                                    </button>
+                                </div>
+
                                 <div className="border-t border-[#be3627]/10 dark:border-white/5 pt-6">
                                     <label className="block text-sm font-bold text-red-600 dark:text-red-400 mb-3">Danger Zone</label>
                                     <button

@@ -79,24 +79,26 @@ const Layout = ({ children }) => {
                             className="flex items-center gap-3 cursor-pointer select-none"
                             onClick={() => navigate('/')}
                             onContextMenu={(e) => {
-                                e.preventDefault();
-                                window.dispatchEvent(new Event('show_cluster_centers'));
-                                alert('Secret Found: Clusters Activated!');
+                                if (location.pathname.startsWith('/map')) {
+                                    e.preventDefault();
+                                    window.dispatchEvent(new Event('show_cluster_centers'));
+                                }
                             }}
                             onMouseDown={() => {
-                                window.logoPressTimer = setTimeout(() => {
-                                    window.dispatchEvent(new Event('show_cluster_centers'));
-                                    // Visual feedback?
-                                    alert('Easter Egg: Clusters Activated!');
-                                }, 3000);
+                                if (location.pathname.startsWith('/map')) {
+                                    window.logoPressTimer = setTimeout(() => {
+                                        window.dispatchEvent(new Event('show_cluster_centers'));
+                                    }, 3000);
+                                }
                             }}
                             onMouseUp={() => clearTimeout(window.logoPressTimer)}
                             onMouseLeave={() => clearTimeout(window.logoPressTimer)}
                             onTouchStart={() => {
-                                window.logoPressTimer = setTimeout(() => {
-                                    window.dispatchEvent(new Event('show_cluster_centers'));
-                                    alert('Easter Egg: Clusters Activated!');
-                                }, 3000);
+                                if (location.pathname.startsWith('/map')) {
+                                    window.logoPressTimer = setTimeout(() => {
+                                        window.dispatchEvent(new Event('show_cluster_centers'));
+                                    }, 3000);
+                                }
                             }}
                             onTouchEnd={() => clearTimeout(window.logoPressTimer)}
                         >

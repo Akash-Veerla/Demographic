@@ -253,6 +253,46 @@ io.on('connection', (socket) => {
 
 // --- New API Routes for Dynamic Discovery ---
 
+// Block features
+app.get('/api/users/blocked', requireAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).populate('blockedUsers', 'displayName email profilePhoto bio');
+        res.json(user.blockedUsers || []);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/users/block', requireAuth, async (req, res) => {
+    try {
+        const { targetId } = req.body;
+        if (!targetId) return res.status(400).json({ error: 'User ID required' });
+
+        // Block + unfriend both ways
+        await User.findByIdAndUpdate(req.user.id, { $addToSet: { blockedUsers: targetId }, $pull: { friends: targetId } });
+        await User.findByIdAndUpdate(targetId, { $pull: { friends: req.user.id } });
+
+        // Clean any pending requests
+        await FriendRequest.deleteMany({
+            $or: [{ from: req.user.id, to: targetId }, { from: targetId, to: req.user.id }]
+        });
+
+        res.json({ message: 'User blocked.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/users/unblock', requireAuth, async (req, res) => {
+    try {
+        const { targetId } = req.body;
+        await User.findByIdAndUpdate(req.user.id, { $pull: { blockedUsers: targetId } });
+        res.json({ message: 'User unblocked.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Get Nearby Users (Dynamic Radius)
 // ---------------------------------------------------------------------------
 // DEMOGRAPHIC MATCHING ENDPOINT (Replicates GNN model logic in JS)
@@ -269,14 +309,19 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'Valid Latitude and Longitude required' });
         }
 
-        // Get current user's interests + friends list
-        const currentUser = await User.findById(userId).select('interests friends');
+        // Get current user's interests + friends list + blocks
+        const currentUser = await User.findById(userId).select('interests friends blockedUsers');
         const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
         const myFriends = (currentUser?.friends || []).map(f => f.toString());
+        const myBlocked = (currentUser?.blockedUsers || []).map(b => b.toString());
 
         if (myInterests.length === 0) {
             return res.json([]);
         }
+
+        const usersBlockingMe = await User.find({ blockedUsers: userId }).select('_id');
+        const blockedByOthers = usersBlockingMe.map(u => u._id.toString());
+        const excludeIds = [...new Set([...myBlocked, ...blockedByOthers, userId])];
 
         const MATCH_RADIUS_METERS = 20000;
 
@@ -291,7 +336,7 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                 }
             },
             'location.coordinates': { $ne: [0, 0] },
-            _id: { $ne: userId },
+            _id: { $nin: excludeIds },
             interests: { $exists: true, $ne: [] }
         }).select('displayName email interests location profilePhoto bio lastLogin');
 
@@ -343,9 +388,14 @@ app.get('/api/users/discover', requireAuth, async (req, res) => {
             return res.json([]); // Need location for "nearest"
         }
 
-        const currentUser = await User.findById(userId).select('interests friends');
+        const currentUser = await User.findById(userId).select('interests friends blockedUsers');
         const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
         const myFriends = (currentUser?.friends || []).map(f => f.toString());
+        const myBlocked = (currentUser?.blockedUsers || []).map(b => b.toString());
+
+        const usersBlockingMe = await User.find({ blockedUsers: userId }).select('_id');
+        const blockedByOthers = usersBlockingMe.map(u => u._id.toString());
+        const excludeIdsObj = [...new Set([...myBlocked, ...blockedByOthers, userId])].map(id => new mongoose.Types.ObjectId(id));
 
         // 1. Gather 50 users near the user (sorted by distance by default)
         const nearestUsers = await User.aggregate([
@@ -355,7 +405,7 @@ app.get('/api/users/discover', requireAuth, async (req, res) => {
                     distanceField: "dist.calculated",
                     maxDistance: 10000000, // Large radius (10,000 km) to just get "nearest"
                     query: {
-                        _id: { $ne: new mongoose.Types.ObjectId(userId) },
+                        _id: { $nin: excludeIdsObj },
                         'location.coordinates': { $ne: [0, 0] }
                     },
                     spherical: true
@@ -488,12 +538,17 @@ app.get('/api/admin/seed', async (req, res) => {
 app.get('/api/users/global', requireAuth, async (req, res) => {
     try {
         const userId = req.user.id;
-        const currentUser = await User.findById(userId).select('interests friends');
+        const currentUser = await User.findById(userId).select('interests friends blockedUsers');
         const myInterests = (currentUser?.interests || []).map(i => i.toLowerCase().trim());
         const myFriends = (currentUser?.friends || []).map(f => f.toString());
+        const myBlocked = (currentUser?.blockedUsers || []).map(b => b.toString());
+
+        const usersBlockingMe = await User.find({ blockedUsers: userId }).select('_id');
+        const blockedByOthers = usersBlockingMe.map(u => u._id.toString());
+        const excludeIds = [...new Set([...myBlocked, ...blockedByOthers, userId])];
 
         const globalUsers = await User.find({
-            _id: { $ne: userId },
+            _id: { $nin: excludeIds },
             'location.coordinates': { $ne: [0, 0] },
             interests: { $exists: true, $ne: [] }
         })

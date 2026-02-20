@@ -7,7 +7,7 @@ import OSM from 'ol/source/OSM';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Feature } from 'ol';
-import { Point, LineString, Circle as GeomCircle } from 'ol/geom';
+import { Point, LineString, Circle as GeomCircle, Polygon } from 'ol/geom';
 import { Style, Circle as StyleCircle, Fill, Stroke, Text, Icon } from 'ol/style';
 
 const SVG_PATHS = {
@@ -486,10 +486,9 @@ const MapComponent = () => {
             }
         });
 
-        // Only slice if we've actually moved somewhat along the path (e.g. index > 0)
-        // Also ensure we don't slice off the destination
-        if (minIndex > 0 && minIndex < coords.length - 1) {
-            feature.setGeometry(new LineString([userLocation, ...coords.slice(minIndex + 1)]));
+        // Always tether the start to the user, and slice off passed waypoints
+        if (minIndex >= 0 && minIndex < coords.length - 1) {
+            feature.getGeometry().setCoordinates([userLocation, ...coords.slice(minIndex + 1)]);
         }
     }, [userLocation, isNavigating, routeSource]);
 
@@ -508,62 +507,61 @@ const MapComponent = () => {
     // Listener for Cluster Event (from Logo or Search)
     useEffect(() => {
         const handleShowClusters = () => {
-            if (!map || nearbyUsersList.length === 0) return;
+            if (!map || nearbyUsersList.length === 0 || !storedLocation) return;
 
-            // 1. Group users by interest[0] (Simpler clustering)
-            const clusters = {};
-            nearbyUsersList.forEach(u => {
-                const mainInterest = u.interests?.[0] || 'Uncategorized';
-                if (!clusters[mainInterest]) clusters[mainInterest] = [];
-                clusters[mainInterest].push(u);
-            });
-
+            setAlertMessage('Secret Found: Clusters Activated!');
             clusterSource.clear();
 
-            Object.entries(clusters).forEach(([interest, users]) => {
-                if (users.length < 2) return; // Minimal cluster
+            const userCoords = [storedLocation.longitude, storedLocation.latitude];
+            const center = fromLonLat(userCoords);
 
-                // Calculate Centroid
-                let sumLat = 0, sumLng = 0;
-                users.forEach(u => {
-                    sumLng += u.location.coordinates[0];
-                    sumLat += u.location.coordinates[1];
+            // All coordinates for the bounding polygon
+            const pointsVec = [center];
+
+            nearbyUsersList.forEach(u => {
+                const p = fromLonLat(u.location.coordinates);
+                pointsVec.push(p);
+
+                // Draw yellow line from user to friend
+                const line = new Feature({
+                    geometry: new LineString([center, p])
                 });
-                const avgLng = sumLng / users.length;
-                const avgLat = sumLat / users.length;
-                const center = fromLonLat([avgLng, avgLat]);
-
-                // Render Centroid Circle
-                const centerFeature = new Feature({ geometry: new Point(center) });
-                centerFeature.setStyle(new Style({
-                    image: new StyleCircle({
-                        radius: 20, // Large Pulsing Appearance (Static for now)
-                        stroke: new Stroke({ color: '#ef4444', width: 2 }),
-                        fill: new Fill({ color: 'rgba(239, 68, 68, 0.2)' })
-                    }),
-                    text: new Text({
-                        text: interest,
-                        font: 'bold 12px Outfit',
-                        fill: new Fill({ color: '#ef4444' }),
-                        stroke: new Stroke({ color: '#fff', width: 3 }),
-                        offsetY: 0
-                    })
+                line.setStyle(new Style({
+                    stroke: new Stroke({ color: 'rgba(250, 204, 21, 0.8)', width: 2 })
                 }));
-                clusterSource.addFeature(centerFeature);
-
-                // Render Lines to Users
-                users.forEach(u => {
-                    const line = new Feature({
-                        geometry: new LineString([center, fromLonLat(u.location.coordinates)])
-                    });
-                    line.setStyle(new Style({
-                        stroke: new Stroke({ color: 'rgba(239, 68, 68, 0.3)', width: 1 })
-                    }));
-                    clusterSource.addFeature(line);
-                });
+                clusterSource.addFeature(line);
             });
 
-            // Auto-clear after 10 seconds?
+            // Convex Hull for encircling outline
+            if (pointsVec.length > 2) {
+                pointsVec.sort((a, b) => a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]);
+                const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+                const lower = [];
+                for (let i = 0; i < pointsVec.length; i++) {
+                    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], pointsVec[i]) <= 0) lower.pop();
+                    lower.push(pointsVec[i]);
+                }
+                const upper = [];
+                for (let i = pointsVec.length - 1; i >= 0; i--) {
+                    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], pointsVec[i]) <= 0) upper.pop();
+                    upper.push(pointsVec[i]);
+                }
+                upper.pop();
+                lower.pop();
+                const hull = lower.concat(upper);
+
+                // Close the polygon
+                if (hull.length > 0) hull.push(hull[0]);
+
+                const hullFeature = new Feature({ geometry: new Polygon([hull]) });
+                hullFeature.setStyle(new Style({
+                    stroke: new Stroke({ color: '#facc15', width: 2 }),
+                    fill: new Fill({ color: 'rgba(250, 204, 21, 0.15)' })
+                }));
+                clusterSource.addFeature(hullFeature);
+            }
+
+            // Auto-clear after 10 seconds
             setTimeout(() => clusterSource.clear(), 10000);
 
             // Zoom out to see clusters
@@ -572,7 +570,7 @@ const MapComponent = () => {
 
         window.addEventListener('show_cluster_centers', handleShowClusters);
         return () => window.removeEventListener('show_cluster_centers', handleShowClusters);
-    }, [map, nearbyUsersList, clusterSource]);
+    }, [map, nearbyUsersList, clusterSource, storedLocation]);
 
 
     // -------------------------------------------------------------------------
@@ -832,12 +830,35 @@ const MapComponent = () => {
                             {selectedUser ? 'User Details' : 'Location'}
                         </p>
                     </div>
-                    <button
-                        onClick={() => { setSelectedUser(null); setDestinationPin(null); }}
-                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 rounded-sq-sm transition-colors shrink-0"
-                    >
-                        <span className="material-symbols-outlined text-lg opacity-60">close</span>
-                    </button>
+                    <div className="flex gap-1 shrink-0">
+                        {selectedUser && (
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm(`Block ${selectedUser.displayName}? They will no longer be able to interact with you.`)) {
+                                        try {
+                                            await api.post('/api/users/block', { targetId: selectedUser._id });
+                                            setAlertMessage(`Blocked ${selectedUser.displayName}`);
+                                            setSelectedUser(null);
+                                            fetchNearbyUsers();
+                                        } catch (err) {
+                                            setAlertMessage('Failed to block user');
+                                        }
+                                    }
+                                }}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded-sq-sm transition-colors"
+                                title="Block User"
+                            >
+                                <span className="material-symbols-outlined text-lg">block</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={() => { setSelectedUser(null); setDestinationPin(null); }}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 rounded-sq-sm transition-colors"
+                            title="Close"
+                        >
+                            <span className="material-symbols-outlined text-lg opacity-60">close</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content (Scrollable) */}

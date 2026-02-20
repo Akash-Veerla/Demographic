@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
+import BlockedUsers from './components/BlockedUsers';
 import Settings from './components/Profile'; // Replaced if needed
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
@@ -131,6 +132,7 @@ const AppContent = () => {
                                                 <Route path="/map" element={<MapStandalone />} />
                                                 <Route path="/friends" element={<Friends />} />
                                                 <Route path="/profile" element={<Profile />} />
+                                                <Route path="/blocked-users" element={<BlockedUsers />} />
                                                 <Route path="/setup" element={<ProfileSetup />} />
                                                 <Route path="/chat/:roomId" element={<Chat />} />
                                                 <Route path="*" element={<Navigate to="/" />} />
