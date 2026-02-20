@@ -75,7 +75,7 @@ const Layout = ({ children }) => {
 
                 {/* Desktop / Tablet Navbar (In Flow) */}
                 {!isMobile && user && (
-                    <div className={`w-[98%] max-w-[1400px] mx-auto mt-6 ${location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? 'mb-1' : 'mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
+                    <div className={`w-[98%] max-w-[1400px] mx-auto ${location.pathname.startsWith('/map') ? 'mt-4 mb-2' : 'mt-6 mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
                         {/* Brand */}
                         <div
                             className="flex items-center gap-3 cursor-pointer select-none"
@@ -149,7 +149,12 @@ const Layout = ({ children }) => {
                 )}
 
                 {/* Page Content */}
-                <Box sx={{ minHeight: 'calc(100% - 140px)' }}>
+                <Box sx={{
+                    minHeight: location.pathname.startsWith('/map') ? 'calc(100vh - 88px)' : 'calc(100% - 140px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexGrow: 1
+                }}>
                     {children}
                 </Box>
             </Box>

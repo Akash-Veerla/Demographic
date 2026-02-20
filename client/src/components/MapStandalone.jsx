@@ -3,10 +3,9 @@ import MapComponent from './Map';
 
 const MapStandalone = () => {
     return (
-        <div className="flex flex-col h-full w-full relative transition-colors duration-300">
-            {/* Header Optional */}
-            <div className="flex-1 relative w-full">
-                <div className="w-full relative overflow-hidden shadow-inner" style={{ height: 'calc(100vh - 4.5rem)' }}>
+        <div className="flex flex-col h-full w-[98%] max-w-[1400px] mx-auto relative transition-colors duration-300">
+            <div className="flex-1 relative w-full h-[calc(100dvh-5rem)] pb-4">
+                <div className="w-full h-full relative overflow-hidden shadow-inner">
                     <MapComponent />
                 </div>
             </div>
