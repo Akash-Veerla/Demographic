@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import MapComponent from './Map';
 import api from '../utils/api';
 import { Box, Card, CardContent, Typography, Avatar, Chip, Button } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +7,7 @@ import M3LoadingIndicator from './M3LoadingIndicator';
 import M3Chip, { M3ChipSet } from './M3Chip';
 import M3SegmentedButton from './M3SegmentedButton';
 
-const ConnectView = () => {
+const Social = () => {
     const [users, setUsers] = useState([]);
     const [matchedUsers, setMatchedUsers] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -442,48 +441,6 @@ const ConnectView = () => {
                         {discoverUsers.map(u => renderUserCard(u))}
                     </div>
                 </div>
-            </div>
-        </div>
-    );
-};
-
-const Social = () => {
-    const [activeTab, setActiveTab] = useState('map');
-
-    useEffect(() => {
-        const handleMapConnect = (e) => {
-            setActiveTab('map');
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('select_map_user', { detail: e.detail }));
-            }, 500);
-        };
-        window.addEventListener('map_connect_user', handleMapConnect);
-        return () => window.removeEventListener('map_connect_user', handleMapConnect);
-    }, []);
-
-    return (
-        <div className="flex flex-col h-full w-full relative transition-colors duration-300">
-            {/* Tab Navigation Bar — Glass Segmented Container */}
-            <div className="bg-white dark:bg-[#141218]/95 dark:backdrop-blur-md border-b border-black/5 dark:border-white/5 px-6 sticky top-0 z-30 flex justify-center h-16 items-center shadow-sm">
-                <M3SegmentedButton
-                    segments={[
-                        { value: 'map', label: 'Map View', icon: 'map' },
-                        { value: 'connect', label: 'Connect', icon: 'group' },
-                    ]}
-                    value={activeTab}
-                    onChange={setActiveTab}
-                />
-            </div>
-
-            {/* Content Area */}
-            <div className="flex-1 relative w-full">
-                {activeTab === 'map' ? (
-                    <div className="w-full relative overflow-hidden shadow-inner" style={{ height: 'calc(100vh - 7rem)' }}>
-                        <MapComponent />
-                    </div>
-                ) : (
-                    <ConnectView />
-                )}
             </div>
         </div>
     );

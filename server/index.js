@@ -11,6 +11,7 @@ require('./auth/google'); // Import Google Strategy Config
 const User = require('./models/User');
 const CustomInterest = require('./models/CustomInterest');
 const FriendRequest = require('./models/FriendRequest');
+const Message = require('./models/Message');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
@@ -177,13 +178,53 @@ io.on('connection', (socket) => {
         socket.join(roomId);
     });
 
-    socket.on('send_message', ({ roomId, message }) => {
+    socket.on('send_message', async ({ roomId, message, receiverId }) => {
         const userId = socketToUser.get(socket.id);
-        io.to(roomId).emit('receive_message', {
-            text: message,
-            senderId: userId,
-            timestamp: new Date()
-        });
+        if (!userId || !receiverId) return;
+
+        try {
+            const msg = new Message({
+                sender: userId,
+                receiver: receiverId,
+                roomId: roomId,
+                content: message,
+                read: false
+            });
+            await msg.save();
+
+            // Emit to the room (or specific user if room isn't joined by receiver yet)
+            io.to(roomId).emit('receive_message', {
+                _id: msg._id,
+                text: message,
+                senderId: userId,
+                timestamp: msg.createdAt
+            });
+
+            // Also emit a notification to the target user (for their friends list)
+            io.to(receiverId).emit('message_notification', {
+                senderId: userId,
+                text: message,
+                timestamp: msg.createdAt
+            });
+        } catch (err) {
+            console.error('Error saving message:', err);
+        }
+    });
+
+    // Mark messages as read
+    socket.on('mark_read', async ({ roomId, senderId }) => {
+        const receiverId = socketToUser.get(socket.id);
+        if (!receiverId) return;
+        try {
+            await Message.updateMany(
+                { roomId, sender: senderId, receiver: receiverId, read: false },
+                { $set: { read: true } }
+            );
+            // Notify sender that messages were read
+            io.to(senderId).emit('messages_read', { roomId, readerId: receiverId });
+        } catch (err) {
+            console.error('Error marking messages read:', err);
+        }
     });
 
     socket.on('disconnect', () => {
@@ -897,6 +938,44 @@ app.delete('/api/friends/:friendId', requireAuth, async (req, res) => {
     } catch (err) {
         console.error('Remove friend error:', err);
         res.status(500).json({ error: 'Failed to remove friend' });
+    }
+});
+
+// --- Chat API Routes ---
+app.get('/api/messages/:roomId', requireAuth, async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const messages = await Message.find({ roomId }).sort({ createdAt: 1 });
+
+        // Mark as read if the current user is the receiver
+        await Message.updateMany(
+            { roomId, receiver: req.user.id, read: false },
+            { $set: { read: true } }
+        );
+
+        res.json(messages);
+    } catch (err) {
+        console.error('Fetch messages error:', err);
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
+app.get('/api/messages/unread/count', requireAuth, async (req, res) => {
+    try {
+        const unreadCounts = await Message.aggregate([
+            { $match: { receiver: new mongoose.Types.ObjectId(req.user.id), read: false } },
+            { $group: { _id: "$sender", count: { $sum: 1 } } }
+        ]);
+
+        const formattedCounts = {};
+        unreadCounts.forEach(item => {
+            formattedCounts[item._id.toString()] = item.count;
+        });
+
+        res.json(formattedCounts);
+    } catch (err) {
+        console.error('Fetch unread counts error:', err);
+        res.status(500).json({ error: 'Failed to fetch unread counts' });
     }
 });
 

@@ -25,8 +25,9 @@ const Layout = ({ children }) => {
 
     const navItems = [
         { label: 'Home', icon: 'home', activeIcon: 'home', path: '/' },
-        { label: 'Social', icon: 'group', activeIcon: 'group', path: '/social' },
-        { label: 'Profile', icon: 'person', activeIcon: 'person', path: '/profile' },
+        { label: 'Map', icon: 'map', activeIcon: 'map', path: '/map' },
+        { label: 'Social', icon: 'explore', activeIcon: 'explore', path: '/social' },
+        { label: 'Friends', icon: 'group', activeIcon: 'group', path: '/friends' },
     ];
 
     return (
@@ -107,14 +108,15 @@ const Layout = ({ children }) => {
                             <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
                         </div>
 
-                        {/* Center Toggles — M3 Segmented Button */}
                         <M3SegmentedButton
-                            className="hidden md:inline-flex"
+                            className="hidden lg:inline-flex"
                             segments={[
                                 { value: '/', label: 'Home', icon: 'home' },
-                                { value: '/social', label: 'Social', icon: 'group' },
+                                { value: '/map', label: 'Map', icon: 'map' },
+                                { value: '/social', label: 'Social', icon: 'explore' },
+                                { value: '/friends', label: 'Friends', icon: 'group' },
                             ]}
-                            value={location.pathname.startsWith('/social') || location.pathname.startsWith('/map') ? '/social' : '/'}
+                            value={location.pathname === '/' ? '/' : location.pathname}
                             onChange={(val) => navigate(val)}
                         />
 

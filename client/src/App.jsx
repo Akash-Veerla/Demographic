@@ -5,9 +5,12 @@ import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
+import Settings from './components/Profile'; // Replaced if needed
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
 import Social from './components/Social';
+import MapStandalone from './components/MapStandalone'; // We will create this wrapper or use Map directly
+import Friends from './components/Friends';
 import Landing from './components/Landing';
 import Home from './components/Home';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -125,10 +128,11 @@ const AppContent = () => {
                                             <Routes>
                                                 <Route path="/" element={<Home />} />
                                                 <Route path="/social" element={<Social />} />
+                                                <Route path="/map" element={<MapStandalone />} />
+                                                <Route path="/friends" element={<Friends />} />
                                                 <Route path="/profile" element={<Profile />} />
                                                 <Route path="/setup" element={<ProfileSetup />} />
-                                                <Route path="/chat" element={<Chat />} />
-                                                <Route path="/map" element={<Social />} />
+                                                <Route path="/chat/:roomId" element={<Chat />} />
                                                 <Route path="*" element={<Navigate to="/" />} />
                                             </Routes>
                                         </Layout>

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Users, Globe, ArrowRight } from 'lucide-react';
+import { MapPin, Users, Globe, ArrowRight, Route, MessageSquare, Sparkles } from 'lucide-react';
 import { ColorModeContext } from '../App';
 import M3Switch from './M3Switch';
 
@@ -9,107 +9,159 @@ const Landing = () => {
     const { toggleColorMode, mode } = useContext(ColorModeContext);
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#f8f6f6] dark:bg-[#141218] text-[#1a100f] dark:text-[#E6E1E5] font-display relative selection:bg-primary/30 overflow-x-hidden">
+        <div className="min-h-[100dvh] w-full flex flex-col bg-[#f8f6f6] dark:bg-[#0f0d13] text-[#1a100f] dark:text-[#E6E1E5] font-display relative overflow-hidden selection:bg-primary/30">
 
-            {/* Background Layer */}
-            <div className="absolute inset-0 z-0 pointer-events-none">
+            {/* Immersive Animated Background */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
+                {/* Core Map Texture */}
                 <div
-                    className="w-full h-full bg-cover bg-center opacity-40 dark:opacity-20 scale-110 blur-xl"
+                    className="absolute inset-0 bg-cover bg-center opacity-30 dark:opacity-[0.15] scale-105 animate-[pulse_10s_ease-in-out_infinite]"
                     style={{ backgroundImage: 'var(--bg-map-url)' }}
                 ></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-white/60 to-[#f8f6f6] dark:from-black/40 dark:via-[#141218]/80 dark:to-[#141218]"></div>
+
+                {/* Advanced Gradient Overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(103,80,164,0.15)_0%,_transparent_70%)] dark:bg-[radial-gradient(circle_at_50%_0%,_rgba(208,188,255,0.15)_0%,_transparent_70%)]"></div>
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#f8f6f6] dark:from-[#0f0d13] to-transparent"></div>
+                <div className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-[#f8f6f6] dark:from-[#0f0d13] to-transparent"></div>
+
+                {/* Floating Map Nodes (Decorative) */}
+                <div className="absolute top-[20%] left-[15%] w-32 h-32 bg-primary/20 rounded-full blur-[60px] animate-blob"></div>
+                <div className="absolute top-[40%] right-[10%] w-40 h-40 bg-secondary/20 rounded-full blur-[70px] animate-blob animation-delay-2000"></div>
+                <div className="absolute bottom-[20%] left-[40%] w-48 h-48 bg-tertiary/20 rounded-full blur-[80px] animate-blob animation-delay-4000"></div>
             </div>
 
-            {/* Navbar */}
-            <nav className="relative z-10 w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary backdrop-blur-sm border border-primary/20">
-                        <MapPin size={20} className="text-primary" />
+            {/* Navigation Bar */}
+            <nav className="relative z-20 w-full px-6 py-5 flex justify-between items-center max-w-7xl mx-auto shrink-0 transition-all duration-300">
+                <div className="flex items-center gap-3 group cursor-pointer z-30" onClick={() => navigate('/')}>
+                    <div className="w-12 h-12 rounded-sq-xl bg-white/70 dark:bg-black/50 backdrop-blur-xl flex items-center justify-center text-primary border border-white/50 dark:border-white/10 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                        <MapPin size={24} className="text-primary drop-shadow-[0_0_8px_rgba(103,80,164,0.5)]" />
                     </div>
-                    <span className="font-bold text-xl tracking-tight">KON-NECT</span>
+                    <span className="font-black text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-[#1a100f] to-[#5e413d] dark:from-white dark:to-gray-400">KON-NECT</span>
                 </div>
-                <div className="flex items-center gap-3">
-                    {/* Theme Toggle — M3 Switch */}
-                    <M3Switch
-                        checked={mode === 'dark'}
-                        onChange={toggleColorMode}
-                        iconOn="dark_mode"
-                        iconOff="light_mode"
-                    />
+                <div className="flex items-center gap-4 z-30">
+                    <div className="hidden sm:block">
+                        <M3Switch
+                            checked={mode === 'dark'}
+                            onChange={toggleColorMode}
+                            iconOn="dark_mode"
+                            iconOff="light_mode"
+                        />
+                    </div>
                     <button
                         onClick={() => navigate('/login')}
-                        className="px-5 py-2 rounded-full font-bold text-sm text-[#5e413d] dark:text-[#CAC4D0] hover:text-primary transition-colors"
+                        className="hidden sm:block px-6 py-2.5 rounded-full font-extrabold text-sm text-[#5e413d] dark:text-[#CAC4D0] hover:text-primary dark:hover:text-[#D0BCFF] hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                     >
-                        Log In
+                        Sign In
                     </button>
                     <button
                         onClick={() => navigate('/register')}
-                        className="px-5 py-2 rounded-full font-bold text-sm bg-primary text-on-primary hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
+                        className="px-6 py-2.5 rounded-sq-full font-extrabold text-sm bg-[#1a100f] dark:bg-white text-white dark:text-[#1a100f] hover:scale-105 transition-all shadow-xl shadow-black/20 dark:shadow-white/10 flex items-center gap-2 group"
                     >
-                        Sign Up
+                        Join Now
+                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                 </div>
             </nav>
 
-            {/* Hero Section — fills remaining space */}
-            <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 text-center max-w-5xl mx-auto w-full min-h-0">
+            {/* Main Hero Container */}
+            <main className="relative z-10 flex-col items-center justify-center px-4 w-full flex-grow flex pb-12 pt-4 sm:pt-8">
+                <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-8">
 
-                {/* Badge */}
-                <div className="mb-4 md:mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm">
-                    <Globe size={16} className="text-primary" />
-                    <span className="text-xs font-bold uppercase tracking-wide text-primary">Global Social Map</span>
-                </div>
-
-                <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-4 md:mb-6 tracking-tight leading-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-tertiary to-primary animate-gradient-x pb-2">
-                    Connect with your <br />world, explicitly.
-                </h1>
-
-                <p className="text-base md:text-xl text-[#5e413d] dark:text-[#CAC4D0] max-w-2xl mb-6 md:mb-8 leading-relaxed">
-                    Discover people nearby, match based on shared interests, and expand your social circle with a privacy-focused, real-time map experience.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                    <button
-                        onClick={() => navigate('/register')}
-                        className="group relative px-8 py-4 rounded-sq-2xl bg-primary/90 text-white font-bold text-lg shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300 overflow-hidden backdrop-blur-sm"
-                    >
-                        <span className="relative z-10 flex items-center gap-2 justify-center">
-                            Get Started Now
-                            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/login')}
-                        className="px-8 py-4 rounded-sq-2xl bg-white/10 dark:bg-white/5 backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10 text-[#1a100f] dark:text-[#E6E1E5] font-bold text-lg hover:bg-white/20 dark:hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all duration-300"
-                    >
-                        I have an account
-                    </button>
-                </div>
-
-                {/* Features Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-12 w-full">
-                    {[
-                        { icon: <MapPin size={24} />, title: "Real-time Location", desc: "See active users nearby with granular privacy controls." },
-                        { icon: <Users size={24} />, title: "Interest Matching", desc: "Filter the map by shared hobbies and passions instantly." },
-                        { icon: <Globe size={24} />, title: "Global & Local", desc: "Switch seamlessly between your neighborhood and the world." }
-                    ].map((feature, i) => (
-                        <div key={i} className="p-5 md:p-6 rounded-sq-2xl bg-white/10 dark:bg-white/5 backdrop-blur-2xl border-[0.5px] border-white/20 dark:border-white/10 shadow-xl hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:border-white/50 transition-all duration-500 hover:-translate-y-1 group text-left">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary mb-3 md:mb-4 group-hover:scale-110 transition-transform">
-                                {feature.icon}
-                            </div>
-                            <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">{feature.title}</h3>
-                            <p className="text-sm text-[#5e413d] dark:text-[#CAC4D0] leading-relaxed">{feature.desc}</p>
+                    {/* Left: Typography & CTA */}
+                    <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-sm shimmer">
+                            <Sparkles size={16} className="text-primary" />
+                            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">Next-Gen Spatial Networking</span>
                         </div>
-                    ))}
-                </div>
 
+                        <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.95] text-[#1a100f] dark:text-white drop-shadow-sm">
+                            Map your <br />
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-tertiary to-primary animate-gradient-x inline-block pb-2">
+                                connections.
+                            </span>
+                        </h1>
+
+                        <p className="text-lg sm:text-xl text-[#5e413d] dark:text-[#CAC4D0] max-w-xl font-medium leading-relaxed">
+                            A completely revolutionized way to discover people. Utilizing geo-spatial mapping, AI-driven interest matching, and persistent real-time networking.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-2">
+                            <button
+                                onClick={() => navigate('/register')}
+                                className="group relative px-8 py-4.5 rounded-sq-2xl bg-primary text-white font-black text-lg shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                            >
+                                <span className="relative z-10 flex items-center gap-3 justify-center">
+                                    Launch Interface
+                                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    </div>
+                                </span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="px-8 py-4.5 rounded-sq-2xl bg-white/50 dark:bg-black/40 backdrop-blur-2xl border-[0.5px] border-white/60 dark:border-white/10 text-[#1a100f] dark:text-white font-bold text-lg hover:bg-white/80 dark:hover:bg-black/60 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300"
+                            >
+                                Access Portal
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Right: Feature Grid (Bento Box Style) */}
+                    <div className="flex-1 w-full max-w-2xl grid grid-cols-2 gap-4 auto-rows-[minmax(140px,auto)]">
+                        {/* Feature 1 - Large */}
+                        <div className="col-span-2 sm:col-span-1 p-6 rounded-sq-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-700">
+                                <Route size={120} />
+                            </div>
+                            <div className="relative z-10 h-full flex flex-col">
+                                <div className="w-12 h-12 rounded-sq-xl bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-auto drop-shadow-md">
+                                    <Route size={24} strokeWidth={2.5} />
+                                </div>
+                                <div className="mt-8">
+                                    <h3 className="text-xl font-black text-[#1a100f] dark:text-white mb-1">Dynamic Routing</h3>
+                                    <p className="text-sm font-medium text-[#5e413d] dark:text-[#CAC4D0]">OSRM-powered navigation snapping to real global road networks instantly.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Feature 2 - Small */}
+                        <div className="p-6 rounded-sq-3xl bg-primary/10 dark:bg-primary/20 backdrop-blur-3xl border border-primary/20 dark:border-primary/10 shadow-2xl hover:bg-primary/20 transition-all duration-500 flex flex-col group">
+                            <div className="w-12 h-12 rounded-sq-xl bg-white/50 dark:bg-black/30 flex items-center justify-center text-primary mb-auto">
+                                <Users size={24} strokeWidth={2.5} />
+                            </div>
+                            <div className="mt-4">
+                                <h3 className="text-lg font-black text-primary mb-1">Interest NLP</h3>
+                                <p className="text-xs font-bold text-primary/70">Geospatial matching based on shared semantic data.</p>
+                            </div>
+                        </div>
+
+                        {/* Feature 3 - Small */}
+                        <div className="p-6 rounded-sq-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 flex flex-col group">
+                            <div className="w-12 h-12 rounded-sq-xl bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 mb-auto">
+                                <MessageSquare size={24} strokeWidth={2.5} />
+                            </div>
+                            <div className="mt-4">
+                                <h3 className="text-lg font-black text-[#1a100f] dark:text-white mb-1">Persistent Sockets</h3>
+                                <p className="text-xs font-bold text-[#5e413d] dark:text-[#CAC4D0]">Real-time encrypted message histories & live unread sync.</p>
+                            </div>
+                        </div>
+
+                        {/* Feature 4 - Wide */}
+                        <div className="col-span-2 p-6 rounded-sq-3xl bg-tertiary/10 dark:bg-tertiary/20 backdrop-blur-3xl border border-tertiary/20 dark:border-tertiary/10 shadow-2xl hover:bg-tertiary/20 transition-all duration-500 overflow-hidden relative group flex items-center justify-between">
+                            <div className="relative z-10 w-2/3">
+                                <h3 className="text-2xl font-black text-tertiary mb-2">Global Heatmaps</h3>
+                                <p className="text-sm font-bold text-tertiary/70">Observe live social pulses and trending interests bubbling up in neighboring continents in real-time.</p>
+                            </div>
+                            <div className="w-20 h-20 rounded-full bg-white/50 dark:bg-black/30 flex items-center justify-center text-tertiary shrink-0 animate-[spin_20s_linear_infinite]">
+                                <Globe size={40} strokeWidth={2} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
 
-            <footer className="relative z-10 py-3 text-center text-xs text-[#5e413d]/60 dark:text-[#CAC4D0]/60 font-medium shrink-0">
-                <p>© 2026 KON-NECT. Designed for connection.</p>
-            </footer>
         </div>
     );
 };

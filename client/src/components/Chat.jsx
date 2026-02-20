@@ -1,81 +1,166 @@
-import React from 'react';
-import { Box, Typography, Container, Paper, Button } from '@mui/material';
-import { Map as MapIcon, MessageCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import io from 'socket.io-client';
+import api from '../utils/api';
+import { Avatar } from '@mui/material';
+import M3LoadingIndicator from './M3LoadingIndicator';
+import { format } from 'date-fns';
 
 const Chat = () => {
+    const { roomId } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    // The friend object passed from the Friends page state
+    const [friend, setFriend] = useState(location.state?.friend || null);
+    const [messages, setMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    const socketRef = useRef(null);
+    const messagesEndRef = useRef(null);
+
+    // If friend wasn't passed in state, we should fetch basic friend details... 
+    // for simplicity, we assume it's passed, or we just render generic "Friend"
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const res = await api.get(`/api/messages/${roomId}`);
+                setMessages(res.data);
+
+                // Once history is fetched, connect to socket
+                socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+                    withCredentials: true
+                });
+
+                socketRef.current.on('connect', () => {
+                    socketRef.current.emit('register_user', user._id);
+                    // Join specific room
+                    socketRef.current.emit('accept_chat', { roomId });
+
+                    // Mark messages as read right now
+                    socketRef.current.emit('mark_read', { roomId, senderId: friend?._id });
+                });
+
+                socketRef.current.on('receive_message', (msg) => {
+                    setMessages(prev => [...prev, msg]);
+                    // Mark read immediately if we are looking at it
+                    if (friend && msg.senderId === friend._id) {
+                        socketRef.current.emit('mark_read', { roomId, senderId: friend._id });
+                    }
+                });
+
+            } catch (err) {
+                console.error("Failed to load chat history", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (roomId) fetchHistory();
+
+        return () => {
+            if (socketRef.current) socketRef.current.disconnect();
+        };
+    }, [roomId, user, friend]);
+
+    // Scroll to bottom when messages update
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const handleSend = (e) => {
+        e.preventDefault();
+        if (!newMessage.trim() || !socketRef.current || !friend) return;
+
+        socketRef.current.emit('send_message', {
+            roomId,
+            message: newMessage,
+            receiverId: friend._id
+        });
+
+        setNewMessage('');
+    };
+
+    if (loading) {
+        return (
+            <div className="h-full w-full flex flex-col items-center justify-center gap-4">
+                <M3LoadingIndicator size={56} />
+            </div>
+        );
+    }
 
     return (
-        <Container maxWidth="md" sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <Paper
-                elevation={0}
-                sx={{
-                    p: { xs: 4, md: 8 },
-                    textAlign: 'center',
-                    borderRadius: '28px',
-                    maxWidth: 500,
-                    width: '100%',
-                    background: theme => theme.palette.mode === 'dark' ? 'rgba(20, 18, 24, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(20px)',
-                    border: theme => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(190, 54, 39, 0.1)'}`,
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.15)'
-                }}
-            >
-                <Box sx={{
-                    display: 'inline-flex',
-                    p: 2.5,
-                    borderRadius: '24px',
-                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(208, 188, 255, 0.1)' : 'rgba(190, 54, 39, 0.1)',
-                    mb: 4,
-                    color: 'primary.main'
-                }}>
-                    <MessageCircle size={48} strokeWidth={2.5} />
-                </Box>
+        <div className="h-full w-full max-w-4xl mx-auto p-4 md:p-6 lg:py-8 animate-fade-in relative z-10 flex flex-col" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
 
-                <Typography variant="h4" fontWeight="900" gutterBottom sx={{
-                    fontFamily: 'Outfit, sans-serif',
-                    color: theme => theme.palette.mode === 'dark' ? '#E6E1E5' : '#1a100f',
-                    letterSpacing: '-0.02em'
-                }}>
-                    Messages
-                </Typography>
-                <Typography variant="body1" sx={{
-                    color: theme => theme.palette.mode === 'dark' ? '#CAC4D0' : '#5e413d',
-                    mb: 5,
-                    lineHeight: 1.6,
-                    fontWeight: 500
-                }}>
-                    Connect with people nearby! Select a user on the Map to start a conversation.
-                </Typography>
+            {/* Header */}
+            <div className="bg-white dark:bg-white/5 dark:backdrop-blur-xl rounded-t-sq-2xl p-4 shadow-sm border border-black/5 dark:border-white/5 flex items-center justify-between shrink-0 mb-1 z-20">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/friends')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-sq-md transition-colors active:scale-95 shrink-0">
+                        <span className="material-symbols-outlined font-bold text-gray-700 dark:text-gray-300">arrow_back</span>
+                    </button>
+                    <Avatar src={friend?.profilePhoto} sx={{ width: 44, height: 44, borderRadius: '14px' }} variant="rounded" />
+                    <div>
+                        <h2 className="text-xl font-black text-[#1a100f] dark:text-white tracking-tight">{friend?.displayName || 'Chat'}</h2>
+                        <p className={`text-xs font-bold leading-tight ${friend?.isOnline ? 'text-primary' : 'text-gray-400'}`}>
+                            {friend?.isOnline ? 'Active Now' : 'Offline'}
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-                <Button
-                    variant="contained"
-                    size="large"
-                    startIcon={<MapIcon />}
-                    onClick={() => navigate('/map')}
-                    sx={{
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        fontWeight: '900',
-                        px: 5,
-                        py: 2,
-                        borderRadius: '20px',
-                        textTransform: 'none',
-                        fontSize: '1.1rem',
-                        boxShadow: '0 8px 25px rgba(190, 54, 39, 0.3)',
-                        '&:hover': {
-                            bgcolor: 'primary.main',
-                            filter: 'brightness(1.1)',
-                            transform: 'translateY(-2px)'
-                        },
-                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                    }}
-                >
-                    Find People on Map
-                </Button>
-            </Paper>
-        </Container>
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto bg-white dark:bg-[#141218]/80 dark:backdrop-blur-xl border border-black/5 dark:border-white/5 p-4 md:p-6 space-y-4 custom-scrollbar shadow-inner">
+                {messages.length === 0 ? (
+                    <div className="h-full w-full flex flex-col items-center justify-center opacity-50">
+                        <span className="material-symbols-outlined text-6xl mb-4">forum</span>
+                        <p className="font-bold tracking-tight">Send a message to start the conversation.</p>
+                    </div>
+                ) : (
+                    messages.map((msg, idx) => {
+                        const isMe = msg.sender === user._id || msg.senderId === user._id;
+                        return (
+                            <div key={idx} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${isMe ? 'bg-primary text-white rounded-br-sm shadow-md' : 'bg-gray-100 dark:bg-white/10 text-[#1a100f] dark:text-[#E6E1E5] rounded-bl-sm border border-black/5 dark:border-white/5'}`}>
+                                    <p className="text-[15px] leading-relaxed break-words">{msg.content || msg.text}</p>
+                                    <p className={`text-[10px] mt-1 font-bold ${isMe ? 'text-white/70 text-right' : 'text-gray-500 dark:text-gray-400'}`}>
+                                        {format(new Date(msg.createdAt || msg.timestamp), 'h:mm a')}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+                <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Area */}
+            <div className="bg-white dark:bg-white/5 dark:backdrop-blur-xl rounded-b-sq-2xl p-4 shadow-xl border border-black/5 dark:border-white/5 shrink-0 z-20">
+                <form onSubmit={handleSend} className="flex gap-3">
+                    <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type a message..."
+                        className="flex-1 bg-gray-100 dark:bg-[#141218] border border-transparent dark:border-white/10 rounded-sq-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 text-[#1a100f] dark:text-white font-medium placeholder-gray-500 transition-all font-body"
+                    />
+                    <button
+                        type="submit"
+                        disabled={!newMessage.trim()}
+                        className="bg-primary hover:bg-primary/90 text-white rounded-sq-lg px-6 font-bold shadow-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                    >
+                        <span className="material-symbols-outlined">send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
     );
 };
 
