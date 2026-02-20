@@ -149,31 +149,49 @@ const MapComponent = () => {
         });
 
         // Context Menu (Right Click) for Pin Drop
-        initialMap.getViewport().addEventListener('contextmenu', (e) => {
+        initialMap.getViewport().addEventListener('contextmenu', async (e) => {
             e.preventDefault();
             const pixel = initialMap.getEventPixel(e);
             const coord = initialMap.getCoordinateFromPixel(pixel); // Web Mercator
             const lonLat = toLonLat(coord);
 
-            // Drop Destination Pin
-            destinationSource.clear();
-            const pinFeature = new Feature({
-                geometry: new Point(coord),
-                type: 'destination'
-            });
-            pinFeature.setStyle(new Style({
-                image: new StyleCircle({
-                    radius: 9,
-                    fill: new Fill({ color: '#ef4444' }),
-                    stroke: new Stroke({ color: '#fff', width: 3 })
-                })
-            }));
-            destinationSource.addFeature(pinFeature);
-            setDestinationPin({ coordinates: lonLat });
-            setSelectedUser(null); // Deselect user to show Pin panel
-            setIsNavigating(false); // Reset nav state until confirmed
-            setRouteInstructions([]);
-            routeSource.clear();
+            try {
+                // Reverse geocode to get the place name
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lonLat[1]}&lon=${lonLat[0]}`);
+                const data = await res.json();
+                const placeName = data.display_name ? data.display_name.split(',')[0] : 'Dropped Pin';
+
+                destinationSource.clear();
+                const pinFeature = new Feature({
+                    geometry: new Point(coord),
+                    type: 'destination'
+                });
+                // Using document class check or theme check via hack to avoid map re-init
+                const dark = document.documentElement.classList.contains('dark');
+
+                pinFeature.setStyle(new Style({
+                    image: new StyleCircle({
+                        radius: 9,
+                        fill: new Fill({ color: '#3b82f6' }), // Blue marker
+                        stroke: new Stroke({ color: '#fff', width: 3 })
+                    }),
+                    text: new Text({
+                        text: placeName,
+                        offsetY: 20,
+                        fill: new Fill({ color: dark ? '#fff' : '#000' }),
+                        font: 'bold 12px Outfit',
+                        stroke: new Stroke({ color: dark ? '#000' : '#fff', width: 3 })
+                    })
+                }));
+                destinationSource.addFeature(pinFeature);
+                setDestinationPin({ coordinates: lonLat, name: placeName });
+                setSelectedUser(null);
+                setIsNavigating(false);
+                setRouteInstructions([]);
+                routeSource.clear();
+            } catch (err) {
+                // Ignore
+            }
         });
 
         return () => initialMap.setTarget(null);
@@ -328,7 +346,7 @@ const MapComponent = () => {
     // -------------------------------------------------------------------------
     // 4. Routing & Navigation
     // -------------------------------------------------------------------------
-    const getDirections = async (targetCoords) => {
+    const getDirections = async (targetCoords, isUser = false) => {
         if (!map || !targetCoords) return;
 
         let startCoords;
@@ -345,6 +363,12 @@ const MapComponent = () => {
         try {
             const response = await fetch(osrmUrl);
             const data = await response.json();
+
+            if (data.code === 'NoRoute') {
+                setAlertMessage("SORRY, WE CAN'T ROUTE OUTSIDE YOUR CONTINENT.");
+                return;
+            }
+
             if (data.routes && data.routes.length > 0) {
                 const route = data.routes[0];
                 const coordinates = route.geometry.coordinates;
@@ -358,8 +382,12 @@ const MapComponent = () => {
 
                 routeSource.clear();
                 const routeFeature = new Feature({ geometry: new LineString(coordinates.map(coord => fromLonLat(coord))) });
+
+                const dark = document.documentElement.classList.contains('dark');
+                let routeColor = isUser ? (dark ? '#D0BCFF' : '#ef4444') : '#3b82f6';
+
                 routeFeature.setStyle(new Style({
-                    stroke: new Stroke({ color: theme.palette.primary.main, width: 6 }) // Primary Color Route
+                    stroke: new Stroke({ color: routeColor, width: 6 })
                 }));
                 routeSource.addFeature(routeFeature);
 
@@ -368,6 +396,8 @@ const MapComponent = () => {
                     padding: [100, 100, 100, 400],
                     duration: 1500
                 });
+            } else {
+                setAlertMessage("Failed to calculate route.");
             }
         } catch (err) {
             console.error("Routing error:", err);
@@ -385,13 +415,13 @@ const MapComponent = () => {
 
     const startNavigation = () => {
         if (destinationPin) {
-            getDirections(destinationPin.coordinates);
+            getDirections(destinationPin.coordinates, false);
         } else if (selectedUser) {
             // Notify via socket
             if (socketRef.current) {
                 socketRef.current.emit('getting_directions', { targetUserId: selectedUser._id });
             }
-            getDirections(selectedUser.location.coordinates);
+            getDirections(selectedUser.location.coordinates, true);
         }
     };
 
@@ -505,9 +535,40 @@ const MapComponent = () => {
 
     const handleSearchSelect = (place) => {
         const coords = [parseFloat(place.lon), parseFloat(place.lat)];
-        map.getView().animate({ center: fromLonLat(coords), zoom: 14, duration: 1500 });
-        setSearchQuery(place.display_name.split(',')[0]);
+        const coord3857 = fromLonLat(coords);
+        map.getView().animate({ center: coord3857, zoom: 14, duration: 1500 });
+
+        const placeName = place.display_name.split(',')[0];
+        setSearchQuery(placeName);
         setShowSuggestions(false);
+
+        // Drop Destination Pin at search result
+        destinationSource.clear();
+        const pinFeature = new Feature({
+            geometry: new Point(coord3857),
+            type: 'destination'
+        });
+        const dark = document.documentElement.classList.contains('dark');
+        pinFeature.setStyle(new Style({
+            image: new StyleCircle({
+                radius: 9,
+                fill: new Fill({ color: '#3b82f6' }),
+                stroke: new Stroke({ color: '#fff', width: 3 })
+            }),
+            text: new Text({
+                text: placeName,
+                offsetY: 20,
+                fill: new Fill({ color: dark ? '#fff' : '#000' }),
+                font: 'bold 12px Outfit',
+                stroke: new Stroke({ color: dark ? '#000' : '#fff', width: 3 })
+            })
+        }));
+        destinationSource.addFeature(pinFeature);
+        setDestinationPin({ coordinates: coords, name: placeName });
+        setSelectedUser(null);
+        setIsNavigating(false);
+        setRouteInstructions([]);
+        routeSource.clear();
     };
 
     // Debounce Search
@@ -652,7 +713,7 @@ const MapComponent = () => {
                 message={alertMessage}
                 icon="directions_car"
                 show={!!alertMessage}
-                variant="info"
+                variant={alertMessage === "SORRY, WE CAN'T ROUTE OUTSIDE YOUR CONTINENT." ? "routeError" : "info"}
                 duration={6000}
                 onDismiss={() => setAlertMessage(null)}
             />

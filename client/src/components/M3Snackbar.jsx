@@ -25,29 +25,35 @@ import React, { memo, useEffect, useState, useCallback, useRef } from 'react';
 
 const VARIANT_MAP = {
     default: {
-        bg: 'bg-white border border-gray-200 shadow-xl dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-none',
+        bg: 'bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10 shadow-2xl',
         text: 'text-[#1a100f] dark:text-[#E6E1E5]',
         action: 'text-primary dark:text-[#D0BCFF]',
         icon: 'text-gray-500 dark:text-[#E6E1E5]/70'
     },
     success: {
-        bg: 'bg-[#1B5E20] dark:bg-[#A5D6A7]',
-        text: 'text-white dark:text-[#1B5E20]',
-        action: 'text-[#A5D6A7] dark:text-[#2E7D32]',
-        icon: 'text-[#A5D6A7] dark:text-[#2E7D32]'
+        bg: 'bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl border-[0.5px] border-green-500/50 dark:border-green-400/50 shadow-2xl',
+        text: 'text-green-800 dark:text-green-300',
+        action: 'text-green-700 dark:text-green-200',
+        icon: 'text-green-600 dark:text-green-400'
     },
     error: {
-        bg: 'bg-[#B3261E] dark:bg-[#F2B8B5]',
-        text: 'text-white dark:text-[#601410]',
-        action: 'text-[#F2B8B5] dark:text-[#B3261E]',
-        icon: 'text-[#F2B8B5] dark:text-[#601410]'
+        bg: 'bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl border-[0.5px] border-red-500/50 dark:border-red-400/50 shadow-2xl',
+        text: 'text-red-600 dark:text-red-300',
+        action: 'text-red-500 dark:text-red-200',
+        icon: 'text-red-500 dark:text-red-400'
     },
     info: {
-        bg: 'bg-primary dark:bg-[#D0BCFF]',
-        text: 'text-white dark:text-[#381E72]',
-        action: 'text-white/90 dark:text-[#381E72]/90',
-        icon: 'text-white/70 dark:text-[#381E72]/70'
+        bg: 'bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl border-[0.5px] border-primary/30 dark:border-[#D0BCFF]/30 shadow-2xl',
+        text: 'text-[#1a100f] dark:text-[#E6E1E5]',
+        action: 'text-primary dark:text-[#D0BCFF]',
+        icon: 'text-primary dark:text-[#D0BCFF]'
     },
+    routeError: {
+        bg: 'bg-white/10 dark:bg-[#1C1B1F]/10 backdrop-blur-2xl border-[0.5px] border-red-500/50 dark:border-[#D0BCFF]/50 shadow-2xl',
+        text: 'text-red-600 dark:text-[#D0BCFF]',
+        action: 'text-red-600 dark:text-[#D0BCFF]',
+        icon: 'text-red-600 dark:text-[#D0BCFF]'
+    }
 };
 
 const M3Snackbar = memo(({
