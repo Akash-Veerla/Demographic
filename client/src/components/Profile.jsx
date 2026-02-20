@@ -137,24 +137,6 @@ const Profile = () => {
                             </div>
                         </div>
 
-                        {/* Requests */}
-                        <div className="bg-white dark:bg-white/5 dark:backdrop-blur-2xl rounded-[28px] p-8 shadow-xl border-[0.5px] border-white/30 dark:border-white/10 flex-grow hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all">
-                            <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#be3627]/10 dark:border-white/5">
-                                <div className="flex items-center gap-3">
-                                    <M3Badge count={0} showZero color="primary">
-                                        <span className="material-symbols-outlined text-primary text-2xl">people</span>
-                                    </M3Badge>
-                                    <h2 className="text-xl font-display font-bold text-[#1a100f] dark:text-[#E6E1E5]">Friend Requests</h2>
-                                </div>
-                            </div>
-                            <div className="flex flex-col items-center justify-center py-8 text-center h-full min-h-[150px]">
-                                <div className="w-16 h-16 bg-[#f2e9e9] dark:bg-[#231f29] rounded-full flex items-center justify-center mb-4 text-[#915b55] dark:text-[#938F99]">
-                                    <span className="material-symbols-outlined text-3xl">mark_email_read</span>
-                                </div>
-                                <p className="text-[#1a100f] dark:text-[#E6E1E5] font-bold">No pending requests.</p>
-                                <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] mt-1">Check back later or explore the map to meet new people!</p>
-                            </div>
-                        </div>
                     </section>
                 </div>
             </main>
