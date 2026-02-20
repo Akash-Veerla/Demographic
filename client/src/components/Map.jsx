@@ -373,6 +373,20 @@ const MapComponent = () => {
             if (data.routes && data.routes.length > 0) {
                 const route = data.routes[0];
                 const coordinates = route.geometry.coordinates;
+
+                // Validate if the route actually reached near the target (prevent intercontinental OSRM snap bugs)
+                const routeEnd = coordinates[coordinates.length - 1];
+                const toRad = x => x * Math.PI / 180;
+                const dLat = toRad(routeEnd[1] - targetLat);
+                const dLon = toRad(routeEnd[0] - targetLng);
+                const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(targetLat)) * Math.cos(toRad(routeEnd[1])) * Math.sin(dLon / 2) ** 2;
+                const distanceGapKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+                if (distanceGapKm > 100) { // If the end of the route is > 100km from destination, it failed to route across an ocean
+                    setAlertMessage("SORRY, WE CAN'T ROUTE OUTSIDE YOUR CONTINENT.");
+                    return;
+                }
+
                 const instructions = route.legs[0].steps.map(step => step.maneuver.instruction);
 
                 // Pivot UI State
