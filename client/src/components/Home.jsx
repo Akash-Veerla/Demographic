@@ -109,7 +109,7 @@ const Home = () => {
                 {/* 3. Stats (Row 2) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StatCard
-                        label="Friends Online"
+                        label="Friends Near You"
                         count={stats.activeNearby}
                         description="Mutual friends active within 20km"
                         icon={Radio}

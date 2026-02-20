@@ -114,20 +114,28 @@ const MapComponent = () => {
             if (socketRef.current) {
                 socketRef.current.emit('update_location', { lat: storedLocation.lat, lng: storedLocation.lng });
             }
-        } else if (navigator.geolocation) {
-            // Fallback: only fetch geolocation if no stored location
-            navigator.geolocation.getCurrentPosition(
+        }
+
+        let watchId = null;
+        if (navigator.geolocation) {
+            let isFirstFix = true;
+            watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const center = fromLonLat([longitude, latitude]);
+
+                    if (isFirstFix && !storedLocation) {
+                        initialMap.getView().animate({ center, zoom: 14 });
+                    }
+                    isFirstFix = false;
+
                     setUserLocation(center);
-                    initialMap.getView().animate({ center, zoom: 14 });
                     if (socketRef.current) {
                         socketRef.current.emit('update_location', { lat: latitude, lng: longitude });
                     }
                 },
                 (error) => console.error("Geolocation error:", error),
-                { enableHighAccuracy: true }
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
             );
         }
 
@@ -195,7 +203,12 @@ const MapComponent = () => {
             }
         });
 
-        return () => initialMap.setTarget(null);
+        return () => {
+            if (watchId !== null && navigator.geolocation) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            initialMap.setTarget(null);
+        };
     }, []);
 
     // -------------------------------------------------------------------------
@@ -366,7 +379,7 @@ const MapComponent = () => {
             const data = await response.json();
 
             if (data.code === 'NoRoute') {
-                setAlertMessage("SORRY, WE CAN'T ROUTE OUTSIDE YOUR CONTINENT.");
+                setAlertMessage("SORRY, WE CAN'T ROUTE OUTSIDE YOUR CURRENT LOCATION.");
                 return;
             }
 
@@ -382,9 +395,8 @@ const MapComponent = () => {
                 const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(targetLat)) * Math.cos(toRad(routeEnd[1])) * Math.sin(dLon / 2) ** 2;
                 const distanceGapKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-                if (distanceGapKm > 100) { // If the end of the route is > 100km from destination, it failed to route across an ocean
-                    setAlertMessage("SORRY, WE CAN'T ROUTE OUTSIDE YOUR CONTINENT.");
-                    return;
+                if (distanceGapKm > 100) {
+                    setAlertMessage("You can go as far as the road shows. Consider nearest flight/ferry for the rest of the journey!");
                 }
 
                 const instructions = route.legs[0].steps.map(step => step.maneuver.instruction);
@@ -442,6 +454,37 @@ const MapComponent = () => {
             getDirections(selectedUser.location.coordinates, true);
         }
     };
+
+    // Dynamic Route Slicing (Shrinks route behind user as they move)
+    useEffect(() => {
+        if (!isNavigating || !userLocation || routeSource.getFeatures().length === 0) return;
+
+        const feature = routeSource.getFeatures()[0];
+        const geom = feature.getGeometry();
+        const coords = geom.getCoordinates();
+
+        if (coords.length < 2) return;
+
+        let minIndex = 0;
+        let minDistanceSq = Infinity;
+
+        // Find the closest point in the linestring
+        coords.forEach((c, idx) => {
+            const dx = c[0] - userLocation[0];
+            const dy = c[1] - userLocation[1];
+            const distSq = dx * dx + dy * dy;
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
+                minIndex = idx;
+            }
+        });
+
+        // Only slice if we've actually moved somewhat along the path (e.g. index > 0)
+        // Also ensure we don't slice off the destination
+        if (minIndex > 0 && minIndex < coords.length - 1) {
+            feature.setGeometry(new LineString([userLocation, ...coords.slice(minIndex + 1)]));
+        }
+    }, [userLocation, isNavigating, routeSource]);
 
     // -------------------------------------------------------------------------
     // 5. Easter Eggs & Clusters
@@ -766,7 +809,7 @@ const MapComponent = () => {
                 message={alertMessage}
                 icon="directions_car"
                 show={!!alertMessage}
-                variant={alertMessage === "SORRY, WE CAN'T ROUTE OUTSIDE YOUR CONTINENT." ? "routeError" : "info"}
+                variant={alertMessage === "You can go as far as the road shows. Consider nearest flight/ferry for the rest of the journey!" ? "routeError" : "info"}
                 duration={6000}
                 onDismiss={() => setAlertMessage(null)}
             />
