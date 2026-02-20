@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { ColorModeContext } from '../App';
-import { Home } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Avatar from './Avatar';
 import M3NavBar from './M3NavBar';
@@ -102,8 +102,8 @@ const Layout = ({ children }) => {
                             }}
                             onTouchEnd={() => clearTimeout(window.logoPressTimer)}
                         >
-                            <div className="w-10 h-10 rounded-sq-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
-                                <Home size={20} className="text-primary" />
+                            <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary shadow-sm hover:scale-105 transition-transform">
+                                <MapPin size={20} className="text-primary" />
                             </div>
                             <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5] whitespace-nowrap">KON-NECT</span>
                         </div>

@@ -33,7 +33,7 @@ const Landing = () => {
             {/* Navigation Bar */}
             <nav className="relative z-20 w-full px-6 py-5 flex justify-between items-center max-w-7xl mx-auto shrink-0 transition-all duration-300">
                 <div className="flex items-center gap-3 group cursor-pointer z-30" onClick={() => navigate('/')}>
-                    <div className="w-12 h-12 rounded-sq-xl bg-white/70 dark:bg-black/50 backdrop-blur-xl flex items-center justify-center text-primary border border-white/50 dark:border-white/10 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    <div className="w-12 h-12 rounded-2xl bg-white/70 dark:bg-black/50 backdrop-blur-xl flex items-center justify-center text-primary border border-white/50 dark:border-white/10 shadow-lg group-hover:scale-105 transition-transform duration-300">
                         <MapPin size={24} className="text-primary drop-shadow-[0_0_8px_rgba(103,80,164,0.5)]" />
                     </div>
                     <span className="font-black text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-[#1a100f] to-[#5e413d] dark:from-white dark:to-gray-400">KON-NECT</span>
@@ -85,38 +85,17 @@ const Landing = () => {
                             A completely revolutionized way to discover people. Utilizing geo-spatial mapping, AI-driven interest matching, and persistent real-time networking.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-2">
-                            <button
-                                onClick={() => navigate('/register')}
-                                className="group relative px-8 py-4.5 rounded-sq-2xl bg-primary text-white font-black text-lg shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-                            >
-                                <span className="relative z-10 flex items-center gap-3 justify-center">
-                                    Launch Interface
-                                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                    </div>
-                                </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                            </button>
-
-                            <button
-                                onClick={() => navigate('/login')}
-                                className="px-8 py-4.5 rounded-sq-2xl bg-white/50 dark:bg-black/40 backdrop-blur-2xl border-[0.5px] border-white/60 dark:border-white/10 text-[#1a100f] dark:text-white font-bold text-lg hover:bg-white/80 dark:hover:bg-black/60 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300"
-                            >
-                                Access Portal
-                            </button>
-                        </div>
                     </div>
 
                     {/* Right: Feature Grid (Bento Box Style) */}
                     <div className="flex-1 w-full max-w-2xl grid grid-cols-2 gap-4 auto-rows-[minmax(140px,auto)]">
-                        {/* Feature 1 - Large */}
-                        <div className="col-span-2 sm:col-span-1 p-6 rounded-sq-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 overflow-hidden relative group">
+                        {/* Feature 1 - Default 1 on SM, 2 on mobile */}
+                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 overflow-hidden relative group">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-700">
                                 <Route size={120} />
                             </div>
                             <div className="relative z-10 h-full flex flex-col">
-                                <div className="w-12 h-12 rounded-sq-xl bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-auto drop-shadow-md">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-auto drop-shadow-md">
                                     <Route size={24} strokeWidth={2.5} />
                                 </div>
                                 <div className="mt-8">
@@ -126,9 +105,9 @@ const Landing = () => {
                             </div>
                         </div>
 
-                        {/* Feature 2 - Small */}
-                        <div className="p-6 rounded-sq-3xl bg-primary/10 dark:bg-primary/20 backdrop-blur-3xl border border-primary/20 dark:border-primary/10 shadow-2xl hover:bg-primary/20 transition-all duration-500 flex flex-col group">
-                            <div className="w-12 h-12 rounded-sq-xl bg-white/50 dark:bg-black/30 flex items-center justify-center text-primary mb-auto">
+                        {/* Feature 2 */}
+                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-primary/10 dark:bg-primary/20 backdrop-blur-3xl border border-primary/20 dark:border-primary/10 shadow-2xl hover:bg-primary/20 transition-all duration-500 flex flex-col group">
+                            <div className="w-12 h-12 rounded-2xl bg-white/50 dark:bg-black/30 flex items-center justify-center text-primary mb-auto">
                                 <Users size={24} strokeWidth={2.5} />
                             </div>
                             <div className="mt-4">
@@ -137,9 +116,9 @@ const Landing = () => {
                             </div>
                         </div>
 
-                        {/* Feature 3 - Small */}
-                        <div className="p-6 rounded-sq-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 flex flex-col group">
-                            <div className="w-12 h-12 rounded-sq-xl bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 mb-auto">
+                        {/* Feature 3 */}
+                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-500 flex flex-col group">
+                            <div className="w-12 h-12 rounded-2xl bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 mb-auto">
                                 <MessageSquare size={24} strokeWidth={2.5} />
                             </div>
                             <div className="mt-4">
@@ -148,15 +127,28 @@ const Landing = () => {
                             </div>
                         </div>
 
-                        {/* Feature 4 - Wide */}
-                        <div className="col-span-2 p-6 rounded-sq-3xl bg-tertiary/10 dark:bg-tertiary/20 backdrop-blur-3xl border border-tertiary/20 dark:border-tertiary/10 shadow-2xl hover:bg-tertiary/20 transition-all duration-500 overflow-hidden relative group flex items-center justify-between">
-                            <div className="relative z-10 w-2/3">
-                                <h3 className="text-2xl font-black text-tertiary mb-2">Global Heatmaps</h3>
-                                <p className="text-sm font-bold text-tertiary/70">Observe live social pulses and trending interests bubbling up in neighboring continents in real-time.</p>
+                        {/* Feature 4 - New */}
+                        <div className="col-span-2 sm:col-span-1 p-6 rounded-3xl bg-[#5e413d]/10 dark:bg-tertiary/20 backdrop-blur-3xl border border-white/50 dark:border-tertiary/10 shadow-2xl hover:bg-[#5e413d]/20 dark:hover:bg-tertiary/30 transition-all duration-500 flex flex-col group">
+                            <div className="w-12 h-12 rounded-2xl bg-white/50 dark:bg-black/30 flex items-center justify-center text-[#1a100f] dark:text-tertiary mb-auto">
+                                <Sparkles size={24} strokeWidth={2.5} />
                             </div>
-                            <div className="w-20 h-20 rounded-full bg-white/50 dark:bg-black/30 flex items-center justify-center text-tertiary shrink-0 animate-[spin_20s_linear_infinite]">
-                                <Globe size={40} strokeWidth={2} />
+                            <div className="mt-4">
+                                <h3 className="text-lg font-black text-[#1a100f] dark:text-white mb-1">Instant Presence</h3>
+                                <p className="text-xs font-bold text-[#5e413d] dark:text-[#CAC4D0]">Seamless online state tracking across the expansive network map.</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Wide Feature: Global Heatmaps - Spans below both columns */}
+                <div className="w-full max-w-6xl mx-auto mt-6">
+                    <div className="w-full p-6 md:p-8 rounded-3xl bg-tertiary/10 dark:bg-tertiary/20 backdrop-blur-3xl border border-tertiary/20 dark:border-tertiary/10 shadow-2xl hover:bg-tertiary/20 transition-all duration-500 overflow-hidden relative group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                        <div className="relative z-10 w-full sm:w-2/3">
+                            <h3 className="text-2xl font-black text-tertiary mb-2">Global Heatmaps</h3>
+                            <p className="text-sm font-bold text-tertiary/70">Observe live social pulses and trending interests bubbling up in neighboring continents in real-time. Navigate global interests dynamically through intelligent spatial visualizations built on real traffic.</p>
+                        </div>
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/50 dark:bg-black/30 flex items-center justify-center text-tertiary shrink-0 animate-[spin_20s_linear_infinite]">
+                            <Globe className="w-10 h-10 sm:w-12 sm:h-12" strokeWidth={2} />
                         </div>
                     </div>
                 </div>

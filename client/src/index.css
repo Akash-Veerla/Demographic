@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  body {
+    font-variant-caps: small-caps;
+  }
+
   :root {
     /* Light Theme (Red Tone - from secure_login_1) */
     --color-primary: #be3627;
