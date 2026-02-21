@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { Avatar } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import M3LoadingIndicator from './M3LoadingIndicator';
+import M3Dialog from './M3Dialog';
 import { useNavigate } from 'react-router-dom';
 
 const Friends = () => {
@@ -11,6 +12,7 @@ const Friends = () => {
     const [unreadCounts, setUnreadCounts] = useState({});
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [dialogConfig, setDialogConfig] = useState({ open: false, headline: '', message: '', action: null, icon: '' });
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -61,27 +63,43 @@ const Friends = () => {
     };
 
     const handleRemoveFriend = async (friendId) => {
-        if (!window.confirm("Are you sure you want to unfriend?")) return;
-        setActionLoading(friendId);
-        try {
-            await api.delete(`/api/friends/${friendId}`);
-            await fetchAll();
-        } catch (err) {
-            console.error('Failed to remove friend', err);
-        }
-        setActionLoading(null);
+        setDialogConfig({
+            open: true,
+            icon: 'person_remove',
+            headline: 'Remove Friend',
+            message: 'Are you sure you want to unfriend? You will lose access to their location features and chat.',
+            action: async () => {
+                setDialogConfig({ ...dialogConfig, open: false });
+                setActionLoading(friendId);
+                try {
+                    await api.delete(`/api/friends/${friendId}`);
+                    await fetchAll();
+                } catch (err) {
+                    console.error('Failed to remove friend', err);
+                }
+                setActionLoading(null);
+            }
+        });
     };
 
     const handleBlockUser = async (userId) => {
-        if (!window.confirm("Are you sure you want to block this user?")) return;
-        setActionLoading(userId);
-        try {
-            await api.post('/api/users/block', { targetId: userId });
-            await fetchAll();
-        } catch (err) {
-            console.error('Failed to block user', err);
-        }
-        setActionLoading(null);
+        setDialogConfig({
+            open: true,
+            icon: 'block',
+            headline: 'Block User',
+            message: 'Are you sure you want to block this user? They will not be able to interact with you.',
+            action: async () => {
+                setDialogConfig({ ...dialogConfig, open: false });
+                setActionLoading(userId);
+                try {
+                    await api.post('/api/users/block', { targetId: userId });
+                    await fetchAll();
+                } catch (err) {
+                    console.error('Failed to block user', err);
+                }
+                setActionLoading(null);
+            }
+        });
     };
 
     const handleChatClick = (friend) => {
@@ -144,7 +162,10 @@ const Friends = () => {
                         </div>
                         <p className="text-xl font-black text-[#1a100f] dark:text-white tracking-tight">No active chats</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium max-w-[260px] mt-2 leading-relaxed">Find people on the map and send connection requests to start chatting.</p>
-                        <button onClick={() => navigate('/map')} className="mt-8 px-8 py-3.5 bg-primary text-white rounded-full font-black text-sm uppercase tracking-wide shadow-lg hover:shadow-xl hover:scale-105 transition-all shadow-primary/30">Explore Map</button>
+                        <div className="flex gap-3 mt-8">
+                            <button onClick={() => navigate('/map')} className="px-6 py-3.5 bg-primary text-white rounded-full font-black text-sm uppercase tracking-wide shadow-lg hover:shadow-xl hover:scale-105 transition-all shadow-primary/30">Explore Map</button>
+                            <button onClick={() => navigate('/social')} className="px-6 py-3.5 bg-white dark:bg-white/10 text-primary dark:text-[#D0BCFF] border border-primary/20 dark:border-white/10 rounded-full font-black text-sm uppercase tracking-wide shadow-lg hover:shadow-xl hover:scale-105 transition-all outline-none">Explore Social Community</button>
+                        </div>
                     </div>
                 ) : (
                     friends.map(friend => {
@@ -199,6 +220,19 @@ const Friends = () => {
                     })
                 )}
             </div>
+
+            <M3Dialog
+                open={dialogConfig.open}
+                onClose={() => setDialogConfig({ ...dialogConfig, open: false })}
+                icon={dialogConfig.icon}
+                headline={dialogConfig.headline}
+                actions={[
+                    { label: 'Cancel', onClick: () => setDialogConfig({ ...dialogConfig, open: false }) },
+                    { label: 'Confirm', variant: 'filled', onClick: dialogConfig.action }
+                ]}
+            >
+                <p>{dialogConfig.message}</p>
+            </M3Dialog>
         </div>
     );
 };

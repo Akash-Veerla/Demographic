@@ -31,6 +31,7 @@ import M3FAB from './M3FAB';
 import M3Chip from './M3Chip';
 import M3Switch from './M3Switch';
 import M3Snackbar from './M3Snackbar';
+import M3Dialog from './M3Dialog';
 import { useTheme } from '@mui/material';
 
 const TIPS = [
@@ -78,6 +79,8 @@ const MapComponent = () => {
     // Tips Carousel State
     const [currentTipIndex, setCurrentTipIndex] = useState(0);
     const [isTipVisible, setIsTipVisible] = useState(true);
+
+    const [dialogConfig, setDialogConfig] = useState({ open: false, title: '', message: '', icon: '', onConfirm: null });
 
     // -------------------------------------------------------------------------
     // 0. Tips Carousel Effect (Smooth Transition)
@@ -507,13 +510,19 @@ const MapComponent = () => {
     // Listener for Cluster Event (from Logo or Search)
     useEffect(() => {
         const handleShowClusters = () => {
-            if (!map || nearbyUsersList.length === 0 || !storedLocation) return;
+            if (!map || nearbyUsersList.length === 0 || (!userLocation && !storedLocation)) return;
 
             setAlertMessage('Secret Found: Clusters Activated!');
             clusterSource.clear();
 
-            const userCoords = [storedLocation.longitude, storedLocation.latitude];
-            const center = fromLonLat(userCoords);
+            let center;
+            if (userLocation) {
+                center = userLocation;
+            } else if (storedLocation) {
+                center = fromLonLat([storedLocation.lng, storedLocation.lat]);
+            } else {
+                return;
+            }
 
             // All coordinates for the bounding polygon
             const pointsVec = [center];
@@ -570,7 +579,7 @@ const MapComponent = () => {
 
         window.addEventListener('show_cluster_centers', handleShowClusters);
         return () => window.removeEventListener('show_cluster_centers', handleShowClusters);
-    }, [map, nearbyUsersList, clusterSource, storedLocation]);
+    }, [map, nearbyUsersList, clusterSource, storedLocation, userLocation]);
 
 
     // -------------------------------------------------------------------------
@@ -772,11 +781,13 @@ const MapComponent = () => {
                     variant="surface"
                     ariaLabel="Locate Me"
                     onClick={() => {
-                        if (navigator.geolocation && map) {
-                            navigator.geolocation.getCurrentPosition((pos) => {
-                                const coords = fromLonLat([pos.coords.longitude, pos.coords.latitude]);
+                        if (map) {
+                            if (userLocation) {
+                                map.getView().animate({ center: userLocation, zoom: 15, duration: 1000 });
+                            } else if (storedLocation) {
+                                const coords = fromLonLat([storedLocation.lng, storedLocation.lat]);
                                 map.getView().animate({ center: coords, zoom: 15, duration: 1000 });
-                            });
+                            }
                         }
                     }}
                 />
@@ -833,17 +844,24 @@ const MapComponent = () => {
                     <div className="flex gap-1 shrink-0">
                         {selectedUser && (
                             <button
-                                onClick={async () => {
-                                    if (window.confirm(`Block ${selectedUser.displayName}? They will no longer be able to interact with you.`)) {
-                                        try {
-                                            await api.post('/api/users/block', { targetId: selectedUser._id });
-                                            setAlertMessage(`Blocked ${selectedUser.displayName}`);
-                                            setSelectedUser(null);
-                                            fetchNearbyUsers();
-                                        } catch (err) {
-                                            setAlertMessage('Failed to block user');
+                                onClick={() => {
+                                    setDialogConfig({
+                                        open: true,
+                                        icon: 'block',
+                                        title: 'Block User',
+                                        message: `Block ${selectedUser.displayName}? They will no longer be able to interact with you.`,
+                                        onConfirm: async () => {
+                                            setDialogConfig({ ...dialogConfig, open: false });
+                                            try {
+                                                await api.post('/api/users/block', { targetId: selectedUser._id });
+                                                setAlertMessage(`Blocked ${selectedUser.displayName}`);
+                                                setSelectedUser(null);
+                                                fetchNearbyUsers();
+                                            } catch (err) {
+                                                setAlertMessage('Failed to block user');
+                                            }
                                         }
-                                    }
+                                    });
                                 }}
                                 className="w-8 h-8 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded-sq-sm transition-colors"
                                 title="Block User"
@@ -1038,17 +1056,24 @@ const MapComponent = () => {
                                 Friends
                             </div>
                             <button
-                                onClick={async () => {
-                                    if (window.confirm(`Unfriend ${selectedUser.displayName}?`)) {
-                                        try {
-                                            await api.delete(`/api/friends/${selectedUser._id}`);
-                                            setSelectedUser(prev => ({ ...prev, isFriend: false }));
-                                            setAlertMessage(`Unfriended ${selectedUser.displayName}`);
-                                            fetchNearbyUsers();
-                                        } catch (e) {
-                                            setAlertMessage('Failed to unfriend');
+                                onClick={() => {
+                                    setDialogConfig({
+                                        open: true,
+                                        icon: 'person_remove',
+                                        title: 'Unfriend',
+                                        message: `Are you sure you want to unfriend ${selectedUser.displayName}?`,
+                                        onConfirm: async () => {
+                                            setDialogConfig({ ...dialogConfig, open: false });
+                                            try {
+                                                await api.delete(`/api/friends/${selectedUser._id}`);
+                                                setSelectedUser(prev => ({ ...prev, isFriend: false }));
+                                                setAlertMessage(`Unfriended ${selectedUser.displayName}`);
+                                                fetchNearbyUsers();
+                                            } catch (e) {
+                                                setAlertMessage('Failed to unfriend');
+                                            }
                                         }
-                                    }
+                                    });
                                 }}
                                 className="w-9 h-9 shrink-0 flex items-center justify-center bg-gray-100 hover:bg-red-50 dark:bg-white/10 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-500 rounded-sq-lg transition-colors"
                                 title="Unfriend"
@@ -1109,6 +1134,19 @@ const MapComponent = () => {
                 </div>
             </div>
 
+            {/* Confirmation Dialog */}
+            <M3Dialog
+                open={dialogConfig.open}
+                onClose={() => setDialogConfig({ ...dialogConfig, open: false })}
+                icon={dialogConfig.icon}
+                headline={dialogConfig.title}
+                actions={[
+                    { label: 'Cancel', onClick: () => setDialogConfig({ ...dialogConfig, open: false }) },
+                    { label: 'Confirm', variant: 'filled', onClick: dialogConfig.onConfirm }
+                ]}
+            >
+                <p className="font-medium text-gray-700 dark:text-gray-300">{dialogConfig.message}</p>
+            </M3Dialog>
         </div>
     );
 };

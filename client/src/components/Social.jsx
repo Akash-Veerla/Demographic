@@ -6,6 +6,7 @@ import { MessageSquare } from 'lucide-react';
 import M3LoadingIndicator from './M3LoadingIndicator';
 import M3Chip, { M3ChipSet } from './M3Chip';
 import M3SegmentedButton from './M3SegmentedButton';
+import M3Dialog from './M3Dialog';
 
 const Social = () => {
     const [users, setUsers] = useState([]);
@@ -14,6 +15,7 @@ const Social = () => {
     const [friends, setFriends] = useState([]);
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [dialogConfig, setDialogConfig] = useState({ open: false, title: '', message: '', onConfirm: null, icon: '' });
     const { user, userLocation, updateInterests } = useAuth();
 
     // Fetch Global Users (Discover), Friend Requests, Friends
@@ -225,9 +227,16 @@ const Social = () => {
                         {isFriend ? (
                             <button
                                 onClick={() => {
-                                    if (window.confirm(`Unfriend ${u.displayName}?`)) {
-                                        handleRemoveFriend(u._id)
-                                    }
+                                    setDialogConfig({
+                                        open: true,
+                                        icon: 'person_remove',
+                                        title: 'Remove Friend',
+                                        message: `Are you sure you want to unfriend ${u.displayName}?`,
+                                        onConfirm: async () => {
+                                            setDialogConfig({ ...dialogConfig, open: false });
+                                            handleRemoveFriend(u._id);
+                                        }
+                                    });
                                 }}
                                 disabled={actionLoading === u._id}
                                 className="w-full bg-primary/20 hover:bg-red-50 dark:bg-[#D0BCFF]/20 dark:hover:bg-red-900/40 text-primary dark:text-[#D0BCFF] hover:text-red-500 dark:hover:text-red-400 font-bold h-10 rounded-sq-lg flex items-center justify-center gap-2 text-sm backdrop-blur-md transition-colors group disabled:opacity-50"
@@ -338,6 +347,20 @@ const Social = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Confirmation Dialog */}
+            <M3Dialog
+                open={dialogConfig.open}
+                onClose={() => setDialogConfig({ ...dialogConfig, open: false })}
+                icon={dialogConfig.icon}
+                headline={dialogConfig.title}
+                actions={[
+                    { label: 'Cancel', onClick: () => setDialogConfig({ ...dialogConfig, open: false }) },
+                    { label: 'Confirm', variant: 'filled', onClick: dialogConfig.onConfirm }
+                ]}
+            >
+                <p className="font-medium text-gray-700 dark:text-gray-300">{dialogConfig.message}</p>
+            </M3Dialog>
         </div>
     );
 };

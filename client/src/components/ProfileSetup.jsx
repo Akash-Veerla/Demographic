@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import M3Snackbar from './M3Snackbar';
 
 const DEFAULT_INTERESTS = [
     "Sports & Outdoors", "Travel", "Business & Industry", "Entertainment & Media",
@@ -20,6 +21,7 @@ const ProfileSetup = () => {
     const [profilePhoto, setProfilePhoto] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [alertMessage, setAlertMessage] = useState(null);
 
     // Fetch canonical interests from API
     useEffect(() => {
@@ -79,7 +81,7 @@ const ProfileSetup = () => {
         // Check case insensitive duplicate
         const exists = selectedInterests.some(i => i.toLowerCase() === trimmed.toLowerCase());
         if (exists) {
-            alert("Interest already added!");
+            setAlertMessage("Interest already added!");
             return;
         }
         setSelectedInterests([...selectedInterests, trimmed]);
@@ -89,7 +91,7 @@ const ProfileSetup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (selectedInterests.length === 0) {
-            alert("Please select at least one interest.");
+            setAlertMessage("Please select at least one interest.");
             return;
         }
 
@@ -111,7 +113,7 @@ const ProfileSetup = () => {
             navigate('/');
         } catch (err) {
             console.error("Setup failed:", err);
-            alert("Failed to save profile. Please try again.");
+            setAlertMessage(err.response?.data?.error || "Failed to save profile. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -234,6 +236,13 @@ const ProfileSetup = () => {
                     </form>
                 </div>
             </main>
+
+            {alertMessage && (
+                <M3Snackbar
+                    message={alertMessage}
+                    onClose={() => setAlertMessage(null)}
+                />
+            )}
         </div>
     );
 };

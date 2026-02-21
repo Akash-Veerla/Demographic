@@ -36,15 +36,8 @@ const BlockedUsers = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F6F3E6] dark:bg-[#141218] flex flex-col relative overflow-hidden transition-colors duration-700">
-            {/* Background elements */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-lighten animate-blob"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#5e413d]/20 dark:bg-tertiary/10 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-lighten animate-blob animation-delay-2000"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/90 dark:via-background-dark/60 dark:to-background-dark/70 transition-colors duration-700"></div>
-            </div>
-
-            <main className="relative z-10 w-full max-w-4xl mx-auto px-6 py-12 flex-1 flex flex-col pt-24 md:pt-12">
+        <div className="h-full w-full p-4 md:p-8 animate-fade-in relative z-10 pb-24 max-w-3xl mx-auto">
+            <main className="w-full flex-1 flex flex-col pt-12 md:pt-4">
                 <div className="flex items-center gap-4 mb-8">
                     <button
                         onClick={() => navigate('/profile')}
