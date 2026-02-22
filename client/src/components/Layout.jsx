@@ -64,7 +64,7 @@ const Layout = ({ children }) => {
     };
 
     const navItems = [
-        { label: 'Home', icon: 'home', activeIcon: 'home', path: '/' },
+        { label: 'Home', icon: 'home', activeIcon: 'home', path: '/home' },
         { label: 'Map', icon: 'map', activeIcon: 'map', path: '/map' },
         { label: 'Social', icon: 'explore', activeIcon: 'explore', path: '/social' },
         { label: 'Friends', icon: 'group', activeIcon: 'group', path: '/friends' },

@@ -6,6 +6,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const passport = require('passport'); // Import Passport
+const bcrypt = require('bcryptjs');
 require('./auth/google'); // Import Google Strategy Config
 
 const User = require('./models/User');
@@ -182,11 +183,22 @@ io.on('connection', (socket) => {
         if (!userId || !receiverId) return;
 
         try {
+            const senderUser = await User.findById(userId).select('displayName profilePhoto');
+            const receiverUser = await User.findById(receiverId).select('displayName profilePhoto');
+            const senderName = senderUser ? senderUser.displayName : 'User';
+
+            // Build participant details for root schema (optimization point)
+            const pDetails = [
+                { userId: userId, displayName: senderName, profilePhoto: senderUser?.profilePhoto || '' },
+                { userId: receiverId, displayName: receiverUser?.displayName || 'User', profilePhoto: receiverUser?.profilePhoto || '' }
+            ];
+
             const conv = await Conversation.findOneAndUpdate(
                 { roomId },
                 {
-                    $setOnInsert: { participants: [userId, receiverId] },
-                    $push: { messages: { sender: userId, receiver: receiverId, content: message, read: false } }
+                    $setOnInsert: { participants: [userId, receiverId], participantDetails: pDetails },
+                    $push: { messages: { sender: userId, senderName: senderName, receiver: receiverId, content: message, status: 'sent', readAt: null } },
+                    $set: { lastMessageAt: new Date() }
                 },
                 { upsert: true, new: true }
             );
@@ -194,18 +206,12 @@ io.on('connection', (socket) => {
             const msg = conv.messages[conv.messages.length - 1];
 
             // Emit to the room (or specific user if room isn't joined by receiver yet)
-            io.to(roomId).emit('receive_message', {
-                _id: msg._id,
-                text: message,
-                senderId: userId,
-                timestamp: msg.createdAt
-            });
+            io.to(roomId).emit('receive_message', msg);
 
             // Also emit a notification to the target user (for their friends list)
             io.to(receiverId).emit('message_notification', {
-                senderId: userId,
-                text: message,
-                timestamp: msg.createdAt
+                ...msg.toObject(),
+                senderName: senderName
             });
         } catch (err) {
             console.error('Error saving message:', err);
@@ -217,13 +223,14 @@ io.on('connection', (socket) => {
         const receiverId = socketToUser.get(socket.id);
         if (!receiverId) return;
         try {
+            const currentReadAt = new Date();
             await Conversation.updateOne(
                 { roomId },
-                { $set: { "messages.$[elem].read": true } },
-                { arrayFilters: [{ "elem.sender": senderId, "elem.read": false }] }
+                { $set: { "messages.$[elem].status": "read", "messages.$[elem].readAt": currentReadAt } },
+                { arrayFilters: [{ "elem.sender": senderId, "elem.status": { $ne: "read" } }] }
             );
             // Notify sender that messages were read
-            io.to(senderId).emit('messages_read', { roomId, readerId: receiverId });
+            io.to(senderId).emit('messages_read', { roomId, readerId: receiverId, readAt: currentReadAt });
         } catch (err) {
             console.error('Error marking messages read:', err);
         }
@@ -608,8 +615,11 @@ app.get('/health', (req, res) => {
 
 app.get('/api/current_user', requireAuth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.json(user);
+        const user = await User.findById(req.user.id);
+        const userObj = user.toObject();
+        userObj.hasPassword = !!userObj.password;
+        delete userObj.password; // Ensure password isn't leaked
+        res.json(userObj);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch user' });
     }
@@ -628,12 +638,38 @@ app.post('/api/user/profile', requireAuth, async (req, res) => {
             req.user.id,
             updateData,
             { new: true }
-        ).select('-password');
+        );
+        const userObj = updatedUser.toObject();
+        userObj.hasPassword = !!userObj.password;
+        delete userObj.password;
 
-        res.json(updatedUser);
+        res.json(userObj);
     } catch (err) {
         console.error('Error updating profile:', err);
         res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
+app.post('/api/user/setup-password', requireAuth, async (req, res) => {
+    try {
+        const { password } = req.body;
+        if (!password || password.length < 8) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters' });
+        }
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+
+        const userObj = user.toObject();
+        userObj.hasPassword = true;
+        delete userObj.password;
+        res.json(userObj);
+    } catch (err) {
+        console.error('Error setting password:', err);
+        res.status(500).json({ error: 'Failed to set password' });
     }
 });
 
@@ -1010,11 +1046,17 @@ app.get('/api/messages/:roomId', requireAuth, async (req, res) => {
 
         // Mark as read if the current user is the receiver
         if (conv) {
-            await Conversation.updateOne(
-                { roomId },
-                { $set: { "messages.$[elem].read": true } },
-                { arrayFilters: [{ "elem.receiver": req.user.id, "elem.read": false }] }
-            );
+            let hasChanges = false;
+            conv.messages.forEach(msg => {
+                if (msg.receiver.toString() === req.user.id && msg.status !== 'read') {
+                    msg.status = 'read';
+                    msg.readAt = new Date();
+                    hasChanges = true;
+                }
+            });
+            if (hasChanges) {
+                await conv.save();
+            }
         }
 
         res.json(messages);
@@ -1029,7 +1071,7 @@ app.get('/api/messages/unread/count', requireAuth, async (req, res) => {
         const unreadCounts = await Conversation.aggregate([
             { $match: { participants: new mongoose.Types.ObjectId(req.user.id) } },
             { $unwind: "$messages" },
-            { $match: { "messages.receiver": new mongoose.Types.ObjectId(req.user.id), "messages.read": false } },
+            { $match: { "messages.receiver": new mongoose.Types.ObjectId(req.user.id), "messages.status": { $ne: "read" } } },
             { $group: { _id: "$messages.sender", count: { $sum: 1 } } }
         ]);
 

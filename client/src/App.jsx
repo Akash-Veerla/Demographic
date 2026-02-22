@@ -127,7 +127,8 @@ const AppContent = () => {
                                     <ProtectedRoute>
                                         <Layout>
                                             <Routes>
-                                                <Route path="/" element={<Home />} />
+                                                <Route path="/home" element={<Home />} />
+                                                <Route path="/" element={<Navigate to="/home" replace />} />
                                                 <Route path="/social" element={<Social />} />
                                                 <Route path="/map" element={<MapStandalone />} />
                                                 <Route path="/friends" element={<Friends />} />

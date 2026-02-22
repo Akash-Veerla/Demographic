@@ -1,47 +1,12 @@
-# Demographic - Client (Frontend)
+# KON-NECT Portal
 
-This is the frontend client for the **Demographic** social map application.
+Welcome to the digital gateway of KON-NECT! The portal is your frontline interface offering a premium, smooth, and hyper-responsive user experience across all devices.
 
-## Tech Stack
+## The Experience
 
--   **Framework**: React (v19) + Vite
--   **Styling**: TailwindCSS + Material UI (MUI)
--   **State Management**: React Context API (`AuthContext`, `ColorModeContext`)
--   **Routing**: React Router DOM (v7)
--   **Real-time**: Socket.io Client
--   **Icons**: Lucide React + Material Symbols
+-   **Stunning Interface**: Driven by beautiful glassmorphism gradients and crisp typography that adapts organically to Light or Dark modes depending on your preference.
+-   **Live Interactive Connectivity**: See users populated directly onto your local map in real time. Our 10km constraint filters the noise, allowing you to focus on the community directly surrounding you without overwhelming your screen.
+-   **Effortless Matching**: A robust profile system natively pairs users who share explicitly defined hobbies, occupations, and lifestyle traits so finding new friends is seamless and natural.
+-   **Privacy-First Communication**: Peer-to-peer real-time chatting ensures total ephemerality, leaving zero trace of past conversations once your connection is complete.
 
-## Features
-
--   **Premium UI**: Glassmorphism design, animated gradients, and dark mode support.
--   **Interactive Map**: Real-time user discovery using geolocation.
--   **User Profiles**: Dynamic profiles with avatars, interests, and bio.
--   **Chat**: Real-time messaging with nearby users.
--   **Authentication**: Custom JWT-based auth (Register/Login).
-
-## Project Structure
-
--   `src/components/`: Reusable UI components (Map, Chat, Profile, etc.).
--   `src/context/`: Global state providers (Auth, Theme).
--   `src/utils/`: Helper functions and API configuration (`axios` interceptors).
--   `src/assets/`: Static assets.
-
-## Running Locally
-
-1.  Install dependencies:
-    ```bash
-    npm install
-    ```
-
-2.  Run the development server:
-    ```bash
-    npm run dev
-    ```
-
-3.  The app will open at `http://localhost:5173`.
-
-## Environment Variables
-
-Ensure you have a `.env` file in the root (legacy) or `client/` root depending on your vite config setup, though typically Vite reads from the root `.env` if configured or `client/.env`.
-
--   `VITE_API_URL`: Backend URL (e.g., `http://localhost:10000`)
+Jump into KON-NECT, enable your location, and discover who’s standing right next to you!

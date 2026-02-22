@@ -174,9 +174,11 @@ router.post('/forgot-password', async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            // For security, generic message? User requested "give the user a strong temporary password".
-            // If user not found, we probably shouldn't show a password.
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (!user.password && user.googleId) {
+            return res.status(400).json({ error: 'This email is linked to Google. Please log in with Google.' });
         }
 
         // Generate strong random password

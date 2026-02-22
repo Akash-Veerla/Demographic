@@ -59,8 +59,22 @@ const Chat = () => {
 
         socket.on('receive_message', handleReceive);
 
+        const handleMessagesRead = ({ roomId: readRoomId, readAt }) => {
+            if (readRoomId === roomId) {
+                setMessages(prev => prev.map(msg => {
+                    const isMe = msg.sender === user._id || msg.senderId === user._id;
+                    if (isMe && msg.status !== 'read') {
+                        return { ...msg, status: 'read', readAt: readAt };
+                    }
+                    return msg;
+                }));
+            }
+        };
+        socket.on('messages_read', handleMessagesRead);
+
         return () => {
             socket.off('receive_message', handleReceive);
+            socket.off('messages_read', handleMessagesRead);
         };
     }, [socket, roomId, friend]);
 
@@ -121,11 +135,23 @@ const Chat = () => {
                         const isMe = msg.sender === user._id || msg.senderId === user._id;
                         return (
                             <div key={idx} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${isMe ? 'bg-primary text-white rounded-br-sm shadow-md' : 'bg-gray-100 dark:bg-white/10 text-[#1a100f] dark:text-[#E6E1E5] rounded-bl-sm border border-black/5 dark:border-white/5'}`}>
+                                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl flex flex-col ${isMe ? 'bg-primary text-white rounded-br-sm shadow-md' : 'bg-gray-100 dark:bg-white/10 text-[#1a100f] dark:text-[#E6E1E5] rounded-bl-sm border border-black/5 dark:border-white/5'}`}>
+                                    {!isMe && (
+                                        <span className="text-[11px] font-black text-primary/80 dark:text-primary/50 mb-1">
+                                            {msg.senderName || friend?.displayName || 'User'}
+                                        </span>
+                                    )}
                                     <p className="text-[15px] leading-relaxed break-words">{msg.content || msg.text}</p>
-                                    <p className={`text-[10px] mt-1 font-bold ${isMe ? 'text-white/70 text-right' : 'text-gray-500 dark:text-gray-400'}`}>
-                                        {format(new Date(msg.createdAt || msg.timestamp), 'h:mm a')}
-                                    </p>
+                                    <div className={`flex items-center gap-1 mt-1 justify-end ${isMe ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>
+                                        <span className="text-[10px] font-bold">
+                                            {format(new Date(msg.createdAt || msg.timestamp), 'h:mm a')}
+                                        </span>
+                                        {isMe && (
+                                            <span className={`material-symbols-outlined text-[14px] ${msg.status === 'read' ? 'text-blue-200' : ''}`} style={{ fontVariationSettings: "'FILL' 0, 'wght' 600" }}>
+                                                {msg.status === 'read' ? 'done_all' : (msg.status === 'delivered' ? 'done_all' : 'check')}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );

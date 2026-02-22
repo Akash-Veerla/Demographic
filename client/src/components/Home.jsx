@@ -96,7 +96,7 @@ const Home = () => {
                         title="Explore Map"
                         description="Discover people and places matching your vibe nearby."
                         icon={Map}
-                        onClick={() => navigate('/social')}
+                        onClick={() => navigate('/map')}
                     />
                     <DashboardCard
                         title="My Profile"

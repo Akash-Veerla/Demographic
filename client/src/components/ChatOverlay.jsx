@@ -23,18 +23,34 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
         // Listeners
         const handleChatJoined = ({ roomId }) => {
             setRoomId(roomId);
+            socket.emit('mark_read', { roomId, senderId: targetUser._id });
         };
 
         const handleReceiveMessage = (data) => {
             setMessages(prev => [...prev, data]);
+            if (data.senderId === targetUser._id || data.sender === targetUser._id) {
+                socket.emit('mark_read', { roomId: data.roomId || roomId, senderId: targetUser._id });
+            }
+        };
+
+        const handleMessagesRead = ({ roomId: readRoomId, readAt }) => {
+            setMessages(prev => prev.map(msg => {
+                const isMe = msg.sender === user._id || msg.senderId === user._id;
+                if (isMe && msg.status !== 'read') {
+                    return { ...msg, status: 'read', readAt: readAt };
+                }
+                return msg;
+            }));
         };
 
         socket.on('chat_joined', handleChatJoined);
         socket.on('receive_message', handleReceiveMessage);
+        socket.on('messages_read', handleMessagesRead);
 
         return () => {
             socket.off('chat_joined', handleChatJoined);
             socket.off('receive_message', handleReceiveMessage);
+            socket.off('messages_read', handleMessagesRead);
         };
     }, [socket, targetUser]);
 
@@ -47,7 +63,7 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
             socket.emit('send_message', {
                 roomId,
                 message: input,
-                toName: targetUser.displayName
+                receiverId: targetUser._id
             });
             setInput('');
         }
@@ -117,8 +133,20 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
                                 boxShadow: isMe ? '0 4px 12px rgba(var(--primary-main-rgb),0.3)' : '0 2px 8px rgba(0,0,0,0.05)',
                                 border: isMe ? 'none' : '0.5px solid rgba(255,255,255,0.2)'
                             }}>
-                                {!isMe && <Typography variant="caption" display="block" sx={{ opacity: 0.8, mb: 0.5, fontWeight: 'black' }}>{msg.senderName}</Typography>}
-                                <Typography variant="body2" sx={{ fontWeight: '600' }}>{msg.text}</Typography>
+                                {!isMe && <Typography variant="caption" display="block" sx={{ opacity: 0.8, mb: 0.5, fontWeight: 'black' }}>{msg.senderName || targetUser.displayName || 'User'}</Typography>}
+                                <Typography variant="body2" sx={{ fontWeight: '600' }}>{msg.content || msg.text}</Typography>
+
+                                {/* Timestamp & Read Receipt */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, mt: 0.5 }}>
+                                    <Typography variant="caption" sx={{ fontSize: '9px', opacity: 0.7, fontWeight: 'bold' }}>
+                                        {msg.createdAt || msg.timestamp ? new Date(msg.createdAt || msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                    </Typography>
+                                    {isMe && (
+                                        <span className={`material-symbols-outlined ${msg.status === 'read' ? 'text-blue-300' : 'text-white/70'}`} style={{ fontSize: '12px', fontVariationSettings: "'FILL' 0, 'wght' 600" }}>
+                                            {msg.status === 'read' ? 'done_all' : (msg.status === 'delivered' ? 'done_all' : 'check')}
+                                        </span>
+                                    )}
+                                </Box>
                             </Paper>
                         </Box>
                     );
@@ -159,7 +187,7 @@ const ChatOverlay = ({ socket, user, targetUser, onClose }) => {
                     <Send size={18} />
                 </IconButton>
             </Box>
-        </Paper>
+        </Paper >
     );
 };
 
