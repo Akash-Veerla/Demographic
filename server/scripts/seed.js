@@ -14,8 +14,8 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const User = require('./models/User');
-const FriendRequest = require('./models/FriendRequest');
+const User = require('../models/User');
+const FriendRequest = require('../models/FriendRequest');
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
@@ -24,7 +24,7 @@ if (!MONGO_URI) {
 }
 
 // ─────────────────────────────────── Interests ────────────────────────────────
-const INTERESTS = require('./config/Interests.json');
+const INTERESTS = require('../config/Interests.json');
 
 // ─────────────────────────────────── Indian Names ─────────────────────────────
 const MALE_NAMES = [

@@ -16,7 +16,10 @@ If you are cloning this repo and want to test the map logic in your own city or 
 5.  **Change User Count**: Locate the `for` loop (around line 240). Change `i < 200` to whatever number of users you need.
 6.  **Run the script**:
     ```bash
-    # From the project root
+    # From the server directory
+    node scripts/seed.js
+    
+    # OR from the project root
     npm run seed
     ```
 

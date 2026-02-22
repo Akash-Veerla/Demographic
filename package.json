@@ -8,7 +8,7 @@
     "start": "node server/index.js",
     "build": "npm install && cd client && npm install && npm run build",
     "dev": "concurrently \"npm start\" \"cd client && npm run dev\"",
-    "seed": "node server/seed.js",
+    "seed": "node server/scripts/seed.js",
     "reset-cluster": "node server/scripts/resetCluster.js",
     "reset-surgical": "node server/scripts/resetClusterSurgical.js",
     "seed-ghosts": "node server/scripts/seedGhosts.js"
