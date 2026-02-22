@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { ColorModeContext } from '../App';
 import { MapPin } from 'lucide-react';
@@ -9,6 +9,7 @@ import M3IconButton from './M3IconButton';
 import M3Switch from './M3Switch';
 import M3SegmentedButton from './M3SegmentedButton';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { requestNotificationPermission, sendNotification } from '../utils/notifications';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -17,6 +18,45 @@ const Layout = ({ children }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const { toggleColorMode, mode } = useContext(ColorModeContext);
+    const { socket } = useAuth();
+
+    // 1. Request Notification Permission
+    useEffect(() => {
+        if (user) {
+            requestNotificationPermission();
+        }
+    }, [user]);
+
+    // 2. Global Socket Listeners for Notifications
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleMessageNotif = (data) => {
+            // Check if user is currently inside that chat room to avoid redundant sounds/notifs
+            const inChat = location.pathname === `/chat/${data.roomId}`;
+            if (!inChat) {
+                sendNotification(`New Message from ${data.senderName}`, {
+                    body: data.message,
+                    tag: 'message'
+                });
+            }
+        };
+
+        const handleFriendReqNotif = (data) => {
+            sendNotification(`Friend Request`, {
+                body: data.message || `${data.fromName} sent you a friend request.`,
+                tag: 'friend_request'
+            });
+        };
+
+        socket.on('message_notification', handleMessageNotif);
+        socket.on('friend_request_notification', handleFriendReqNotif);
+
+        return () => {
+            socket.off('message_notification', handleMessageNotif);
+            socket.off('friend_request_notification', handleFriendReqNotif);
+        };
+    }, [socket, location.pathname]);
 
     const handleLogout = () => {
         logout();

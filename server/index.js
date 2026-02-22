@@ -9,7 +9,6 @@ const passport = require('passport'); // Import Passport
 require('./auth/google'); // Import Google Strategy Config
 
 const User = require('./models/User');
-const CustomInterest = require('./models/CustomInterest');
 const FriendRequest = require('./models/FriendRequest');
 const Conversation = require('./models/Message');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -703,39 +702,14 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
                 // Use Standard Interest exactly as defined
                 finalizedInterests.push(STANDARD_INTERESTS[baseIndex]);
             } else {
-                // Check if it already exists in CustomInterests
-                const existing = await CustomInterest.findOne({ name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
-                if (existing) {
-                    finalizedInterests.push(existing.name);
-                } else {
-                    const capitalized = capitalizeWords(name);
-                    finalizedInterests.push(capitalized);
-                }
+                // Custom interest, just capitalize each word
+                const capitalized = capitalizeWords(name);
+                finalizedInterests.push(capitalized);
             }
         }
 
         // Deduplicate locally
         const uniqueFinalized = [...new Set(finalizedInterests)];
-
-        // Identify custom interests (not in the 12 standard ones)
-        const customOnes = uniqueFinalized.filter(i => !standardLower.includes(i.toLowerCase()));
-
-        // Persist new custom interests to MongoDB (upsert, ignore duplicates)
-        if (customOnes.length > 0) {
-            const ops = customOnes.map(name => ({
-                updateOne: {
-                    filter: { name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
-                    update: { $setOnInsert: { name, addedBy: req.user.id } },
-                    upsert: true
-                }
-            }));
-            try {
-                await CustomInterest.bulkWrite(ops, { ordered: false });
-            } catch (bulkErr) {
-                // Ignore duplicate key errors (E11000), they're expected
-                if (bulkErr.code !== 11000) console.error('Custom interest save warning:', bulkErr.message);
-            }
-        }
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
@@ -847,6 +821,14 @@ app.post('/api/friend-request/send', requireAuth, async (req, res) => {
                 // Add each other as friends
                 await User.findByIdAndUpdate(fromId, { $addToSet: { friends: toUserId } });
                 await User.findByIdAndUpdate(toUserId, { $addToSet: { friends: fromId } });
+
+                // Notify the other user
+                io.to(toUserId).emit('friend_request_accepted', {
+                    fromId,
+                    fromName: currentUser.displayName,
+                    message: `${currentUser.displayName} accepted your friend request.`
+                });
+
                 return res.json({ message: 'Friend request auto-accepted! You are now friends.', status: 'accepted' });
             }
             return res.status(400).json({ error: 'Friend request already sent' });
@@ -866,6 +848,14 @@ app.post('/api/friend-request/send', requireAuth, async (req, res) => {
             to: toUserId,
             toName: targetUser.displayName
         });
+
+        // Notify target user
+        io.to(toUserId).emit('friend_request_notification', {
+            fromId,
+            fromName: currentUser.displayName,
+            message: `${currentUser.displayName} sent you a friend request!`
+        });
+
         res.json({ message: 'Friend request sent', status: 'pending' });
     } catch (err) {
         console.error('Friend request send error:', err);
@@ -891,6 +881,13 @@ app.post('/api/friend-request/accept', requireAuth, async (req, res) => {
         // Add each other as friends (bidirectional)
         await User.findByIdAndUpdate(userId, { $addToSet: { friends: request.from } });
         await User.findByIdAndUpdate(request.from, { $addToSet: { friends: userId } });
+
+        const currentUser = await User.findById(userId).select('displayName');
+        io.to(request.from.toString()).emit('friend_request_accepted', {
+            fromId: userId,
+            fromName: currentUser.displayName,
+            message: `${currentUser.displayName} accepted your friend request.`
+        });
 
         res.json({ message: 'Friend request accepted' });
     } catch (err) {

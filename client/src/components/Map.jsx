@@ -33,6 +33,8 @@ import M3Switch from './M3Switch';
 import M3Snackbar from './M3Snackbar';
 import M3Dialog from './M3Dialog';
 import { useTheme } from '@mui/material';
+import { getDistance } from 'ol/sphere';
+import { sendNotification } from '../utils/notifications';
 
 const TIPS = [
     { icon: 'person', text: 'Click on user pins to see details' },
@@ -474,6 +476,19 @@ const MapComponent = () => {
         const coords = geom.getCoordinates();
 
         if (coords.length < 2) return;
+
+        // Check if destination is reached (within 50 meters)
+        const lastCoord = coords[coords.length - 1];
+        const distanceToTargetMeters = getDistance(toLonLat(userLocation), toLonLat(lastCoord));
+        if (distanceToTargetMeters < 50) {
+            sendNotification("Destination Reached", {
+                body: "You have arrived at your destination.",
+                tag: "destination"
+            });
+            setAlertMessage("You have arrived at your destination!");
+            clearRoute();
+            return;
+        }
 
         let minIndex = 0;
         let minDistanceSq = Infinity;

@@ -176,52 +176,51 @@ const Social = () => {
                         <div className="h-8 mb-4 shrink-0"></div>
                     )}
 
-                    <M3ChipSet className="justify-center mb-4 min-h-[40px] flex-wrap items-center">
-                        {sortedInterests.slice(0, 4).map((int, i) => {
-                            const intStr = typeof int === 'string' ? int : int.name;
-                            const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
-                            const canAdd = !isShared && (isFriend || u.friendRequestSent || u.friendRequestReceived);
+                    <div className="mb-4 max-h-[100px] overflow-y-auto overflow-x-hidden rounded-xl border border-white/40 dark:border-white/5 bg-black/5 dark:bg-black/20 p-2 pr-1 custom-scrollbar shrink-0">
+                        <M3ChipSet className="justify-start flex-wrap items-start">
+                            {sortedInterests.map((int, i) => {
+                                const intStr = typeof int === 'string' ? int : int.name;
+                                const isShared = u.sharedInterests?.some(si => si.toLowerCase() === intStr.toLowerCase());
+                                const canAdd = !isShared && (isFriend || u.friendRequestSent || u.friendRequestReceived);
 
-                            if (canAdd) {
-                                return (
-                                    <button
-                                        key={`add_${i}`}
-                                        onClick={async () => {
-                                            try {
-                                                const currentArr = user.interests || [];
-                                                if (!currentArr.includes(intStr)) {
-                                                    await updateInterests([...currentArr, intStr]);
-                                                    await fetchAll();
-                                                    await fetchMatches();
+                                if (canAdd) {
+                                    return (
+                                        <button
+                                            key={`add_${i}`}
+                                            onClick={async () => {
+                                                try {
+                                                    const currentArr = user.interests || [];
+                                                    if (!currentArr.includes(intStr)) {
+                                                        await updateInterests([...currentArr, intStr]);
+                                                        await fetchAll();
+                                                        await fetchMatches();
+                                                    }
+                                                } catch (e) {
+                                                    console.error(e);
                                                 }
-                                            } catch (e) {
-                                                console.error(e);
-                                            }
-                                        }}
-                                        className="group h-7 px-2 border border-primary/30 inline-flex items-center gap-1 hover:bg-primary/10 transition-colors mx-0.5"
-                                        style={{ borderRadius: '8px' }}
-                                        title={`Add ${intStr} to your profile`}
-                                    >
-                                        <span className="material-symbols-outlined text-[14px] text-primary group-hover:block hidden">add</span>
-                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{intStr}</span>
-                                    </button>
-                                );
-                            }
+                                            }}
+                                            className="group h-7 px-2 border border-primary/30 inline-flex items-center gap-1 hover:bg-primary/10 transition-colors mx-0.5 mb-1"
+                                            style={{ borderRadius: '8px' }}
+                                            title={`Add ${intStr} to your profile`}
+                                        >
+                                            <span className="material-symbols-outlined text-[14px] text-primary group-hover:block hidden">add</span>
+                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{intStr}</span>
+                                        </button>
+                                    );
+                                }
 
-                            return (
-                                <M3Chip
-                                    key={i}
-                                    label={isShared ? `★ ${intStr}` : intStr}
-                                    type={isShared ? "suggestion" : "assist"}
-                                    highlighted={isShared}
-                                    className={`scale-90 ${isShared ? 'font-bold ring-2 ring-green-500/20' : ''}`}
-                                />
-                            );
-                        })}
-                        {(sortedInterests.length || 0) > 4 && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 font-bold self-center">+{sortedInterests.length - 4}</span>
-                        )}
-                    </M3ChipSet>
+                                return (
+                                    <M3Chip
+                                        key={i}
+                                        label={isShared ? `★ ${intStr}` : intStr}
+                                        type={isShared ? "suggestion" : "assist"}
+                                        highlighted={isShared}
+                                        className={`scale-90 mb-1 ${isShared ? 'font-bold ring-2 ring-green-500/20' : ''}`}
+                                    />
+                                );
+                            })}
+                        </M3ChipSet>
+                    </div>
 
                     <div className="w-full mt-auto pt-2">
                         {isFriend ? (
