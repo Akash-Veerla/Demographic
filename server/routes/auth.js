@@ -10,19 +10,30 @@ const { validateInterests } = require('../utils/moderation');
 // --- Google Auth Routes ---
 
 // 1. Initiate Google Login
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', (req, res, next) => {
+    const action = req.query.action || 'login';
+    passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        state: action
+    })(req, res, next);
+});
 
 // 2. Callback with Verbose Error Handling
 router.get('/google/callback', (req, res, next) => {
     passport.authenticate('google', { session: false }, (err, user, info) => {
+        const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+        const action = req.query.state || 'login';
+
         if (err) {
             console.error("Google OAuth Error (Passport):", err);
             // Redirect to login with error details for user visibility if needed, or simple error page
-            return res.redirect(`${(process.env.CLIENT_URL || "").replace(/\/$/, "")}/login?error=auth_failed&details=${encodeURIComponent(err.message)}`);
+            return res.redirect(`${clientUrl}/login?error=auth_failed&details=${encodeURIComponent(err.message)}`);
         }
         if (!user) {
             console.error("Google OAuth Failed: No user returned");
-            return res.redirect('/login?error=no_user');
+            const errorMessage = info && info.message ? info.message : 'no_user';
+            const redirectPath = action === 'register' ? '/register' : '/login';
+            return res.redirect(`${clientUrl}${redirectPath}?error=${encodeURIComponent(errorMessage)}`);
         }
 
         // Successful authentication
@@ -33,9 +44,13 @@ router.get('/google/callback', (req, res, next) => {
                 { expiresIn: '7d' }
             );
 
+            // If it's a new user, send to setup
+            if (info && info.isNew) {
+                return res.redirect(`${clientUrl}/setup?token=${token}`);
+            }
+
             // Redirect to Frontend with token
-            const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
-            res.redirect(`${clientUrl}?token=${token}`);
+            res.redirect(`${clientUrl}/?token=${token}`);
         } catch (jwtError) {
             console.error("JWT Generation Error:", jwtError);
             res.status(500).send("Internal Authentication Error");

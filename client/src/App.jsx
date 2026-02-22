@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, createContext } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext'; // Import AuthProvider
 import Layout from './components/Layout';
 import Login from './components/Login';
@@ -55,7 +55,8 @@ const ProtectedRoute = ({ children }) => {
     }
 
     // Enforce Setup if interests are empty (and not currently on setup page)
-    const isSetupPage = window.location.pathname === '/setup';
+    const location = useLocation();
+    const isSetupPage = location.pathname === '/setup';
     if (isAuthenticated && user && (!user.interests || user.interests.length === 0) && !isSetupPage) {
         return <Navigate to="/setup" replace />;
     }

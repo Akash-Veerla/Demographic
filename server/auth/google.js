@@ -22,41 +22,49 @@ passport.use(new GoogleStrategy({
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     // Google Console Env Variable Check (User named it CALLBACK_URL)
     callbackURL: process.env.GOOGLE_CALLBACK_URL || process.env.CALLBACK_URL || "/api/auth/google/callback",
-    proxy: true
-}, async (accessToken, refreshToken, profile, done) => {
+    proxy: true,
+    passReqToCallback: true
+}, async (req, accessToken, refreshToken, profile, done) => {
     try {
-        // 1. Check if user exists with googleId
-        const existingUser = await User.findOne({ googleId: profile.id });
-        if (existingUser) {
-            return done(null, existingUser);
-        }
-
-        // 2. Check if user exists with same email (Link Account)
+        const action = req.query.state || 'login';
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
-        if (email) {
-            const existingEmailUser = await User.findOne({ email });
-            if (existingEmailUser) {
-                existingEmailUser.googleId = profile.id;
-                // We keep their existing profile info (bio, etc) to not overwrite it violently
-                if (!existingEmailUser.profilePhoto) {
-                    existingEmailUser.profilePhoto = profile.photos && profile.photos[0] ? profile.photos[0].value : '';
-                }
-                await existingEmailUser.save();
-                return done(null, existingEmailUser);
+
+        if (action === 'login') {
+            // Must have googleId to login via Google
+            const existingUser = await User.findOne({ googleId: profile.id });
+            if (existingUser) {
+                return done(null, existingUser);
             }
+            // Cannot login if Google account not registered
+            return done(null, false, { message: 'Account not found. Please register first or use your email and password.' });
+
+        } else if (action === 'register') {
+            // 1. Check if user exists with googleId
+            const existingUser = await User.findOne({ googleId: profile.id });
+            if (existingUser) {
+                return done(null, existingUser, { isNew: false });
+            }
+
+            // 2. Check if user exists with same email (normal registration)
+            if (email) {
+                const existingEmailUser = await User.findOne({ email });
+                if (existingEmailUser) {
+                    return done(null, false, { message: 'Email already registered. Please login with your email and password.' });
+                }
+            }
+
+            // 3. Create New User
+            const newUser = new User({
+                googleId: profile.id,
+                displayName: profile.displayName,
+                email: email,
+                profilePhoto: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
+                bio: "New to the community!"
+            });
+
+            await newUser.save();
+            return done(null, newUser, { isNew: true });
         }
-
-        // 3. Create New User
-        const newUser = new User({
-            googleId: profile.id,
-            displayName: profile.displayName,
-            email: email, // Might be null if not provided, but schema requires it. Google usually provides it.
-            profilePhoto: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
-            bio: "New to the community!"
-        });
-
-        await newUser.save();
-        done(null, newUser);
     } catch (err) {
         console.error("Google Auth Error:", err);
         done(err, null);
