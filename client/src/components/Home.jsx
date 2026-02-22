@@ -128,7 +128,7 @@ const Home = () => {
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                                Live Pulse (20km)
+                                Trending Near You (20km)
                             </h3>
                         </div>
                         <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">

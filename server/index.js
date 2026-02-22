@@ -208,11 +208,16 @@ io.on('connection', (socket) => {
 
             const encryptedContent = CryptoJS.AES.encrypt(message, MESSAGE_SECRET).toString();
 
+            // BOT AUTO-READ
+            const isBot = receiverUser?.email?.endsWith('@seed.konnect');
+            const initialStatus = isBot ? 'read' : 'sent';
+            const initialReadAt = isBot ? new Date() : null;
+
             const conv = await Conversation.findOneAndUpdate(
                 { roomId },
                 {
                     $setOnInsert: { participants: [userId, receiverId], participantDetails: pDetails },
-                    $push: { messages: { sender: userId, senderName: senderName, receiver: receiverId, content: encryptedContent, status: 'sent', readAt: null } },
+                    $push: { messages: { sender: userId, senderName: senderName, receiver: receiverId, content: encryptedContent, status: initialStatus, readAt: initialReadAt } },
                     $set: { lastMessageAt: new Date() }
                 },
                 { upsert: true, new: true }
@@ -231,6 +236,12 @@ io.on('connection', (socket) => {
                 ...broadcastMsg,
                 senderName: senderName
             });
+
+            if (isBot) {
+                // Instantly notify sender that bot read it
+                socket.emit('messages_read', { roomId, readerId: receiverId, readAt: initialReadAt });
+                // Note: The UI usually expects this to update its bubble statuses to "read"
+            }
         } catch (err) {
             console.error('Error saving message:', err);
         }
@@ -423,7 +434,7 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                 if (sharedInterests.length === 0) return null;
 
                 const isFriend = myFriends.includes(uid);
-                const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!obj.isActive;
+                const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!obj.isActive || !!(obj.email && obj.email.endsWith('@seed.konnect'));
 
                 return {
                     ...obj,
@@ -505,7 +516,7 @@ app.get('/api/users/discover', requireAuth, async (req, res) => {
             const theirInterests = (u.interests || []).map(i => i.toLowerCase().trim());
             const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
             const isFriend = myFriends.includes(uid);
-            const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!u.isActive;
+            const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!u.isActive || !!(u.email && u.email.endsWith('@seed.konnect'));
 
             return {
                 ...u,
@@ -633,7 +644,7 @@ app.get('/api/users/global', requireAuth, async (req, res) => {
             const theirInterests = (obj.interests || []).map(i => i.toLowerCase().trim());
             const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
             const isFriend = myFriends.includes(uid);
-            const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!obj.isActive;
+            const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!obj.isActive || !!(obj.email && obj.email.endsWith('@seed.konnect'));
 
             return {
                 ...obj,
@@ -971,6 +982,13 @@ app.post('/api/friend-request/send', requireAuth, async (req, res) => {
             return res.json({ message: 'Friend request re-sent', status: 'pending' });
         }
 
+        // BOT AUTO-ACCEPT FEATURE
+        if (targetUser.email && targetUser.email.endsWith('@seed.konnect')) {
+            await User.findByIdAndUpdate(fromId, { $addToSet: { friends: toUserId } });
+            await User.findByIdAndUpdate(toUserId, { $addToSet: { friends: fromId } });
+            return res.json({ message: 'Friend request auto-accepted by bot! You are now friends.', status: 'accepted' });
+        }
+
         await FriendRequest.create({
             from: fromId,
             fromName: currentUser.displayName,
@@ -1100,7 +1118,7 @@ app.get('/api/friends', requireAuth, async (req, res) => {
             const obj = f.toObject();
             return {
                 ...obj,
-                isOnline: !!((io.sockets.adapter.rooms.get(f._id.toString())?.size || 0) > 0) || !!obj.isActive
+                isOnline: !!((io.sockets.adapter.rooms.get(f._id.toString())?.size || 0) > 0) || !!obj.isActive || !!(obj.email && obj.email.endsWith('@seed.konnect'))
             };
         });
 
@@ -1274,33 +1292,28 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
             matchedInterestsNearby = result[0]?.count || 0;
         }
 
-        // 3. Top Interests Pulse (20km Radius, intersecting with user profile)
+        // 3. Trending Near You (20km Radius, not intersecting with user profile)
         const pulseDistance = 20000; // 20km
-        let topInterests = [];
-        if (userInterests.length > 0) {
-            const topInterestsRaw = await User.aggregate([
-                {
-                    $geoNear: {
-                        near: { type: 'Point', coordinates: centerCoords },
-                        distanceField: "dist.calculated",
-                        maxDistance: pulseDistance,
-                        query: {
-                            'location.coordinates': { $ne: [0, 0] },
-                            isActive: { $ne: false },
-                            _id: { $ne: new mongoose.Types.ObjectId(userId) }, // Exclude self
-                            interests: { $in: userInterests }
-                        },
-                        spherical: true
-                    }
-                },
-                { $unwind: "$interests" },
-                { $match: { interests: { $in: userInterests } } },
-                { $group: { _id: "$interests", count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-                { $limit: 3 }
-            ]);
-            topInterests = topInterestsRaw.map(i => ({ category: i._id, count: i.count }));
-        }
+        const topInterestsRaw = await User.aggregate([
+            {
+                $geoNear: {
+                    near: { type: 'Point', coordinates: centerCoords },
+                    distanceField: "dist.calculated",
+                    maxDistance: pulseDistance,
+                    query: {
+                        'location.coordinates': { $ne: [0, 0] },
+                        isActive: { $ne: false },
+                        _id: { $ne: new mongoose.Types.ObjectId(userId) } // Exclude self
+                    },
+                    spherical: true
+                }
+            },
+            { $unwind: "$interests" },
+            { $group: { _id: "$interests", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 5 }
+        ]);
+        const topInterests = topInterestsRaw.map(i => ({ category: i._id, count: i.count }));
 
         res.json({ activeNearby, matchedInterestsNearby, topInterests });
 

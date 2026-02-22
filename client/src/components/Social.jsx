@@ -15,6 +15,7 @@ const Social = () => {
     const [friends, setFriends] = useState([]);
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [fetchLimit, setFetchLimit] = useState(50);
     const [dialogConfig, setDialogConfig] = useState({ open: false, title: '', message: '', onConfirm: null, icon: '' });
     const { user, userLocation, updateInterests, socket } = useAuth();
 
@@ -53,11 +54,15 @@ const Social = () => {
 
     useEffect(() => {
         fetchAll();
-    }, [fetchAll]);
-
-    useEffect(() => {
         fetchMatches();
-    }, [fetchMatches]);
+
+        // Background poll to surface new nearby users automatically
+        const interval = setInterval(() => {
+            fetchAll();
+            fetchMatches();
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [fetchAll, fetchMatches]);
 
     // Listen for live online/offline status updates and block/delete removals globally
     useEffect(() => {
@@ -303,12 +308,28 @@ const Social = () => {
         );
     };
 
-    // Filter global users, sort by matchScore descending
-    const matchedIds = new Set(matchedUsers.map(u => u._id));
-    const discoverUsers = users
-        .filter(u => u._id !== user?._id && !matchedIds.has(u._id))
-        .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
-        .slice(0, 50);
+    // Limit Logic
+    let displayMatched = matchedUsers.slice(0, fetchLimit);
+    let spilloverMatched = matchedUsers.slice(fetchLimit);
+
+    const inMatchedSectionIds = new Set(displayMatched.map(u => u._id));
+    const allMatchedIds = new Set(matchedUsers.map(u => u._id));
+
+    const discoverCandidates = [
+        ...spilloverMatched,
+        ...users.filter(u => !allMatchedIds.has(u._id) && u._id !== user?._id)
+    ];
+
+    const discoverUsers = [];
+    const seenDiscover = new Set();
+
+    for (const cand of discoverCandidates) {
+        if (!inMatchedSectionIds.has(cand._id) && !seenDiscover.has(cand._id)) {
+            discoverUsers.push(cand);
+            seenDiscover.add(cand._id);
+        }
+        if (discoverUsers.length >= fetchLimit) break;
+    }
 
     if (initialLoading) {
         return (
@@ -322,8 +343,19 @@ const Social = () => {
     return (
         <div className="h-full w-full p-4 space-y-8 animate-fade-in relative z-10 pb-24">
             <div className="max-w-[1600px] mx-auto space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-                    {/* UI moved to Friends page */}
+                {/* Limit Selector */}
+                <div className="flex justify-between items-center bg-white/80 dark:bg-white/5 dark:backdrop-blur-xl rounded-sq-xl p-4 shadow-sm border border-black/5 dark:border-white/5 mb-6 mx-2 transition-colors">
+                    <p className="font-black text-sm text-[#1a100f] dark:text-[#E6E1E5] uppercase tracking-wider flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">person_search</span>
+                        People Limit
+                    </p>
+                    <select
+                        value={fetchLimit}
+                        onChange={(e) => setFetchLimit(Number(e.target.value))}
+                        className="bg-primary/10 dark:bg-white/10 border-none text-[#1a100f] dark:text-white rounded-lg px-3 py-1.5 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-primary appearance-none text-center"
+                    >
+                        {[10, 20, 30, 40, 50].map(val => <option key={val} value={val} className="text-black">{val} Users</option>)}
+                    </select>
                 </div>
 
                 {/* 1. Matched Interests Section */}
@@ -339,13 +371,17 @@ const Social = () => {
                             </div>
                         </div>
                     </div>
-                    {matchedUsers.length > 0 ? (
+                    {displayMatched.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {matchedUsers.map(u => renderUserCard(u))}
+                            {displayMatched.map(u => renderUserCard(u))}
                         </div>
                     ) : (
-                        <div className="text-center p-12 bg-white dark:bg-white/5 dark:backdrop-blur-2xl rounded-sq-2xl border-[0.5px] border-white/30 dark:border-white/10 shadow-xl">
-                            <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold">No matches nearby yet. Try adding more interests!</p>
+                        <div className="text-center p-12 bg-white dark:bg-white/5 dark:backdrop-blur-2xl rounded-sq-2xl border-[0.5px] border-white/30 dark:border-white/10 shadow-xl flex flex-col items-center justify-center min-h-[300px]">
+                            <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">search_off</span>
+                            <p className="text-[#1a100f] dark:text-[#E6E1E5] font-black text-xl mb-2">No Matching Users Nearby</p>
+                            <p className="text-[#5e413d] dark:text-[#CAC4D0] font-medium max-w-sm">
+                                There seems to be no matching users near you. Discover other users below and try adding their interests to fit into their network.
+                            </p>
                         </div>
                     )}
                 </div>
