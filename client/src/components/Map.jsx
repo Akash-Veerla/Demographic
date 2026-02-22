@@ -499,15 +499,18 @@ const MapComponent = () => {
 
         if (coords.length < 2) return;
 
-        // Check if destination is reached (within 50 meters)
+        // Check if destination is reached (within 20 meters)
         const lastCoord = coords[coords.length - 1];
         const distanceToTargetMeters = getDistance(toLonLat(userLocation), toLonLat(lastCoord));
-        if (distanceToTargetMeters < 50) {
-            sendNotification("Destination Reached", {
+        if (distanceToTargetMeters < 20) {
+            const notif = sendNotification("Destination Reached", {
                 body: "You have arrived at your destination.",
                 tag: "destination"
             });
-            setAlertMessage("You have arrived at your destination!");
+
+            if (notif?.type === 'app') {
+                setAlertMessage("You have arrived at your destination!");
+            }
             clearRoute();
             return;
         }

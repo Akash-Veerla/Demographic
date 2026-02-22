@@ -8,6 +8,7 @@ import M3NavBar from './M3NavBar';
 import M3IconButton from './M3IconButton';
 import M3Switch from './M3Switch';
 import M3SegmentedButton from './M3SegmentedButton';
+import M3Snackbar from './M3Snackbar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { requestNotificationPermission, sendNotification } from '../utils/notifications';
 
@@ -20,41 +21,96 @@ const Layout = ({ children }) => {
     const { toggleColorMode, mode } = useContext(ColorModeContext);
     const { socket } = useAuth();
 
-    // 1. Request Notification Permission
+    const [notifAlert, setNotifAlert] = useState(null);
+
+    // 1. Request Notification Permission and handle Alert
     useEffect(() => {
-        if (user) {
-            requestNotificationPermission();
-        }
-    }, [user]);
+        const checkPerms = async () => {
+            const status = await requestNotificationPermission();
+            if (status === 'denied' || status === 'default') {
+                setNotifAlert({
+                    message: "Enable notifications to receive message alerts and friend request status updates.",
+                    icon: "notifications_off"
+                });
+            }
+        };
+
+        const checkLocation = () => {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    () => { console.log("Location access granted"); },
+                    (error) => {
+                        console.warn("Location error:", error);
+                        setNotifAlert({
+                            message: "Location access is required for mapping features. Please enable it.",
+                            icon: "location_off"
+                        });
+                    }
+                );
+            }
+        };
+
+        checkPerms();
+        checkLocation();
+    }, []);
 
     // 2. Global Socket Listeners for Notifications
     useEffect(() => {
         if (!socket) return;
 
         const handleMessageNotif = (data) => {
-            // Check if user is currently inside that chat room to avoid redundant sounds/notifs
             const inChat = location.pathname === `/chat/${data.roomId}`;
             if (!inChat) {
-                sendNotification(`New Message from ${data.senderName}`, {
+                const result = sendNotification(`New Message from ${data.senderName}`, {
                     body: data.message,
                     tag: 'message'
                 });
+                if (result?.type === 'app') {
+                    setNotifAlert({ message: `${data.senderName}: ${data.message}`, icon: 'message' });
+                }
             }
         };
 
         const handleFriendReqNotif = (data) => {
-            sendNotification(`Friend Request`, {
+            const result = sendNotification(`Friend Request`, {
                 body: data.message || `${data.fromName} sent you a friend request.`,
                 tag: 'friend_request'
             });
+            if (result?.type === 'app') {
+                setNotifAlert({ message: data.message || `New friend request from ${data.fromName}`, icon: 'person_add' });
+            }
+        };
+
+        const handleFriendReqAccepted = (data) => {
+            const result = sendNotification(`Friend Request Accepted`, {
+                body: data.message || `${data.fromName} accepted your request!`,
+                tag: 'friend_request_accepted'
+            });
+            if (result?.type === 'app') {
+                setNotifAlert({ message: data.message || `${data.fromName} accepted your friend request!`, icon: 'person_add' });
+            }
+        };
+
+        const handleFriendReqRejected = (data) => {
+            const result = sendNotification(`Friend Request Update`, {
+                body: data.message || `${data.fromName} declined your friend request.`,
+                tag: 'friend_request_rejected'
+            });
+            if (result?.type === 'app') {
+                setNotifAlert({ message: data.message || `${data.fromName} declined your friend request.`, icon: 'person_remove' });
+            }
         };
 
         socket.on('message_notification', handleMessageNotif);
         socket.on('friend_request_notification', handleFriendReqNotif);
+        socket.on('friend_request_accepted', handleFriendReqAccepted);
+        socket.on('friend_request_rejected', handleFriendReqRejected);
 
         return () => {
             socket.off('message_notification', handleMessageNotif);
             socket.off('friend_request_notification', handleFriendReqNotif);
+            socket.off('friend_request_accepted', handleFriendReqAccepted);
+            socket.off('friend_request_rejected', handleFriendReqRejected);
         };
     }, [socket, location.pathname]);
 
@@ -202,6 +258,15 @@ const Layout = ({ children }) => {
             {isMobile && user && (
                 <M3NavBar items={navItems} />
             )}
+
+            {/* Global Notifications Snackbars */}
+            <M3Snackbar
+                show={!!notifAlert}
+                message={notifAlert?.message}
+                icon={notifAlert?.icon}
+                onDismiss={() => setNotifAlert(null)}
+                duration={5000}
+            />
         </Box>
     );
 };

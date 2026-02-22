@@ -1039,6 +1039,13 @@ app.post('/api/friend-request/reject', requireAuth, async (req, res) => {
         request.status = 'rejected';
         await request.save();
 
+        const currentUser = await User.findById(userId).select('displayName');
+        io.to(request.from.toString()).emit('friend_request_rejected', {
+            fromId: userId,
+            fromName: currentUser.displayName,
+            message: `${currentUser.displayName} declined your friend request.`
+        });
+
         res.json({ message: 'Friend request rejected' });
     } catch (err) {
         console.error('Friend request reject error:', err);

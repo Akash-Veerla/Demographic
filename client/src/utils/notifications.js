@@ -5,33 +5,39 @@ export const requestNotificationPermission = async () => {
     }
 
     if (Notification.permission === "granted") {
-        return true;
+        return "granted";
     }
 
     if (Notification.permission !== "denied") {
         const permission = await Notification.requestPermission();
-        return permission === "granted";
+        return permission;
     }
 
-    return false;
+    return "denied";
 };
 
 export const sendNotification = (title, options = {}) => {
-    if (!("Notification" in window)) return;
+    if (!("Notification" in window)) return null;
 
-    if (Notification.permission === "granted") {
+    // Logic: Browser notification if tab is hidden/unfocused.
+    // App notification (handled via callback or returned obj) if focused.
+    const isFocused = document.hasFocus();
+
+    if (Notification.permission === "granted" && !isFocused) {
         const notification = new Notification(title, {
-            icon: '/logo.svg', // Assuming a logo or icon exists at root
+            icon: '/logo.svg',
             ...options
         });
 
-        // Optional: click handler to focus window
         notification.onclick = function (event) {
-            event.preventDefault(); // prevent the browser from focusing the Notification's tab
+            event.preventDefault();
             window.focus();
             notification.close();
         };
 
-        return notification;
+        return { type: 'browser', notification };
     }
+
+    // If focused or permission denied, we signal to show an In-App notification
+    return { type: 'app', title, options };
 };
