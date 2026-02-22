@@ -105,10 +105,10 @@ const ProfileSetup = () => {
             }
             await updateProfile(profileData);
 
-            // Set User Password if newly provided (for Google Logins)
-            if (user && !user.hasPassword && password) {
-                if (password.length < 8) {
-                    setAlertMessage("Password must be at least 8 characters.");
+            // Enforce User Password if strictly NO password is set (Google Setup)
+            if (user && user.hasPassword === false) {
+                if (!password || password.length < 8) {
+                    setAlertMessage("You must create a secure password (min 8 characters) to finalize your account.");
                     setLoading(false);
                     return;
                 }
@@ -189,19 +189,20 @@ const ProfileSetup = () => {
                         </div>
 
                         {/* Password Setup (conditionally rendered for Google users) */}
-                        {user && !user.hasPassword && (
+                        {user && user.hasPassword === false && (
                             <div className="space-y-2">
                                 <label className="block text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5]" htmlFor="password">
-                                    Set Local Password <span className="text-[#5e413d] dark:text-[#CAC4D0] text-xs ml-1 font-medium">(Optional)</span>
+                                    Set Local Password <span className="text-primary text-xs ml-1 font-medium">(Required)</span>
                                 </label>
                                 <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] mb-2 font-bold opacity-80 leading-snug">
-                                    You signed in with Google! Adding a password allows you to smoothly log in locally and save credentials to your browser's password manager.
+                                    You signed in with Google! Creating a password is required so you can smoothly log in locally and save credentials to your browser's password manager.
                                 </p>
                                 <input
                                     type="password"
                                     id="password"
                                     name="password"
                                     autoComplete="new-password"
+                                    required
                                     className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-sq-xl px-4 py-4 text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] transition-all font-medium placeholder:text-[#915b55]/50"
                                     placeholder="Enter a secure password..."
                                     value={password}

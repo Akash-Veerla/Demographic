@@ -1,7 +1,7 @@
 /**
  * Unified Seed Script for KON-NECT
  * ----------------------------------
- * Seeds 80 users in AP & Telangana + 500 users across India = 580 total
+ * Seeds 80 users in AP & Telangana + 200 users across India = 280 total
  * Uses the 12 standard interests from config/Interests.json
  * Each user gets 2-5 random interests
  * 
@@ -223,29 +223,12 @@ async function seed() {
         await mongoose.connect(MONGO_URI);
         console.log('✅ Connected to MongoDB');
 
-        // 1. Clean up previously seeded users (identified by @seed.konnect email)
-        const deleteResult = await User.deleteMany({ email: { $regex: /@seed\.konnect$/ } });
-        console.log(`🗑  Removed ${deleteResult.deletedCount} previously seeded users`);
+        // 1. Clean up ALL previously existing users and friends arrays
+        const deleteResult = await User.deleteMany({});
+        console.log(`🗑  Removed ${deleteResult.deletedCount} previous users from database`);
 
-        // Also remove old ghost users and @example.com seed users from prior scripts
-        const oldCleanup = await User.deleteMany({
-            $or: [
-                { userType: 'ghost' },
-                { email: { $regex: /@example\.com$/ } }
-            ]
-        });
-        if (oldCleanup.deletedCount > 0) {
-            console.log(`🗑  Removed ${oldCleanup.deletedCount} old ghost/example users`);
-        }
-
-        // Clean up any friend requests involving deleted users
-        const allUserIds = (await User.find({}, '_id')).map(u => u._id);
-        await FriendRequest.deleteMany({
-            $or: [
-                { from: { $nin: allUserIds } },
-                { to: { $nin: allUserIds } }
-            ]
-        });
+        const friendRequestsResult = await FriendRequest.deleteMany({});
+        console.log(`🗑  Removed ${friendRequestsResult.deletedCount} old friend requests`);
 
         // 2. Hash a common password once (efficient — all seed users share this)
         const hashedPassword = await bcrypt.hash('Konnect@Seed2026', 10);
@@ -276,9 +259,9 @@ async function seed() {
             });
         }
 
-        // ─── B. 500 users across India ──────────────────────────────────
-        console.log('📍 Seeding rest of India (500 users)...');
-        for (let i = 0; i < 500; i++) {
+        // ─── B. 200 users across India ──────────────────────────────────
+        console.log('📍 Seeding rest of India (200 users)...');
+        for (let i = 0; i < 200; i++) {
             const city = pick(INDIA_CITIES);
             const name = getRandomName();
             users.push({
@@ -303,7 +286,7 @@ async function seed() {
         await User.insertMany(users);
         console.log(`\n✅ Successfully seeded ${users.length} users total:`);
         console.log(`   • 80 in Andhra Pradesh & Telangana`);
-        console.log(`   • 500 across India`);
+        console.log(`   • 200 across India`);
         console.log(`\n📊 Total users in DB: ${await User.countDocuments()}`);
 
         process.exit(0);

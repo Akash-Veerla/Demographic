@@ -52,11 +52,6 @@ passport.use(new GoogleStrategy({
             displayName: profile.displayName,
             email: email, // Might be null if not provided, but schema requires it. Google usually provides it.
             profilePhoto: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
-            // Generate valid random password since schema requires one if googleId is not present, 
-            // but here googleId IS present, so line 21 of User.js says `required: function() { return !this.googleId; }` 
-            // so we technically don't need a password!
-            // But let's add a dummy hashed one just in case they try to login with email later (they would need to reset it)
-            password: await bcrypt.hash(Math.random().toString(36).slice(-8) + Date.now(), 10),
             bio: "New to the community!"
         });
 
