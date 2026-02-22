@@ -23,6 +23,7 @@ graph TD
         ChatHost[Chat System]
         SecureAuth[Secure Login Handler]
         SmartMatch[Interest Link Engine]
+        StatsHub[Local Statistics Hub]
     end
     
     subgraph "Storage & External Services"
@@ -37,6 +38,7 @@ graph TD
     Map <--> RouteSvc
     Map <--> PlaceSearch
     Gateway <--> SmartMatch
+    Gateway <--> StatsHub
     SmartMatch <--> Database
     Gateway <--> SecureAuth
 ```
@@ -44,15 +46,17 @@ graph TD
 ---
 
 ## 💾 2. Information Structure
-This shows how users, friends, and interests are organized and connected.
+This shows how users, friends, conversations, and interests are organized.
 
 ```mermaid
 erDiagram
     USER ||--o{ FRIEND-REQUEST : "Sends/Receives"
     USER ||--o{ CUSTOM-INTEREST : "Creates Tags"
-    USER ||--o{ FRIENDSHIP : "Mutual Link"
-    USER ||--o{ MESSAGE : "History"
-    FRIENDSHIP }o--|| USER : "Connects to"
+    USER ||--o{ CONVERSATION : "Participates In"
+    USER ||--o{ BLOCKED-USER : "Restricts Visibility"
+    FRIENDSHIP }o--|| USER : "Connects to Profile A"
+    FRIENDSHIP }o--|| USER : "Connects to Profile B"
+    CONVERSATION ||--o{ MESSAGE : "Contains History"
 
     USER {
         String ID PK
@@ -62,7 +66,7 @@ erDiagram
         String Bio "Personal Description"
         String[] Interests "Hobbies & Tags"
         Point Location "GPS Coordinates"
-        Date LastActive
+        String AuthMethod "Local / Google"
     }
 
     FRIEND-REQUEST {
@@ -73,17 +77,23 @@ erDiagram
         Date TimeSent
     }
 
-    MESSAGE {
+    CONVERSATION {
         String ID PK
-        String RoomID "Private Chat"
+        String RoomID "Socket identifier"
+        String[] Participants "User IDs"
+        Date LastMessageAt
+    }
+
+    MESSAGE {
         String Sender FK
-        String Content "Persistent Text"
-        Boolean Read "Status notification"
+        String Receiver FK
+        String Content "Encrypted Text"
+        String Status "Sent / Delivered / Read"
     }
 
     CUSTOM-INTEREST {
         String ID PK
-        String Name "Custom Tag"
+        String Name "Normalized Tag"
         String CreatedBy FK
     }
 ```
@@ -91,26 +101,29 @@ erDiagram
 ---
 
 ## 🔐 3. Secure Login Process
-A simple step-by-step guide on how you sign in securely.
+How you sign in securely via Email or Google.
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant A as App
-    participant L as Login Service
-    participant I as Identity Provider
+    participant L as Login Gateway
+    participant S as Security Server
     participant D as Database
 
-    U->>A: Click Login
-    A->>L: Request Secure Entry
-    L->>I: Verify Identity
-    I-->>L: Confirm User Info
-    L->>D: Find Account Record
-    D-->>L: Profile Found
-    L->>L: Start Secure Session
-    L-->>A: Redirect to Dashboard
-    A->>A: Save Login State
-    Note over A, L: You stay logged in for your session
+    U->>A: Enter Email/Password OR Google
+    A->>L: Request Entry
+    alt Alternative: Google Path
+        L->>S: Verify Google Identity
+        S-->>L: Confirm Profile
+    else Alternative: Email Path
+        L->>D: Check Password Hash
+        D-->>L: Verified
+    end
+    L->>L: Create JWT Token
+    L-->>A: Send Token & Profile
+    A->>A: Save to Secure LocalStorage
+    Note over A, L: Every request now carries your Token
 ```
 
 ---
@@ -123,15 +136,15 @@ graph TD
     U1[Person A Profile] --> Data[Analyze Interests & GPS]
     U2[Person B Profile] --> Data
     
-    Data --> Distance[Check Current Distance]
+    Data --> Distance[Check Current Road Distance]
     Distance --> Range{Within 20km?}
     
-    Range -- "Yes" --> Link[Create Connection Path]
+    Range -- "Yes" --> Link[Create Network Edge]
     Range -- "No" --> NoMatch([Too Far Apart])
     
-    Link --> Algorithm[Process Matching Algorithm]
-    Algorithm --> Score[Calculate Match Level]
-    Score --> Logic{Final Decision}
+    Link --> Algorithm[Interest Group Analysis]
+    Algorithm --> Score[Calculate Compatibility Score]
+    Score --> Logic{Final Verdict}
     
     Data --> Common{Shared Interests?}
     Common -- "Yes" --> Logic
@@ -142,60 +155,62 @@ graph TD
 
 ---
 
-## 🔍 5. People Discovery Flow
-How the app finds and displays people around you.
+## 🔍 5. People Discovery & Stats
+How the app finds people and local trends around you.
 
 ```mermaid
 graph LR
     Start([Live Location Update]) --> Hub[Stats Hub]
-    Hub --> Search[Search Local Area]
-    Search --> Range[Follow Within 20km]
+    Hub --> Trends[Calculate Trending Interests]
+    Hub --> Nearby[Identify Friends Online]
     
-    subgraph "Intelligent Checks"
-        ReverseGeo["Reverse Geocode (Places)"]
-        Match{Match Interests?}
-        Global{Global View?}
+    subgraph "Precision Filters"
+        ReverseGeo["Reverse Geocode (Current Place)"]
+        Match{Match My Profile?}
+        Range[Radius: 20km]
     end
     
+    Nearby --> Range
     Range --> Match
-    Global -- "On" --> ShowAll[Show All Users]
-    Match -- "Yes" --> Calc[Determine Best Matches]
+    Match -- "Yes" --> Display([Live Pins on Map])
     
-    Calc --> Sort[Sort Results]
-    Sort --> MapPins([Live Pins on Map])
-    ShowAll --> MapPins
-    
-    MapPins --> ReverseGeo
-    
-    MapPins --> Groups["Group by Interests"]
+    Display --> ReverseGeo
+    Display --> Trends
 ```
 
 ---
 
-## 🤝 6. Connecting with Friends
-The workflow of managing your social connections.
+## 🤝 6. Connection & Trust Lifecycle
+Managing requests, friendships, and blocking safely.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> StartRequest : Send Friend Request
+    [*] --> RequestSent : Send Invite
     
-    state StartRequest {
-        direction TB
-        Sent --> Accepted : Friend Clicks Accept
-        Sent --> Rejected : Friend Clicks Denies
-        Sent --> Cancelled : You Click Withdraw
+    state RequestSent {
+        direction LR
+        Pending --> Accepted : User B Accepts
+        Pending --> Declined : User B Rejects
+        Pending --> Cancelled : User A Withdraws
     }
     
-    Accepted --> Connected : Dual Link in System
-    Rejected --> Sent : You can resend later
+    Accepted --> Friends : Mutual Connection
+    Friends --> Connected : Private Persistent Chat
     
-    Connected --> [*] : Unfriend or Delete Account
+    state SafetyActions {
+        direction TB
+        Friends --> Unfriend : Break Connection
+        Connected --> Block : Restrict Visibility
+    }
+    
+    Unfriend --> [*]
+    Block --> [*]
 ```
 
 ---
 
-## 💬 7. Instant Updates & Chat
-How messages and location updates travel instantly while respecting privacy.
+## 💬 7. Persistent Encrypted Chat
+How messages flow and stay securely stored in the system.
 
 ```mermaid
 sequenceDiagram
@@ -203,43 +218,60 @@ sequenceDiagram
     participant Hub as Central Hub
     participant Peer as Nearby Person
 
-    Me->>Hub: Live Tracking Start (Watch)
-    Peer->>Hub: Live Tracking Start (Watch)
-
-    rect rgba(200, 200, 200, 0.1)
-    Note over Me, Hub: Dynamic Route Tailing
-    Me->>Hub: Movement Updates
-    Hub->>Hub: Slice Route Line Behind User
-    Hub->>Me: Redraw Active Path
-    end
+    Me->>Hub: Connect (Active Session)
+    Hub-->>Me: Fetch Last 50 Messages (Decrypted)
 
     rect rgba(0, 100, 255, 0.1)
-    Note over Me, Peer: Persistent Messaging
-    Me->>Hub: Send Message (Save to DB)
+    Note over Me, Peer: Secure Messaging
+    Me->>Me: Encrypt Text (AES)
+    Me->>Hub: Send Encrypted Message
+    Hub->>Hub: Save to Database
     Hub->>Peer: Direct Notification
     Peer->>Hub: Mark as Read
-    Hub->>Me: Read Confirmation
+    Hub->>Me: Blue Check (Read Receipt)
     end
 ```
 
 ---
 
-## 🗺️ 8. App Navigation Map
-The simple structure of the app screens.
+## 🗺️ 8. Navigation & Route Tailing
+How the navigation guide follows you accurately on the map.
 
 ```mermaid
 graph TD
-    App[App Home] --> Settings[Settings & Sync]
-    Settings --> Account[Account Security]
-    Settings --> Display[Theme & Appearance]
+    Start([Set Destination]) --> Router[Calculate Best Path]
+    Router --> Display[Draw Route Line]
     
-    App --> Flow[App Screens]
-    Flow --> Landing[Welcome Screen]
-    Flow --> Login[Entry Gate]
-    Flow --> Explorer[Main Exploratory Hub]
+    subgraph "Dynamic Tailing"
+        Track[watchPosition Updates]
+        Compare[Check Nearest Point on Line]
+        Slice[Remove Completed Segment]
+    end
     
-    Explorer --> SocialMap[Live Social Map]
-    Explorer --> FriendsList[My Connections]
-    Explorer --> Navigation[Direction Guide]
-    Explorer --> ChatBox[Chat Interface]
+    Display --> Track
+    Track --> Compare
+    Compare --> Slice
+    Slice --> Redraw[Redraw Shorter Route]
+    Redraw --> Track
 ```
+
+---
+
+## 🏷️ 9. Interest Normalization
+How we keep the library of interests clean and professional.
+
+```mermaid
+graph LR
+    Input[User enters 'hiking'] --> Clean[Trim Whitespace]
+    Clean --> Case[Power Capitalization: 'Hiking']
+    Case --> Search[Check Existing Tags]
+    
+    Search --> Exists{Tag Exists?}
+    
+    Exists -- "Yes" --> UseOld[Use Existing System Tag]
+    Exists -- "No" --> Create[Register as New Custom Tag]
+    
+    UseOld --> Save[Save to User Profile]
+    Create --> Save
+```
+
