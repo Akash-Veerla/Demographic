@@ -25,13 +25,24 @@ const Layout = ({ children }) => {
 
     // 1. Request Notification Permission and handle Alert
     useEffect(() => {
-        const checkPerms = async () => {
-            const status = await requestNotificationPermission();
-            if (status === 'denied' || status === 'default') {
-                setNotifAlert({
-                    message: "Enable notifications to receive message alerts and friend request status updates.",
-                    icon: "notifications_off"
-                });
+        const checkPerms = () => {
+            if ("Notification" in window) {
+                if (Notification.permission === 'default') {
+                    setNotifAlert({
+                        message: "Enable notifications to stay updated on messages and friend requests.",
+                        icon: "notifications",
+                        actionLabel: "Enable",
+                        onAction: async () => {
+                            await requestNotificationPermission();
+                            if (Notification.permission === 'granted') {
+                                setNotifAlert({ message: "Notifications enabled!", icon: "notifications_active" });
+                            }
+                        }
+                    });
+                } else if (Notification.permission === 'denied') {
+                    // Optional: We can silently ignore if blocked, but just giving a hint
+                    console.log("Notifications are blocked by the user.");
+                }
             }
         };
 
@@ -264,6 +275,8 @@ const Layout = ({ children }) => {
                 show={!!notifAlert}
                 message={notifAlert?.message}
                 icon={notifAlert?.icon}
+                actionLabel={notifAlert?.actionLabel}
+                onAction={notifAlert?.onAction}
                 onDismiss={() => setNotifAlert(null)}
                 duration={5000}
             />

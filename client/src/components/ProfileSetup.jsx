@@ -23,6 +23,7 @@ const ProfileSetup = () => {
     const [loading, setLoading] = useState(false);
     const [alertMessage, setAlertMessage] = useState(null);
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Fetch canonical interests from API
     useEffect(() => {
@@ -130,7 +131,7 @@ const ProfileSetup = () => {
                 navigate('/');
                 return;
             } else if (errData?.code === 'MODERATION_WARNING') {
-                setAlertMessage(errData.error);
+                setAlertMessage(`⚠️ Identity & Safety standard enforced. ${errData.error} The flagged items were removed. Please review your profile and try saving again.`);
                 if (errData.safeInterests) {
                     setSelectedInterests(errData.safeInterests);
                 }
@@ -209,17 +210,29 @@ const ProfileSetup = () => {
                                 <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] mb-2 font-bold opacity-80 leading-snug">
                                     You signed in with Google! Creating a password is required so you can smoothly log in locally and save credentials to your browser's password manager.
                                 </p>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    autoComplete="new-password"
-                                    required
-                                    className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-sq-xl px-4 py-4 text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] transition-all font-medium placeholder:text-[#915b55]/50"
-                                    placeholder="Enter a secure password..."
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        name="password"
+                                        autoComplete="new-password"
+                                        required
+                                        className="w-full bg-[#f2e9e9] dark:bg-[#231f29] border-none rounded-sq-xl pl-4 pr-12 py-4 text-[#1a100f] dark:text-[#E6E1E5] focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-[#2D2835] transition-all font-medium placeholder:text-[#915b55]/50"
+                                        placeholder="Enter a secure password..."
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5e413d] dark:text-[#CAC4D0] hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-center p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                    >
+                                        <span className="material-symbols-outlined text-[20px]">
+                                            {showPassword ? 'visibility_off' : 'visibility'}
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
                         )}
 
