@@ -7,6 +7,7 @@ import M3LoadingIndicator from './M3LoadingIndicator';
 import M3Chip, { M3ChipSet } from './M3Chip';
 import M3SegmentedButton from './M3SegmentedButton';
 import M3Dialog from './M3Dialog';
+import M3ShapeSlider from './M3ShapeSlider';
 
 const Social = () => {
     const [users, setUsers] = useState([]);
@@ -344,18 +345,28 @@ const Social = () => {
         <div className="h-full w-full p-4 space-y-8 animate-fade-in relative z-10 pb-24">
             <div className="max-w-[1600px] mx-auto space-y-6">
                 {/* Limit Selector */}
-                <div className="flex justify-between items-center bg-white/80 dark:bg-white/5 dark:backdrop-blur-xl rounded-sq-xl p-4 shadow-sm border border-black/5 dark:border-white/5 mb-6 mx-2 transition-colors">
-                    <p className="font-black text-sm text-[#1a100f] dark:text-[#E6E1E5] uppercase tracking-wider flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">person_search</span>
-                        People Limit
-                    </p>
-                    <select
-                        value={fetchLimit}
-                        onChange={(e) => setFetchLimit(Number(e.target.value))}
-                        className="bg-primary/10 dark:bg-white/10 border-none text-[#1a100f] dark:text-white rounded-lg px-3 py-1.5 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-primary appearance-none text-center"
-                    >
-                        {[10, 20, 30, 40, 50].map(val => <option key={val} value={val} className="text-black">{val} Users</option>)}
-                    </select>
+                <div className="flex flex-col md:flex-row justify-between items-center bg-white/80 dark:bg-white/5 dark:backdrop-blur-xl rounded-sq-xl p-6 shadow-sm border border-black/5 dark:border-white/5 mb-6 mx-2 transition-all gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/10 dark:bg-white/10 rounded-sq-lg flex items-center justify-center text-primary dark:text-[#D0BCFF]">
+                            <span className="material-symbols-outlined text-2xl font-bold">person_search</span>
+                        </div>
+                        <div>
+                            <p className="font-black text-sm text-[#1a100f] dark:text-white uppercase tracking-wider">
+                                People Limit
+                            </p>
+                            <p className="text-[10px] font-bold text-[#915b55] dark:text-[#CAC4D0] uppercase tracking-widest mt-0.5">
+                                Select how many users to pull near you
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="w-full md:w-auto flex-1 flex justify-center md:justify-end">
+                        <M3ShapeSlider
+                            value={fetchLimit}
+                            onChange={(val) => setFetchLimit(val)}
+                            stops={[10, 20, 30, 40, 50]}
+                        />
+                    </div>
                 </div>
 
                 {/* 1. Matched Interests Section */}
