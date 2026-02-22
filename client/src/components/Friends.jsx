@@ -13,7 +13,7 @@ const Friends = () => {
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
     const [dialogConfig, setDialogConfig] = useState({ open: false, headline: '', message: '', action: null, icon: '' });
-    const { user } = useAuth();
+    const { user, socket } = useAuth();
     const navigate = useNavigate();
 
     const fetchAll = useCallback(async () => {
@@ -39,6 +39,27 @@ const Friends = () => {
         const interval = setInterval(fetchAll, 10000); // Polling every 10s as a resilient fallback
         return () => clearInterval(interval);
     }, [fetchAll]);
+
+    // Listen for live online/offline status updates and block/delete removals
+    useEffect(() => {
+        if (!socket) return;
+        const handleStatusChange = (data) => {
+            setFriends(prev => prev.map(f =>
+                f._id === data.userId ? { ...f, isOnline: data.isActive } : f
+            ));
+        };
+        const handleUserRemoved = (data) => {
+            setFriends(prev => prev.filter(f => f._id !== data.userId));
+            setPendingRequests(prev => prev.filter(req => (req.from?._id || req.from) !== data.userId && (req.to?._id || req.to) !== data.userId));
+        };
+
+        socket.on('user_status_change', handleStatusChange);
+        socket.on('user_removed', handleUserRemoved);
+        return () => {
+            socket.off('user_status_change', handleStatusChange);
+            socket.off('user_removed', handleUserRemoved);
+        };
+    }, [socket]);
 
     const handleAcceptRequest = async (requestId) => {
         setActionLoading(requestId);

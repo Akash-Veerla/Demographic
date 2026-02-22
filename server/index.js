@@ -11,8 +11,14 @@ require('./auth/google'); // Import Google Strategy Config
 
 const User = require('./models/User');
 const FriendRequest = require('./models/FriendRequest');
-const Conversation = require('./models/Message');
+const Conversation = require('./models/Conversation');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const { validateInterests } = require('./utils/moderation');
+const CryptoJS = require("crypto-js");
+
+// Fallback message encryption key
+const MESSAGE_SECRET = process.env.MESSAGE_SECRET || 'default_secret_key_12345';
 
 const authRoutes = require('./routes/auth');
 
@@ -126,6 +132,13 @@ io.on('connection', (socket) => {
         socket.join(userId); // Join a room named after the userId for private messaging
         console.log(`Socket ${socket.id} mapped to User ${userId}`);
 
+        try {
+            await User.findByIdAndUpdate(userId, { isActive: true, lastLogin: new Date() });
+            io.emit('user_status_change', { userId, isActive: true });
+        } catch (err) {
+            console.error('Error activating user:', err);
+        }
+
         // Trigger an initial broadcast for this user
         broadcastNearbyUsers(socket, userId);
     });
@@ -193,24 +206,29 @@ io.on('connection', (socket) => {
                 { userId: receiverId, displayName: receiverUser?.displayName || 'User', profilePhoto: receiverUser?.profilePhoto || '' }
             ];
 
+            const encryptedContent = CryptoJS.AES.encrypt(message, MESSAGE_SECRET).toString();
+
             const conv = await Conversation.findOneAndUpdate(
                 { roomId },
                 {
                     $setOnInsert: { participants: [userId, receiverId], participantDetails: pDetails },
-                    $push: { messages: { sender: userId, senderName: senderName, receiver: receiverId, content: message, status: 'sent', readAt: null } },
+                    $push: { messages: { sender: userId, senderName: senderName, receiver: receiverId, content: encryptedContent, status: 'sent', readAt: null } },
                     $set: { lastMessageAt: new Date() }
                 },
                 { upsert: true, new: true }
             );
 
             const msg = conv.messages[conv.messages.length - 1];
+            // Decrypt local instance to broadcast
+            const broadcastMsg = msg.toObject();
+            broadcastMsg.content = message;
 
             // Emit to the room (or specific user if room isn't joined by receiver yet)
-            io.to(roomId).emit('receive_message', msg);
+            io.to(roomId).emit('receive_message', broadcastMsg);
 
             // Also emit a notification to the target user (for their friends list)
             io.to(receiverId).emit('message_notification', {
-                ...msg.toObject(),
+                ...broadcastMsg,
                 senderName: senderName
             });
         } catch (err) {
@@ -236,9 +254,49 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
+        const userId = socketToUser.get(socket.id);
         socketToUser.delete(socket.id);
         console.log('Client disconnected', socket.id);
+
+        if (userId) {
+            // Delay slightly to handle page refresh seamlessly
+            setTimeout(async () => {
+                let stillActive = false;
+                for (let [sId, uId] of socketToUser.entries()) {
+                    if (uId === userId) {
+                        stillActive = true;
+                        break;
+                    }
+                }
+                if (!stillActive) {
+                    try {
+                        await User.findByIdAndUpdate(userId, { isActive: false });
+                        io.emit('user_status_change', { userId, isActive: false });
+                    } catch (err) {
+                        console.error('Error deactivating user:', err);
+                    }
+                }
+            }, 1000); // 1s buffer for reloads
+        }
+    });
+
+    socket.on('logout', async (userId) => {
+        if (!userId) return;
+        try {
+            await User.findByIdAndUpdate(userId, { isActive: false });
+            io.emit('user_status_change', { userId, isActive: false });
+
+            for (let [sId, uId] of socketToUser.entries()) {
+                if (uId === userId) {
+                    socketToUser.delete(sId);
+                    const s = io.sockets.sockets.get(sId);
+                    if (s) s.disconnect(true);
+                }
+            }
+        } catch (err) {
+            console.error('Error logging out socket:', err);
+        }
     });
 
     socket.on('getting_directions', async ({ targetUserId }) => {
@@ -282,6 +340,10 @@ app.post('/api/users/block', requireAuth, async (req, res) => {
         await FriendRequest.deleteMany({
             $or: [{ from: req.user.id, to: targetId }, { from: targetId, to: req.user.id }]
         });
+
+        // Immediately enforce the block in exactly the connected UI components of both users
+        io.to(targetId).emit('user_removed', { userId: req.user.id }); // Tell target to remove blocker
+        io.to(req.user.id).emit('user_removed', { userId: targetId }); // Tell blocker to remove target
 
         res.json({ message: 'User blocked.' });
     } catch (err) {
@@ -344,7 +406,7 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
             'location.coordinates': { $ne: [0, 0] },
             _id: { $nin: excludeIds },
             interests: { $exists: true, $ne: [] }
-        }).select('displayName email interests location profilePhoto bio lastLogin');
+        }).select('displayName email interests location profilePhoto bio lastLogin isActive');
 
         // Get pending friend requests for UI state
         const sentRequests = await FriendRequest.find({ from: userId, status: 'pending' }).select('to').lean();
@@ -361,12 +423,11 @@ app.get('/api/users/nearby', requireAuth, async (req, res) => {
                 if (sharedInterests.length === 0) return null;
 
                 const isFriend = myFriends.includes(uid);
-                const isOnline = (io.sockets.adapter.rooms.get(uid)?.size || 0) > 0;
+                const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!obj.isActive;
 
                 return {
                     ...obj,
-                    // Only friends can see each other's online status
-                    isOnline: isFriend ? isOnline : null,
+                    isOnline: isFriend ? isOnlineRaw : null,
                     isFriend,
                     friendRequestSent: sentToIds.includes(uid),
                     friendRequestReceived: receivedFromIds.includes(uid),
@@ -427,6 +488,7 @@ app.get('/api/users/discover', requireAuth, async (req, res) => {
                     profilePhoto: 1,
                     bio: 1,
                     lastLogin: 1,
+                    isActive: 1,
                     dist: 1
                 }
             }
@@ -443,13 +505,11 @@ app.get('/api/users/discover', requireAuth, async (req, res) => {
             const theirInterests = (u.interests || []).map(i => i.toLowerCase().trim());
             const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
             const isFriend = myFriends.includes(uid);
-
-            // Basic online check (optional)
-            const isOnline = (io.sockets.adapter.rooms.get(uid)?.size || 0) > 0;
+            const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!u.isActive;
 
             return {
                 ...u,
-                isOnline: isFriend ? isOnline : null,
+                isOnline: isFriend ? isOnlineRaw : null,
                 isFriend,
                 friendRequestSent: sentToIds.includes(uid),
                 friendRequestReceived: receivedFromIds.includes(uid),
@@ -560,7 +620,7 @@ app.get('/api/users/global', requireAuth, async (req, res) => {
         })
             .sort({ lastLogin: -1 })
             .limit(500)
-            .select('displayName email interests location profilePhoto bio lastLogin');
+            .select('displayName email interests location profilePhoto bio lastLogin isActive');
 
         const sentRequests = await FriendRequest.find({ from: userId, status: 'pending' }).select('to').lean();
         const receivedRequests = await FriendRequest.find({ to: userId, status: 'pending' }).select('from').lean();
@@ -573,11 +633,11 @@ app.get('/api/users/global', requireAuth, async (req, res) => {
             const theirInterests = (obj.interests || []).map(i => i.toLowerCase().trim());
             const sharedInterests = myInterests.filter(i => theirInterests.includes(i));
             const isFriend = myFriends.includes(uid);
-            const isOnline = (io.sockets.adapter.rooms.get(uid)?.size || 0) > 0;
+            const isOnlineRaw = !!((io.sockets.adapter.rooms.get(uid)?.size || 0) > 0) || !!obj.isActive;
 
             return {
                 ...obj,
-                isOnline: isFriend ? isOnline : null,
+                isOnline: isFriend ? isOnlineRaw : null,
                 isFriend,
                 friendRequestSent: sentToIds.includes(uid),
                 friendRequestReceived: receivedFromIds.includes(uid),
@@ -722,10 +782,39 @@ app.post('/api/user/interests', requireAuth, async (req, res) => {
         };
 
         // Sanitize: trim whitespace, remove empties, cap at 20
-        const sanitized = interests
+        let sanitized = interests
             .map(i => (typeof i === 'string' ? i.trim() : ''))
             .filter(Boolean)
             .slice(0, 20);
+
+        const moderationResult = validateInterests(sanitized);
+        if (!moderationResult.valid) {
+            const user = await User.findById(req.user.id);
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            const currentStrikes = (user.moderationStrikes || 0) + 1;
+            user.moderationStrikes = currentStrikes;
+            await user.save();
+
+            if (currentStrikes >= 6) {
+                const userId = user._id;
+                await User.updateMany({ friends: userId }, { $pull: { friends: userId } });
+                await FriendRequest.deleteMany({ $or: [{ from: userId }, { to: userId }] });
+                await User.findByIdAndDelete(userId);
+                io.emit('user_removed', { userId });
+                return res.status(403).json({
+                    error: 'Account terminated due to repeated community guidelines violations.',
+                    code: 'ACCOUNT_DELETED'
+                });
+            }
+
+            const safeInterests = sanitized.filter(i => !moderationResult.flagged.includes(i));
+            return res.status(400).json({
+                error: `Inappropriate interests blocked: ${moderationResult.flagged.join(', ')}. You have ${6 - currentStrikes} warnings remaining before account termination.`,
+                code: 'MODERATION_WARNING',
+                safeInterests
+            });
+        }
 
         const finalizedInterests = [];
         const standardLower = STANDARD_INTERESTS.map(s => s.toLowerCase());
@@ -810,6 +899,10 @@ app.delete('/api/user/delete', requireAuth, async (req, res) => {
         // Remove all friend requests involving this user
         await FriendRequest.deleteMany({ $or: [{ from: userId }, { to: userId }] });
         await User.findByIdAndDelete(userId);
+
+        // Notify all online clients that this user is entirely gone
+        io.emit('user_removed', { userId });
+
         res.json({ message: 'User deleted successfully' });
     } catch (err) {
         console.error("Delete user error:", err);
@@ -994,13 +1087,13 @@ app.get('/api/friend-requests/pending', requireAuth, async (req, res) => {
 app.get('/api/friends', requireAuth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
-            .populate('friends', 'displayName email profilePhoto bio interests location lastLogin');
+            .populate('friends', 'displayName email profilePhoto bio interests location lastLogin isActive');
 
         const friendsList = (user?.friends || []).map(f => {
             const obj = f.toObject();
             return {
                 ...obj,
-                isOnline: (io.sockets.adapter.rooms.get(f._id.toString())?.size || 0) > 0
+                isOnline: !!((io.sockets.adapter.rooms.get(f._id.toString())?.size || 0) > 0) || !!obj.isActive
             };
         });
 
@@ -1059,7 +1152,19 @@ app.get('/api/messages/:roomId', requireAuth, async (req, res) => {
             }
         }
 
-        res.json(messages);
+        const decryptedMessages = messages.map(msg => {
+            const msgObj = msg.toObject ? msg.toObject() : msg;
+            try {
+                const bytes = CryptoJS.AES.decrypt(msgObj.content, MESSAGE_SECRET);
+                msgObj.content = bytes.toString(CryptoJS.enc.Utf8);
+            } catch (err) {
+                console.error("Decryption err:", err);
+                msgObj.content = "Message unavailable";
+            }
+            return msgObj;
+        });
+
+        res.json(decryptedMessages);
     } catch (err) {
         console.error('Fetch messages error:', err);
         res.status(500).json({ error: 'Failed to fetch messages' });

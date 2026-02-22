@@ -16,7 +16,7 @@ const Social = () => {
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
     const [dialogConfig, setDialogConfig] = useState({ open: false, title: '', message: '', onConfirm: null, icon: '' });
-    const { user, userLocation, updateInterests } = useAuth();
+    const { user, userLocation, updateInterests, socket } = useAuth();
 
     // Fetch Global Users (Discover), Friend Requests, Friends
     const fetchAll = useCallback(async () => {
@@ -58,6 +58,28 @@ const Social = () => {
     useEffect(() => {
         fetchMatches();
     }, [fetchMatches]);
+
+    // Listen for live online/offline status updates and block/delete removals globally
+    useEffect(() => {
+        if (!socket) return;
+        const handleStatusChange = (data) => {
+            setUsers(prev => prev.map(u => u._id === data.userId ? { ...u, isOnline: data.isActive } : u));
+            setMatchedUsers(prev => prev.map(u => u._id === data.userId ? { ...u, isOnline: data.isActive } : u));
+            setFriends(prev => prev.map(f => f._id === data.userId ? { ...f, isOnline: data.isActive } : f));
+        };
+        const handleUserRemoved = (data) => {
+            setUsers(prev => prev.filter(u => u._id !== data.userId));
+            setMatchedUsers(prev => prev.filter(u => u._id !== data.userId));
+            setFriends(prev => prev.filter(f => f._id !== data.userId));
+        };
+
+        socket.on('user_status_change', handleStatusChange);
+        socket.on('user_removed', handleUserRemoved);
+        return () => {
+            socket.off('user_status_change', handleStatusChange);
+            socket.off('user_removed', handleUserRemoved);
+        };
+    }, [socket]);
 
     const checkInterestMatch = (u) => {
         return (u.sharedInterests?.length || 0) > 0;

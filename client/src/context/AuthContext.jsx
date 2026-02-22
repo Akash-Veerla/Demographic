@@ -120,6 +120,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
+        if (socketRef.current && user) {
+            socketRef.current.emit('logout', user._id || user.id);
+            socketRef.current.disconnect();
+            socketRef.current = null;
+            setSocket(null);
+        }
         localStorage.removeItem('token');
         setUser(null);
         setIsAuthenticated(false);

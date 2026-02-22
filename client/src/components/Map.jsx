@@ -256,6 +256,28 @@ const MapComponent = () => {
         return () => map.un('moveend', listener);
     }, [map, fetchNearbyUsers]);
 
+    // Listen for live online/offline status updates and block/delete removals globally
+    useEffect(() => {
+        if (!socket) return;
+        const handleStatusChange = (data) => {
+            setNearbyUsersList(prev => prev.map(u =>
+                u._id === data.userId ? { ...u, isOnline: data.isActive } : u
+            ));
+            setSelectedUser(prev => prev && prev._id === data.userId ? { ...prev, isOnline: data.isActive } : prev);
+        };
+        const handleUserRemoved = (data) => {
+            setNearbyUsersList(prev => prev.filter(u => u._id !== data.userId));
+            setSelectedUser(prev => prev && prev._id === data.userId ? null : prev);
+        };
+
+        socket.on('user_status_change', handleStatusChange);
+        socket.on('user_removed', handleUserRemoved);
+        return () => {
+            socket.off('user_status_change', handleStatusChange);
+            socket.off('user_removed', handleUserRemoved);
+        };
+    }, [socket]);
+
     // -------------------------------------------------------------------------
     // 3. Render Users on Map (Marker Branding)
     // -------------------------------------------------------------------------

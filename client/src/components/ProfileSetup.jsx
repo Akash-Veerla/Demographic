@@ -12,7 +12,7 @@ const DEFAULT_INTERESTS = [
 
 const ProfileSetup = () => {
     const navigate = useNavigate();
-    const { user, updateInterests, updateProfile, fetchCurrentUser, loading: authLoading } = useAuth();
+    const { user, updateInterests, updateProfile, fetchCurrentUser, loading: authLoading, logout } = useAuth();
 
     const [bio, setBio] = useState('');
     const [selectedInterests, setSelectedInterests] = useState([]);
@@ -124,7 +124,19 @@ const ProfileSetup = () => {
             navigate('/');
         } catch (err) {
             console.error("Setup failed:", err);
-            setAlertMessage(err.response?.data?.error || "Failed to save profile. Please try again.");
+            const errData = err.response?.data;
+            if (errData?.code === 'ACCOUNT_DELETED') {
+                logout();
+                navigate('/');
+                return;
+            } else if (errData?.code === 'MODERATION_WARNING') {
+                setAlertMessage(errData.error);
+                if (errData.safeInterests) {
+                    setSelectedInterests(errData.safeInterests);
+                }
+                return; // Let them stay and submit again
+            }
+            setAlertMessage(errData?.error || "Failed to save profile. Please try again.");
         } finally {
             setLoading(false);
         }

@@ -67,6 +67,10 @@ const userSchema = new Schema({
         type: String,
         enum: ['local', 'google'],
         default: 'local'
+    },
+    moderationStrikes: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 
