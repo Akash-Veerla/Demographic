@@ -117,7 +117,7 @@ const Home = () => {
                     <StatCard
                         label="Matched Interests"
                         count={stats.matchedInterestsNearby}
-                        description="Users within 20km sharing your interests"
+                        description="Your distinct interests shared by nearby users"
                         icon={Heart}
                     />
                 </div>

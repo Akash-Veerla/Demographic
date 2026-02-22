@@ -1,11 +1,12 @@
 // Moderation Utilities
 
 const BLACKLIST_CATEGORIES = {
-    explicit: ['nsfw', 'porn', 'adult', 'erotica', 'xxx', 'sexual', 'fetish', 'dating', 'hookup'],
-    violence: ['gore', 'blood', 'kill', 'suicide', 'self-harm', 'weapons', 'explosives', 'guns', 'murder', 'terrorism'],
-    hate: ['racist', 'nazi', 'slur', 'hate', 'supremacy', 'extremist', 'discrimination'],
-    substances: ['drugs', 'cocaine', 'meth', 'ecstasy', 'dealer'], // 'weed' excluded if needed, but keeping strict for now based on prompt 'weed (unless medical...)' - prompt implies strict check.
-    gambling: ['casino', 'betting', 'lottery', 'ponzi', 'crypto-scam']
+    explicit: ['nsfw', 'porn', 'adult', 'eroti', 'xxx', 'sexual', 'sex', 'fetish', 'dating', 'hookup', 'escort', 'nude', 'naked', 'brothel', 'prostitut', 'onlyfans'],
+    violence: ['gore', 'blood', 'kill', 'suicid', 'self-harm', 'weapon', 'explosiv', 'gun', 'murder', 'terror', 'bomb', 'shoot', 'assassin', 'massacre', 'tortur', 'mutilat', 'behead', 'snuff', 'knife', 'blade', 'rifle', 'sniper'],
+    hate: ['racist', 'nazi', 'slur', 'hate', 'supremacy', 'extremist', 'discriminat', 'bigot', 'homophob', 'transphob', 'xenophob', 'antisemit', 'kkk', 'jihad'],
+    substances: ['drug', 'cocaine', 'meth', 'ecstasy', 'dealer', 'heroin', 'fentanyl', 'opioid', 'crack', 'narcotic', 'acid', 'lsd', 'shroom'],
+    gambling: ['casino', 'betting', 'lottery', 'ponzi', 'crypto-scam', 'gamble', 'blackjack', 'roulette', 'poker'],
+    scam: ['scam', 'fraud', 'phishing', 'malware', 'hack', 'steal', 'botnet', 'ddos', 'dox', 'swatting', 'pyramid scheme']
 };
 
 /**

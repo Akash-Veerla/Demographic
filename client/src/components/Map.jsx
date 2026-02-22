@@ -67,6 +67,7 @@ const MapComponent = () => {
     const [routeInstructions, setRouteInstructions] = useState([]);
     const [isNavigating, setIsNavigating] = useState(false);
     const [destinationPin, setDestinationPin] = useState(null); // { coords: [lng, lat] }
+    const [navDistanceMeters, setNavDistanceMeters] = useState(0);
 
     const [chatTarget, setChatTarget] = useState(null);
     const [socketReady, setSocketReady] = useState(false);
@@ -502,6 +503,8 @@ const MapComponent = () => {
         // Check if destination is reached (within 20 meters)
         const lastCoord = coords[coords.length - 1];
         const distanceToTargetMeters = getDistance(toLonLat(userLocation), toLonLat(lastCoord));
+        setNavDistanceMeters(distanceToTargetMeters);
+
         if (distanceToTargetMeters < 20) {
             const notif = sendNotification("Destination Reached", {
                 body: "You have arrived at your destination.",
@@ -567,7 +570,12 @@ const MapComponent = () => {
             // All coordinates for the bounding polygon
             const pointsVec = [center];
 
-            nearbyUsersList.forEach(u => {
+            const matchingUsers = nearbyUsersList.filter(u => {
+                if (!u.interests || !user.interests) return false;
+                return u.interests.some(i => user.interests.includes(i));
+            });
+
+            matchingUsers.forEach(u => {
                 const p = fromLonLat(u.location.coordinates);
                 pointsVec.push(p);
 
@@ -1165,7 +1173,11 @@ const MapComponent = () => {
                         </div>
                         <div className="flex flex-col">
                             <h3 className="text-lg font-black text-[#1a100f] dark:text-white leading-none">Navigating</h3>
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">Follow route on map</p>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">
+                                {navDistanceMeters > 0
+                                    ? `${(navDistanceMeters * 0.000621371).toFixed(2)} Mi / ${(navDistanceMeters / 1000).toFixed(2)} KM approx`
+                                    : 'Follow route on map'}
+                            </p>
                         </div>
                     </div>
                     <button onClick={clearRoute} className="px-4 py-2 bg-red-100/50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-sq-lg font-bold text-xs transition-colors cursor-pointer shrink-0 border border-red-200/50 dark:border-red-500/20">
