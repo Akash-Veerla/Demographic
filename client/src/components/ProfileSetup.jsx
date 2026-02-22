@@ -285,8 +285,9 @@ const ProfileSetup = () => {
 
             {alertMessage && (
                 <M3Snackbar
+                    show={true}
                     message={alertMessage}
-                    onClose={() => setAlertMessage(null)}
+                    onDismiss={() => setAlertMessage(null)}
                 />
             )}
         </div>

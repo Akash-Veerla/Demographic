@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { ColorModeContext } from '../App';
 import M3TextField from './M3TextField';
@@ -8,7 +8,15 @@ import M3IconButton from './M3IconButton';
 
 const Register = () => {
     const navigate = useNavigate();
-    const { register, loading, error } = useAuth();
+    const location = useLocation();
+    const { register, loading, error: authError } = useAuth();
+
+    // Extract error from URL if present
+    const queryParams = new URLSearchParams(location.search);
+    const urlError = queryParams.get('error');
+
+    // Use authError if it exists (prioritize recent actions), otherwise URL error
+    const displayError = authError ? (authError.error || authError) : urlError;
 
     const [formData, setFormData] = useState({
         displayName: '',
@@ -68,9 +76,9 @@ const Register = () => {
                     </p>
                 </div>
 
-                {error && (
+                {displayError && (
                     <div className="mb-4 p-3 bg-error/10 text-error rounded-lg text-sm text-center font-medium">
-                        {error.error || 'Registration failed'}
+                        {displayError}
                     </div>
                 )}
 

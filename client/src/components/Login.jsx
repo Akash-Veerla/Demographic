@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { ColorModeContext } from '../App';
 import { Copy, Check } from 'lucide-react';
@@ -10,7 +10,15 @@ import M3IconButton from './M3IconButton';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { login, loading, error, forgotPassword } = useAuth();
+    const location = useLocation();
+    const { login, loading, error: authError, forgotPassword } = useAuth();
+
+    // Extract error from URL if present
+    const queryParams = new URLSearchParams(location.search);
+    const urlError = queryParams.get('error');
+
+    // Use authError if it exists (prioritize recent actions), otherwise URL error
+    const displayError = authError ? (authError.error || authError) : urlError;
 
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
@@ -96,9 +104,9 @@ const Login = () => {
                     </p>
                 </div>
 
-                {error && (
+                {displayError && (
                     <div className="mb-4 p-3 bg-error/10 text-error rounded-lg text-sm text-center font-medium">
-                        {error.error || 'Login failed'}
+                        {displayError}
                     </div>
                 )}
 
