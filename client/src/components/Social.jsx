@@ -17,6 +17,7 @@ const Social = () => {
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
     const [fetchLimit, setFetchLimit] = useState(10);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [dialogConfig, setDialogConfig] = useState({ open: false, title: '', message: '', onConfirm: null, icon: '' });
     const { user, userLocation, updateInterests, socket } = useAuth();
 
@@ -64,6 +65,19 @@ const Social = () => {
         }, 10000);
         return () => clearInterval(interval);
     }, [fetchAll, fetchMatches]);
+
+    // Handle Limit Change with loading effect
+    useEffect(() => {
+        if (initialLoading) return;
+
+        setIsRefreshing(true);
+        // Artificial delay to simulate "pulling" and prevent aggressive sliding
+        const timer = setTimeout(() => {
+            setIsRefreshing(false);
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, [fetchLimit, initialLoading]);
 
     // Listen for live online/offline status updates and block/delete removals globally
     useEffect(() => {
@@ -309,28 +323,19 @@ const Social = () => {
         );
     };
 
-    // Limit Logic
-    let displayMatched = matchedUsers.slice(0, fetchLimit);
-    let spilloverMatched = matchedUsers.slice(fetchLimit);
+    // Refined Limit Logic: Both sections now pull up to fetchLimit independently
+    const displayMatched = matchedUsers.slice(0, fetchLimit);
 
-    const inMatchedSectionIds = new Set(displayMatched.map(u => u._id));
-    const allMatchedIds = new Set(matchedUsers.map(u => u._id));
+    // Discover Logic: 
+    // 1. Identify spillover matched users (those not in the top N shown in Matched section)
+    const spilloverMatched = matchedUsers.slice(fetchLimit);
 
-    const discoverCandidates = [
-        ...spilloverMatched,
-        ...users.filter(u => !allMatchedIds.has(u._id) && u._id !== user?._id)
-    ];
+    // 2. Identify all non-matched users
+    const matchedIds = new Set(matchedUsers.map(u => u._id));
+    const otherUsers = users.filter(u => u._id !== user?._id && !matchedIds.has(u._id));
 
-    const discoverUsers = [];
-    const seenDiscover = new Set();
-
-    for (const cand of discoverCandidates) {
-        if (!inMatchedSectionIds.has(cand._id) && !seenDiscover.has(cand._id)) {
-            discoverUsers.push(cand);
-            seenDiscover.add(cand._id);
-        }
-        if (discoverUsers.length >= 50) break;
-    }
+    // 3. Combine and take top N for Discover section
+    const discoverUsers = [...spilloverMatched, ...otherUsers].slice(0, fetchLimit);
 
     if (initialLoading) {
         return (
@@ -343,6 +348,16 @@ const Social = () => {
 
     return (
         <div className="h-full w-full p-4 space-y-8 animate-fade-in relative z-10 pb-24">
+            {/* refreshing Overlay */}
+            {isRefreshing && (
+                <div className="fixed inset-0 z-[100] backdrop-blur-md bg-white/10 dark:bg-black/10 flex flex-col items-center justify-center gap-4 transition-all duration-300">
+                    <M3LoadingIndicator size={64} />
+                    <p className="text-[#1a100f] dark:text-white font-black uppercase tracking-[0.2em] animate-pulse">
+                        Refreshing People...
+                    </p>
+                </div>
+            )}
+
             <div className="max-w-[1600px] mx-auto space-y-6">
                 {/* Limit Selector */}
                 <div className="flex flex-col md:flex-row justify-between items-center bg-white/80 dark:bg-white/5 dark:backdrop-blur-xl rounded-sq-xl p-6 shadow-sm border border-black/5 dark:border-white/5 mb-6 mx-2 transition-all gap-6">

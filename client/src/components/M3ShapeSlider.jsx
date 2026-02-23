@@ -58,7 +58,7 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
             <div className="flex flex-row items-center justify-center gap-[12px] w-full" style={{ height: '50px' }}>
                 {/* Min Symbol */}
                 <div
-                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-bold text-[rgba(60,60,67,0.6)] text-center"
+                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-black text-[#3c3c43] dark:text-[#E6E1E5]"
                     style={{ fontFamily: "'SF Pro', 'Inter', sans-serif" }}
                 >
                     {stops[0]}
@@ -94,39 +94,30 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
                         {stops.map((stop, i) => (
                             <div
                                 key={stop}
-                                className="w-[4px] h-[4px] transition-all duration-300"
+                                className="w-[6px] h-[6px] transition-all duration-300"
                                 style={{
-                                    background: 'rgba(60, 60, 67, 0.18)',
+                                    background: i <= curIndex ? '#0088FF' : 'rgba(60, 60, 67, 0.18)',
                                     clipPath: getPoly(shapes[i]),
-                                    transform: i <= curIndex ? 'scale(1.8)' : 'scale(1.2)'
+                                    transform: i === curIndex ? 'scale(1.5)' : 'scale(1)'
                                 }}
                             />
                         ))}
                     </div>
 
-                    {/* Knob */}
+                    {/* Knob - Morphing Shape Knob */}
                     <div
-                        className="absolute w-[38px] h-[24px] bg-white flex items-center justify-center transition-all duration-500 ease-out"
+                        className="absolute w-10 h-10 bg-[#0088FF] dark:bg-[#D0BCFF] shadow-lg shadow-primary/30 z-10 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-all duration-500 ease-out"
                         style={{
-                            left: `calc(${progress * 100}% - 19px)`,
-                            top: 'calc(50% - 12px)',
-                            boxShadow: '0px 0.5px 4px rgba(0, 0, 0, 0.12), 0px 6px 13px rgba(0, 0, 0, 0.12)',
-                            borderRadius: '100px'
+                            left: `${progress * 100}%`,
+                            clipPath: getPoly(shapes[curIndex]),
+                            transition: 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
                         }}
-                    >
-                        {/* Material Morphing Interior */}
-                        <div
-                            className="bg-[#0088FF] w-[14px] h-[14px] transition-all duration-500 ease-out"
-                            style={{
-                                clipPath: getPoly(shapes[curIndex])
-                            }}
-                        />
-                    </div>
+                    />
                 </div>
 
                 {/* Max Symbol */}
                 <div
-                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-bold text-[rgba(60,60,67,0.6)] text-center"
+                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-black text-[#3c3c43] dark:text-[#E6E1E5]"
                     style={{ fontFamily: "'SF Pro', 'Inter', sans-serif" }}
                 >
                     {stops[stops.length - 1]}
