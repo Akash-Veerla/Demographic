@@ -50,78 +50,74 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
         onChange(stops[stopIdx]);
     };
 
+    // Theme accurate colors: Blue for Light, Purple for Dark
+    const activeColorClass = "bg-[#0088FF] dark:bg-[#D0BCFF]";
+    const activeTextColorClass = "text-[#0088FF] dark:text-[#D0BCFF]";
+
     return (
         <div
-            className="flex flex-col items-center select-none w-full max-w-[400px]"
-            style={{ padding: '0px 16px 1px', height: '52px' }}
+            className="flex flex-col items-center select-none w-full max-w-[450px]"
+            style={{ padding: '8px 24px 32px' }}
         >
-            <div className="flex flex-row items-center justify-center gap-[12px] w-full" style={{ height: '50px' }}>
-                {/* Min Symbol */}
+            <div className="relative w-full h-[60px] flex items-center">
+                {/* Interaction Overlay */}
                 <div
-                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-black text-[#3c3c43] dark:text-[#E6E1E5]"
-                    style={{ fontFamily: "'SF Pro', 'Inter', sans-serif" }}
-                >
-                    {stops[0]}
-                </div>
-
-                {/* Stack */}
-                <div
-                    className="flex-1 h-[50px] relative flex items-center cursor-pointer group"
+                    className="absolute inset-0 z-20 cursor-pointer"
                     onMouseDown={handleInteraction}
                     onMouseMove={(e) => { if (e.buttons === 1) handleInteraction(e); }}
-                >
-                    {/* Track Background */}
-                    <div
-                        className="absolute h-[6px] left-0 right-0 rounded-[3px]"
-                        style={{ background: 'rgba(120, 120, 120, 0.2)', top: 'calc(50% - 3px)' }}
-                    />
+                />
 
-                    {/* Fill */}
-                    <div
-                        className="absolute h-[6px] left-0 rounded-[3px] transition-all duration-300 ease-out"
-                        style={{
-                            background: '#0088FF',
-                            top: 'calc(50% - 3px)',
-                            width: `${progress * 100}%`
-                        }}
-                    />
-
-                    {/* Ticks Container */}
-                    <div
-                        className="absolute h-[4px] left-0 right-0 flex flex-row justify-between items-center pointer-events-none"
-                        style={{ top: 'calc(50% - 2px + 9px)' }}
-                    >
-                        {stops.map((stop, i) => (
-                            <div
-                                key={stop}
-                                className="w-[6px] h-[6px] transition-all duration-300"
-                                style={{
-                                    background: i <= curIndex ? '#0088FF' : 'rgba(60, 60, 67, 0.18)',
-                                    clipPath: getPoly(shapes[i]),
-                                    transform: i === curIndex ? 'scale(1.5)' : 'scale(1)'
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Knob - Morphing Shape Knob */}
-                    <div
-                        className="absolute w-10 h-10 bg-[#0088FF] dark:bg-[#D0BCFF] shadow-lg shadow-primary/30 z-10 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-all duration-500 ease-out"
-                        style={{
-                            left: `${progress * 100}%`,
-                            clipPath: getPoly(shapes[curIndex]),
-                            transition: 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                        }}
-                    />
-                </div>
-
-                {/* Max Symbol */}
+                {/* Track Background */}
                 <div
-                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-black text-[#3c3c43] dark:text-[#E6E1E5]"
-                    style={{ fontFamily: "'SF Pro', 'Inter', sans-serif" }}
-                >
-                    {stops[stops.length - 1]}
+                    className="absolute h-[14px] left-0 right-0 rounded-full bg-black/5 dark:bg-white/10"
+                    style={{ top: 'calc(50% - 7px)' }}
+                />
+
+                {/* Fill Track */}
+                <div
+                    className={`absolute h-[14px] left-0 rounded-full transition-all duration-300 ease-out ${activeColorClass}`}
+                    style={{
+                        top: 'calc(50% - 7px)',
+                        width: `${progress * 100}%`
+                    }}
+                />
+
+                {/* Stop Points (Bold thick dots ON the track) */}
+                <div className="absolute inset-0 flex items-center justify-between px-[2px]">
+                    {stops.map((stop, i) => (
+                        <div
+                            key={`point-${stop}`}
+                            className={`w-5 h-5 rounded-full transition-all duration-300 z-10 border-[3px] border-white dark:border-[#1f1b24] shadow-md ${i <= curIndex ? activeColorClass : 'bg-gray-300 dark:bg-gray-600'
+                                }`}
+                            style={{
+                                transform: i === curIndex ? 'scale(1.3)' : 'scale(1)'
+                            }}
+                        />
+                    ))}
                 </div>
+
+                {/* Stop Labels (Numbers 10-50 below) */}
+                <div className="absolute top-[110%] left-0 right-0 flex justify-between">
+                    {stops.map((stop, i) => (
+                        <div
+                            key={`label-${stop}`}
+                            className={`text-[12px] font-black uppercase tracking-widest transition-all duration-300 w-10 text-center ${i === curIndex ? activeTextColorClass : 'text-gray-400 dark:text-gray-500'
+                                }`}
+                        >
+                            {stop}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Knob (The Morphing Shape) */}
+                <div
+                    className={`absolute w-14 h-14 shadow-[0_12px_28px_-4px_rgba(0,0,0,0.35)] z-30 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-all duration-500 ease-out border-[4px] border-white dark:border-[#1f1b24] ${activeColorClass}`}
+                    style={{
+                        left: `${progress * 100}%`,
+                        clipPath: getPoly(shapes[curIndex]),
+                        transition: 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                    }}
+                />
             </div>
         </div>
     );
