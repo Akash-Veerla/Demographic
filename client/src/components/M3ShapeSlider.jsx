@@ -30,15 +30,12 @@ const computeShape = (fn) => {
     return points;
 };
 
-const easeInOutCubic = (t) =>
-    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
 const SELECTED_SHAPE_INDICES = [3, 2, 4, 5, 0]; // 10, 20, 30, 40, 50
 
 const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50] }) => {
     const shapes = useMemo(() => SELECTED_SHAPE_INDICES.map(idx => computeShape(SHAPE_FNS[idx])), []);
 
-    const curIndex = stops.indexOf(value);
+    const curIndex = stops.indexOf(value) !== -1 ? stops.indexOf(value) : 0;
     const progress = curIndex / (stops.length - 1);
 
     const getPoly = (shapePoints) => {
@@ -54,55 +51,86 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
     };
 
     return (
-        <div className="flex flex-col gap-4 w-full max-w-md select-none">
-            <div
-                className="relative h-12 flex items-center cursor-pointer group px-4"
-                onMouseDown={handleInteraction}
-                onMouseMove={(e) => {
-                    if (e.buttons === 1) handleInteraction(e);
-                }}
-            >
-                {/* Track */}
-                <div className="absolute left-4 right-4 h-1 bg-primary/20 dark:bg-white/10 rounded-full overflow-hidden">
-                    <div
-                        className="h-full bg-primary/40 dark:bg-[#D0BCFF]/40 transition-all duration-500 ease-out"
-                        style={{ width: `${progress * 100}%` }}
-                    />
+        <div
+            className="flex flex-col items-center select-none w-full max-w-[400px]"
+            style={{ padding: '0px 16px 1px', height: '52px' }}
+        >
+            <div className="flex flex-row items-center justify-center gap-[12px] w-full" style={{ height: '50px' }}>
+                {/* Min Symbol */}
+                <div
+                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-bold text-[rgba(60,60,67,0.6)] text-center"
+                    style={{ fontFamily: "'SF Pro', 'Inter', sans-serif" }}
+                >
+                    {stops[0]}
                 </div>
 
-                {/* Stops */}
-                {stops.map((stop, i) => {
-                    const stopPos = (i / (stops.length - 1)) * 100;
-                    const isActive = stop <= value;
-                    return (
-                        <div
-                            key={stop}
-                            className="absolute mt-0 transform -translate-x-1/2 flex flex-col items-center"
-                            style={{ left: `calc(1rem + ${stopPos}% * (100% - 2rem) / 100)` }}
-                        >
+                {/* Stack */}
+                <div
+                    className="flex-1 h-[50px] relative flex items-center cursor-pointer group"
+                    onMouseDown={handleInteraction}
+                    onMouseMove={(e) => { if (e.buttons === 1) handleInteraction(e); }}
+                >
+                    {/* Track Background */}
+                    <div
+                        className="absolute h-[6px] left-0 right-0 rounded-[3px]"
+                        style={{ background: 'rgba(120, 120, 120, 0.2)', top: 'calc(50% - 3px)' }}
+                    />
+
+                    {/* Fill */}
+                    <div
+                        className="absolute h-[6px] left-0 rounded-[3px] transition-all duration-300 ease-out"
+                        style={{
+                            background: '#0088FF',
+                            top: 'calc(50% - 3px)',
+                            width: `${progress * 100}%`
+                        }}
+                    />
+
+                    {/* Ticks Container */}
+                    <div
+                        className="absolute h-[4px] left-0 right-0 flex flex-row justify-between items-center pointer-events-none"
+                        style={{ top: 'calc(50% - 2px + 9px)' }}
+                    >
+                        {stops.map((stop, i) => (
                             <div
-                                className={`w-3 h-3 transition-all duration-300 ${isActive ? 'bg-primary dark:bg-[#D0BCFF] scale-110' : 'bg-primary/30 dark:bg-white/20'}`}
+                                key={stop}
+                                className="w-[4px] h-[4px] transition-all duration-300"
                                 style={{
+                                    background: 'rgba(60, 60, 67, 0.18)',
                                     clipPath: getPoly(shapes[i]),
-                                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    transform: i <= curIndex ? 'scale(1.8)' : 'scale(1.2)'
                                 }}
                             />
-                            <span className={`text-[10px] font-black mt-6 transition-colors duration-300 ${isActive ? 'text-primary dark:text-[#D0BCFF]' : 'text-[#915b55] dark:text-[#CAC4D0]'}`}>
-                                {stop}
-                            </span>
-                        </div>
-                    );
-                })}
+                        ))}
+                    </div>
 
-                {/* Thumb */}
+                    {/* Knob */}
+                    <div
+                        className="absolute w-[38px] h-[24px] bg-white flex items-center justify-center transition-all duration-500 ease-out"
+                        style={{
+                            left: `calc(${progress * 100}% - 19px)`,
+                            top: 'calc(50% - 12px)',
+                            boxShadow: '0px 0.5px 4px rgba(0, 0, 0, 0.12), 0px 6px 13px rgba(0, 0, 0, 0.12)',
+                            borderRadius: '100px'
+                        }}
+                    >
+                        {/* Material Morphing Interior */}
+                        <div
+                            className="bg-[#0088FF] w-[14px] h-[14px] transition-all duration-500 ease-out"
+                            style={{
+                                clipPath: getPoly(shapes[curIndex])
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Max Symbol */}
                 <div
-                    className="absolute w-9 h-9 bg-primary dark:bg-[#D0BCFF] shadow-lg shadow-primary/30 z-10 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 group-hover:scale-110 transition-all duration-500"
-                    style={{
-                        left: `calc(1rem + ${progress * 100}% * (100% - 2rem) / 100)`,
-                        clipPath: getPoly(shapes[curIndex]),
-                        transition: 'left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s ease-out'
-                    }}
-                />
+                    className="w-[32px] h-[50px] flex items-center justify-center text-[17px] font-bold text-[rgba(60,60,67,0.6)] text-center"
+                    style={{ fontFamily: "'SF Pro', 'Inter', sans-serif" }}
+                >
+                    {stops[stops.length - 1]}
+                </div>
             </div>
         </div>
     );

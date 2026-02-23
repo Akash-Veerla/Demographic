@@ -16,7 +16,7 @@ const Social = () => {
     const [friends, setFriends] = useState([]);
     const [actionLoading, setActionLoading] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [fetchLimit, setFetchLimit] = useState(50);
+    const [fetchLimit, setFetchLimit] = useState(10);
     const [dialogConfig, setDialogConfig] = useState({ open: false, title: '', message: '', onConfirm: null, icon: '' });
     const { user, userLocation, updateInterests, socket } = useAuth();
 
@@ -329,7 +329,7 @@ const Social = () => {
             discoverUsers.push(cand);
             seenDiscover.add(cand._id);
         }
-        if (discoverUsers.length >= fetchLimit) break;
+        if (discoverUsers.length >= 50) break;
     }
 
     if (initialLoading) {
