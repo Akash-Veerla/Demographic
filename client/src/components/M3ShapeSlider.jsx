@@ -50,16 +50,17 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
         onChange(stops[stopIdx]);
     };
 
-    // Theme accurate colors: Blue for Light, Purple for Dark
-    const activeColorClass = "bg-[#0088FF] dark:bg-[#D0BCFF]";
-    const activeTextColorClass = "text-[#0088FF] dark:text-[#D0BCFF]";
+    // Theme accurate colors: Red (#be3627) for Light, Purple (#D0BCFF) for Dark
+    const activeColorClass = "bg-[#be3627] dark:bg-[#D0BCFF]";
+    const activeTextColorClass = "text-[#be3627] dark:text-[#D0BCFF]";
+    const trackBgColorClass = "bg-[#be3627]/10 dark:bg-white/10";
 
     return (
         <div
             className="flex flex-col items-center select-none w-full max-w-[450px]"
-            style={{ padding: '8px 24px 32px' }}
+            style={{ padding: '8px 24px 36px' }}
         >
-            <div className="relative w-full h-[60px] flex items-center">
+            <div className="relative w-full h-[64px] flex items-center">
                 {/* Interaction Overlay */}
                 <div
                     className="absolute inset-0 z-20 cursor-pointer"
@@ -67,41 +68,44 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
                     onMouseMove={(e) => { if (e.buttons === 1) handleInteraction(e); }}
                 />
 
-                {/* Track Background */}
+                {/* Track Background - Thickened to 18px */}
                 <div
-                    className="absolute h-[14px] left-0 right-0 rounded-full bg-black/5 dark:bg-white/10"
-                    style={{ top: 'calc(50% - 7px)' }}
+                    className={`absolute h-[18px] left-0 right-0 rounded-full ${trackBgColorClass}`}
+                    style={{ top: 'calc(50% - 9px)' }}
                 />
 
-                {/* Fill Track */}
+                {/* Fill Track - Thickened to 18px */}
                 <div
-                    className={`absolute h-[14px] left-0 rounded-full transition-all duration-300 ease-out ${activeColorClass}`}
+                    className={`absolute h-[18px] left-0 rounded-full transition-all duration-300 ease-out ${activeColorClass}`}
                     style={{
-                        top: 'calc(50% - 7px)',
+                        top: 'calc(50% - 9px)',
                         width: `${progress * 100}%`
                     }}
                 />
 
                 {/* Stop Points (Bold thick dots ON the track) */}
-                <div className="absolute inset-0 flex items-center justify-between px-[2px]">
+                <div className="absolute inset-0 flex items-center justify-between px-[1px]">
                     {stops.map((stop, i) => (
                         <div
                             key={`point-${stop}`}
-                            className={`w-5 h-5 rounded-full transition-all duration-300 z-10 border-[3px] border-white dark:border-[#1f1b24] shadow-md ${i <= curIndex ? activeColorClass : 'bg-gray-300 dark:bg-gray-600'
+                            className={`w-5 h-5 rounded-full transition-all duration-300 z-10 border-[2.5px] border-white dark:border-[#141218] shadow-md flex items-center justify-center ${i <= curIndex ? activeColorClass : 'bg-gray-300 dark:bg-gray-700'
                                 }`}
                             style={{
-                                transform: i === curIndex ? 'scale(1.3)' : 'scale(1)'
+                                transform: i === curIndex ? 'scale(1.2)' : 'scale(1)'
                             }}
-                        />
+                        >
+                            {/* Inner dot to prevent mixing into the white border */}
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+                        </div>
                     ))}
                 </div>
 
                 {/* Stop Labels (Numbers 10-50 below) */}
-                <div className="absolute top-[110%] left-0 right-0 flex justify-between">
+                <div className="absolute top-[115%] left-0 right-0 flex justify-between">
                     {stops.map((stop, i) => (
                         <div
                             key={`label-${stop}`}
-                            className={`text-[12px] font-black uppercase tracking-widest transition-all duration-300 w-10 text-center ${i === curIndex ? activeTextColorClass : 'text-gray-400 dark:text-gray-500'
+                            className={`text-[13px] font-black uppercase tracking-tight transition-all duration-300 w-10 text-center ${i === curIndex ? activeTextColorClass : 'text-[#5e413d]/60 dark:text-[#CAC4D0]/60'
                                 }`}
                         >
                             {stop}
@@ -111,13 +115,16 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
 
                 {/* Knob (The Morphing Shape) */}
                 <div
-                    className={`absolute w-14 h-14 shadow-[0_12px_28px_-4px_rgba(0,0,0,0.35)] z-30 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-all duration-500 ease-out border-[4px] border-white dark:border-[#1f1b24] ${activeColorClass}`}
+                    className={`absolute w-14 h-14 shadow-[0_15px_35px_-5px_rgba(0,0,0,0.4)] z-30 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-all duration-500 ease-out border-[4px] border-white dark:border-[#141218] flex items-center justify-center ${activeColorClass}`}
                     style={{
                         left: `${progress * 100}%`,
                         clipPath: getPoly(shapes[curIndex]),
                         transition: 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
                     }}
-                />
+                >
+                    {/* Interior highlights to make it look premium */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent pointer-none" />
+                </div>
             </div>
         </div>
     );
