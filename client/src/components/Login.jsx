@@ -88,7 +88,7 @@ const Login = () => {
                 />
             </div>
 
-            <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white dark:bg-white/5 dark:backdrop-blur-2xl shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border-[0.5px] border-white/30 dark:border-white/10 mb-8" style={{ borderRadius: '28px' }}>
+            <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white/40 dark:bg-white/5 backdrop-blur-xl dark:backdrop-blur-2xl shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border-[0.5px] border-white/50 dark:border-white/10 mb-8" style={{ borderRadius: '28px' }}>
 
                 <div className="flex flex-col items-center gap-3 mb-6">
                     <div className="w-16 h-16 flex items-center justify-center mb-2">
@@ -106,8 +106,8 @@ const Login = () => {
 
                 {displayError && (
                     <div className={`mb-4 p-3 rounded-lg text-sm text-center font-medium flex items-start gap-2 ${displayError.includes('already') || displayError.includes('login')
-                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/40'
-                            : 'bg-error/10 text-error'
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/40'
+                        : 'bg-error/10 text-error'
                         }`}>
                         {(displayError.includes('already') || displayError.includes('login')) && (
                             <span className="material-symbols-outlined text-[18px] text-blue-500 shrink-0 mt-0.5">info</span>

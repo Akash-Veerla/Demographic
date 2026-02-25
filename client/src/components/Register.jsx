@@ -61,7 +61,7 @@ const Register = () => {
                 />
             </div>
 
-            <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white dark:bg-white/5 dark:backdrop-blur-2xl shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border-[0.5px] border-white/30 dark:border-white/10 mb-8" style={{ borderRadius: '28px' }}>
+            <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white/40 dark:bg-white/5 backdrop-blur-xl dark:backdrop-blur-2xl shadow-2xl p-8 md:p-10 flex flex-col animate-fade-in-up border-[0.5px] border-white/50 dark:border-white/10 mb-8" style={{ borderRadius: '28px' }}>
                 <div className="flex flex-col items-center gap-3 mb-6">
                     <div className="w-16 h-16 flex items-center justify-center mb-2">
                         <img src="/logo.svg" alt="App Logo" className="w-full h-full object-contain drop-shadow-md" />

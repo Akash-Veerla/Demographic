@@ -25,36 +25,38 @@ const Landing = () => {
                 <div className="absolute bottom-[20%] left-[40%] w-48 h-48 bg-tertiary/20 rounded-full blur-[80px] animate-blob animation-delay-4000" />
             </div>
 
-            {/* ── Sticky nav — buttons live here only ── */}
-            <nav className="sticky top-0 z-30 w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto shrink-0 backdrop-blur-md bg-[#f8f6f6]/60 dark:bg-[#0f0d13]/60 border-b border-white/20 dark:border-white/5">
-                <div className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
-                    <img src="/logo.svg" alt="KON-NECT" className="w-10 h-10 rounded-2xl shadow-lg border border-white/50 dark:border-white/10 group-hover:scale-105 transition-transform duration-300" />
-                    <span className="font-black text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-[#1a100f] to-[#5e413d] dark:from-white dark:to-gray-400">KON-NECT</span>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="hidden sm:block">
-                        <M3Switch checked={mode === 'dark'} onChange={toggleColorMode} iconOn="dark_mode" iconOff="light_mode" />
+            {/* ── Floating nav ── */}
+            <div className="sticky top-0 z-30 w-full px-4 pt-4 sm:pt-6">
+                <nav className="w-full max-w-7xl mx-auto px-6 py-4 flex justify-between items-center shrink-0 backdrop-blur-md bg-[#f8f6f6]/60 dark:bg-[#0f0d13]/60 border border-white/20 dark:border-white/5 rounded-[28px] shadow-lg shadow-[#1a100f]/5">
+                    <div className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
+                        <img src="/logo.svg" alt="KON-NECT" className="w-10 h-10 rounded-2xl shadow-lg border border-white/50 dark:border-white/10 group-hover:scale-105 transition-transform duration-300" />
+                        <span className="font-black text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-[#1a100f] to-[#5e413d] dark:from-white dark:to-gray-400">KON-NECT</span>
                     </div>
-                    {/* Sign In */}
-                    <button
-                        onClick={() => navigate('/login')}
-                        className="hidden sm:flex items-center px-5 py-2 rounded-full font-extrabold text-sm border border-[#be3627]/30 dark:border-[#D0BCFF]/30 text-[#be3627] dark:text-[#D0BCFF] hover:bg-[#be3627]/8 dark:hover:bg-[#D0BCFF]/8 transition-all"
-                    >
-                        Sign In
-                    </button>
-                    {/* Join Now */}
-                    <button
-                        onClick={() => navigate('/register')}
-                        className="flex items-center gap-1.5 px-5 py-2 rounded-full font-extrabold text-sm bg-[#be3627] dark:bg-[#D0BCFF] text-white dark:text-[#1D1B20] hover:opacity-90 hover:scale-105 transition-all shadow-lg shadow-[#be3627]/25 dark:shadow-[#D0BCFF]/15 group"
-                    >
-                        Join Now
-                        <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                </div>
-            </nav>
+                    <div className="flex items-center gap-3">
+                        <div className="hidden sm:block">
+                            <M3Switch checked={mode === 'dark'} onChange={toggleColorMode} iconOn="dark_mode" iconOff="light_mode" />
+                        </div>
+                        {/* Sign In */}
+                        <button
+                            onClick={() => navigate('/login')}
+                            className="hidden sm:flex items-center px-5 py-2 rounded-full font-extrabold text-sm border border-[#be3627]/30 dark:border-[#D0BCFF]/30 text-[#be3627] dark:text-[#D0BCFF] hover:bg-[#be3627]/8 dark:hover:bg-[#D0BCFF]/8 transition-all"
+                        >
+                            Sign In
+                        </button>
+                        {/* Join Now */}
+                        <button
+                            onClick={() => navigate('/register')}
+                            className="flex items-center gap-1.5 px-5 py-2 rounded-full font-extrabold text-sm bg-[#be3627] dark:bg-[#D0BCFF] text-white dark:text-[#1D1B20] hover:opacity-90 hover:scale-105 transition-all shadow-lg shadow-[#be3627]/25 dark:shadow-[#D0BCFF]/15 group"
+                        >
+                            Join Now
+                            <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                    </div>
+                </nav>
+            </div>
 
             {/* ── Main content ── */}
-            <main className="relative z-10 flex-col items-center justify-center px-4 w-full flex-grow flex pb-12 pt-6 sm:pt-10">
+            <main className="relative z-10 flex-col items-center justify-center px-4 w-full flex-grow flex pb-12 pt-6 sm:pt-14">
                 <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-8">
 
                     {/* Left: tagline only — no CTA buttons (they're in the nav) */}
@@ -148,8 +150,8 @@ const Landing = () => {
                 {/* Wide bottom card — Navigation (Globe icon, NOT spinning, hover-animated like the other cards) */}
                 <div className="w-full max-w-6xl mx-auto mt-6">
                     <div className="w-full p-6 md:p-8 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-300 overflow-hidden relative group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                        {/* Big animated background icon — same treatment as other cards */}
-                        <div className="absolute top-0 right-0 p-6 opacity-[0.07] dark:opacity-[0.05] group-hover:opacity-[0.15] group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300 text-tertiary">
+                        {/* Big animated background icon — Moved to Left to avoid collision with Globe icon */}
+                        <div className="absolute top-0 left-0 p-6 opacity-[0.07] dark:opacity-[0.05] group-hover:opacity-[0.15] group-hover:-translate-x-2 group-hover:scale-110 transition-all duration-300 text-tertiary">
                             <Navigation size={120} strokeWidth={1.3} />
                         </div>
 

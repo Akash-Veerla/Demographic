@@ -90,7 +90,7 @@ const Home = () => {
                     <StatCard
                         label="Friends Near You"
                         count={stats.activeNearby}
-                        description="Friends active within 20km of you"
+                        description="Friends within 20km of you"
                         icon={Radio}
                     />
                     <StatCard
