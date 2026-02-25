@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Map, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
+import { Radio, Heart, Shield, CheckCircle } from 'lucide-react';
 import api from '../utils/api';
 import M3LoadingIndicator from './M3LoadingIndicator';
 import M3Card from './M3Card';
@@ -11,45 +11,33 @@ const Home = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ activeNearby: 0, matchedInterestsNearby: 0, topInterests: [] });
     const [loadingStats, setLoadingStats] = useState(true);
+    const carouselRef = useRef(null);
 
     useEffect(() => {
         if (!user || !userLocation) return;
-
         const fetchStats = async () => {
             try {
-                // Pass current coordinates directly for guaranteed accuracy
                 const res = await api.get('/api/stats/local', {
                     params: { lat: userLocation.lat, lng: userLocation.lng, radius: 20 }
                 });
                 setStats(res.data);
             } catch (err) {
-                console.error("Failed to load stats", err);
+                console.error('Failed to load stats', err);
             } finally {
                 setLoadingStats(false);
             }
         };
-
         fetchStats();
-    }, [userLocation?.lat, userLocation?.lng]); // Stable primitive deps
+    }, [userLocation?.lat, userLocation?.lng]);
 
-    // Card Component for consistency — now using M3Card
-    const DashboardCard = ({ title, description, icon: Icon, onClick, className = "" }) => (
-        <M3Card
-            variant="elevated"
-            onClick={onClick}
-            interactive
-            className={`flex flex-col items-center text-center group ${className}`}
-        >
-            <div className="w-12 h-12 bg-primary/10 rounded-sq-xl flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <Icon size={24} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{description}</p>
-        </M3Card>
-    );
+    const scrollCarousel = (dir) => {
+        if (carouselRef.current) {
+            carouselRef.current.scrollBy({ left: dir * 220, behavior: 'smooth' });
+        }
+    };
 
     const StatCard = ({ label, count, description, icon: Icon }) => (
-        <M3Card variant="elevated" className="flex flex-col items-center text-center justify-center h-full hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]" padding="p-8">
+        <M3Card variant="elevated" className="flex flex-col items-center text-center justify-center h-full" padding="p-8">
             <span className="text-xs font-black tracking-widest text-[#915b55] dark:text-[#CAC4D0] uppercase mb-4 flex items-center gap-2">
                 <Icon size={14} /> {label}
             </span>
@@ -60,28 +48,15 @@ const Home = () => {
         </M3Card>
     );
 
-    const carouselRef = useRef(null);
-
-    const scrollCarousel = (dir) => {
-        if (carouselRef.current) {
-            carouselRef.current.scrollBy({ left: dir * 220, behavior: 'smooth' });
-        }
-    };
-
     const PulseCard = ({ category, count }) => (
         <div
             className="flex-shrink-0 w-52 h-32 bg-white dark:bg-white/5 dark:backdrop-blur-2xl border border-white/40 dark:border-white/10 rounded-sq-2xl p-5 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:border-white/70 dark:hover:border-white/25 transition-all duration-200 active:scale-95 relative overflow-hidden group"
             onClick={() => navigate(`/map?filter=${category}`)}
         >
-            {/* Pulsing indicator */}
             <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-
-            {/* Category name */}
             <h4 className="text-[15px] font-black text-[#1a100f] dark:text-white leading-snug pr-4 group-hover:text-primary dark:group-hover:text-[#D0BCFF] transition-colors">
                 {category}
             </h4>
-
-            {/* Bottom bar */}
             <div>
                 <p className="text-xs text-primary dark:text-[#D0BCFF] font-black uppercase tracking-tight mb-2">
                     {count} Active Nearby
@@ -100,47 +75,33 @@ const Home = () => {
         <div className="min-h-screen w-full bg-transparent flex flex-col items-center py-10 px-4 gap-8 font-display transition-colors duration-300">
             <div className="w-full max-w-4xl space-y-8 flex-1">
 
-                {/* 1. Header / Greeting (Aligned) */}
+                {/* Greeting */}
                 <div className="mb-4 animate-fade-in">
                     <h1 className="text-3xl md:text-4xl font-black text-[#1a100f] dark:text-white tracking-tight">
-                        Welcome back, <span className="text-primary">{user?.displayName?.split(' ')[0]}</span>
+                        Hey, <span className="text-primary">{user?.displayName?.split(' ')[0]}</span> 👋
                     </h1>
-                    <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold mt-1">Ready to find some new connections?</p>
+                    <p className="text-[#5e413d] dark:text-[#CAC4D0] font-bold mt-1">
+                        Here's what's happening near you right now.
+                    </p>
                 </div>
 
-                {/* 2. Navigation Cards (Row 1) — Uses Grid for structure */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                    <DashboardCard
-                        title="Explore Map"
-                        description="Discover people and places matching your vibe nearby."
-                        icon={Map}
-                        onClick={() => navigate('/map')}
-                    />
-                    <DashboardCard
-                        title="My Profile"
-                        description="Update your interests to find better matches."
-                        icon={User}
-                        onClick={() => navigate('/profile')}
-                    />
-                </div>
-
-                {/* 3. Stats (Row 2) */}
+                {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StatCard
                         label="Friends Near You"
                         count={stats.activeNearby}
-                        description="Mutual friends active within 20km"
+                        description="Friends active within 20km of you"
                         icon={Radio}
                     />
                     <StatCard
-                        label="Matched Interests"
+                        label="Shared Interests"
                         count={stats.matchedInterestsNearby}
-                        description="Your distinct interests shared by nearby users"
+                        description="Your interests also liked by people nearby"
                         icon={Heart}
                     />
                 </div>
 
-                {/* 4. Live Pulse Carousel (New Row) */}
+                {/* Trending carousel */}
                 {stats.topInterests && stats.topInterests.length > 0 && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -165,7 +126,6 @@ const Home = () => {
                                 </button>
                             </div>
                         </div>
-                        {/* Scrollable carousel — hidden scrollbar, snap, uniform card height */}
                         <div
                             ref={carouselRef}
                             className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
@@ -180,17 +140,17 @@ const Home = () => {
                     </div>
                 )}
 
-                {/* 5. Info / Welcome Section (Row 4 - Glassmorphism) */}
+                {/* About section */}
                 <div className="squircle-full bg-white dark:bg-white/5 dark:backdrop-blur-2xl p-8 md:p-12 border border-white/20 dark:border-white/5 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
                     <div className="w-full relative z-10">
                         <div className="mb-10 text-center md:text-left">
                             <h2 className="text-3xl font-black text-[#1a100f] dark:text-white mb-4 tracking-tight flex items-center justify-center md:justify-start gap-3">
                                 <img src="/logo.svg" alt="App Logo" className="w-10 h-10 object-contain drop-shadow-md" />
-                                Welcome to KON-NECT
+                                How KON-NECT works
                             </h2>
                             <p className="text-[#5e413d] dark:text-[#CAC4D0] leading-relaxed font-medium text-lg">
-                                KON-NECT helps you discover and connect with people near you who share your passions. Whether it's tech, travel, music, or art — find your tribe on the map, send a friend request, and start real conversations. No algorithms, no endless scrolling — just genuine connections based on what you love.
+                                KON-NECT shows you a live map of people within 20km who share your interests. Click any pin, send a friend request, and start a private chat once they accept. No endless feeds — just real connections around you.
                             </p>
                         </div>
 
@@ -200,16 +160,17 @@ const Home = () => {
                                     <div className="w-10 h-10 bg-primary/10 rounded-sq-lg flex items-center justify-center text-primary">
                                         <CheckCircle size={22} strokeWidth={2.5} />
                                     </div>
-                                    How it Works
+                                    Getting started
                                 </h3>
                                 <ul className="space-y-4">
                                     {[
-                                        "Open the Map to see people near you with shared interests.",
-                                        "Click on a pin to view their profile and interests.",
-                                        "Send a Friend Request to connect and start chatting."
+                                        "Open the Map to see people near you.",
+                                        "Tap any pin to view their profile and shared interests.",
+                                        "Send a friend request — they'll get a notification.",
+                                        "Once they accept, chat opens up instantly.",
                                     ].map((text, i) => (
-                                        <li key={i} className="flex gap-4 items-start group/li">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 group-hover/li:scale-150 transition-transform"></span>
+                                        <li key={i} className="flex gap-4 items-start">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 shrink-0" />
                                             <span className="text-[#5e413d] dark:text-[#CAC4D0] font-bold text-sm tracking-tight">{text}</span>
                                         </li>
                                     ))}
@@ -220,16 +181,16 @@ const Home = () => {
                                     <div className="w-10 h-10 bg-primary/10 rounded-sq-lg flex items-center justify-center text-primary">
                                         <Shield size={22} strokeWidth={2.5} />
                                     </div>
-                                    Safe & Private
+                                    Your privacy
                                 </h3>
                                 <ul className="space-y-4">
                                     {[
-                                        "Your exact location is fuzzed — only your general area is visible.",
-                                        "Online status is only visible to your mutual friends.",
-                                        "Chat unlocks only after both users accept a friend request."
+                                        "Your exact location is never shown — only your general area.",
+                                        "Online status is only visible to mutual friends.",
+                                        "Blocking someone removes them from your map instantly.",
                                     ].map((text, i) => (
-                                        <li key={i} className="flex gap-4 items-start group/li">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 group-hover/li:scale-150 transition-transform"></span>
+                                        <li key={i} className="flex gap-4 items-start">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 shrink-0" />
                                             <span className="text-[#5e413d] dark:text-[#CAC4D0] font-bold text-sm tracking-tight">{text}</span>
                                         </li>
                                     ))}
@@ -243,7 +204,6 @@ const Home = () => {
                 <footer className="text-center py-4">
                     <p className="text-xs text-[#5e413d] dark:text-[#CAC4D0] font-black uppercase tracking-widest">© 2026 KON-NECT. All rights reserved.</p>
                 </footer>
-
             </div>
         </div>
     );

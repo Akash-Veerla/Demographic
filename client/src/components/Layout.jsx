@@ -139,6 +139,8 @@ const Layout = ({ children }) => {
         { label: 'Friends', icon: 'group', activeIcon: 'group', path: '/friends' },
     ];
 
+    const isMap = location.pathname.startsWith('/map');
+
     return (
         <Box sx={{
             display: 'flex',
@@ -149,20 +151,31 @@ const Layout = ({ children }) => {
             position: 'relative'
         }}>
 
-            {/* Background Layer (From Reference Designs) */}
-            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                <div
-                    className="w-full h-full bg-cover bg-center filter blur-xl scale-110 opacity-40 dark:opacity-20 transition-opacity duration-700"
-                    style={{ backgroundImage: 'var(--bg-map-url)' }}
-                ></div>
-                {/* Overlay gradient for contrast */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/90 dark:via-background-dark/60 dark:to-background-dark/70 transition-colors duration-700"></div>
-            </div>
+            {/* Fixed background — stays static while content scrolls. Not applied on map page. */}
+            {!isMap && (
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <div
+                        className="w-full h-full bg-cover bg-center filter blur-xl scale-110 opacity-40 dark:opacity-20 transition-opacity duration-700"
+                        style={{ backgroundImage: 'var(--bg-map-url)' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/90 dark:via-background-dark/60 dark:to-background-dark/70 transition-colors duration-700" />
+                </div>
+            )}
+            {/* On map page keep the old absolute background */}
+            {isMap && (
+                <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                    <div
+                        className="w-full h-full bg-cover bg-center filter blur-xl scale-110 opacity-40 dark:opacity-20 transition-opacity duration-700"
+                        style={{ backgroundImage: 'var(--bg-map-url)' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/40 to-background-light/90 dark:via-background-dark/60 dark:to-background-dark/70 transition-colors duration-700" />
+                </div>
+            )}
 
             <Box sx={{
                 flexGrow: 1,
                 position: 'relative',
-                zIndex: 1 // Content above background
+                zIndex: 1
             }}>
                 {/* Mobile / Narrow Top Bar */}
                 {isNarrow && user && (
@@ -233,79 +246,80 @@ const Layout = ({ children }) => {
                     </>
                 )}
 
-                {/* Desktop / Wide Navbar (In Flow) — only when not narrow */}
+                {/* Desktop / Wide Navbar — sticky so it stays on top when scrolling */}
                 {!isNarrow && user && (
-                    <div className={`w-[98%] max-w-[1400px] mx-auto ${location.pathname.startsWith('/map') ? 'mt-0 mb-2' : 'mt-6 mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
-                        {/* Brand */}
-                        <div
-                            className="flex items-center gap-3 cursor-pointer select-none"
-                            onClick={() => navigate('/')}
-                            onContextMenu={(e) => {
-                                if (location.pathname.startsWith('/map')) {
-                                    e.preventDefault();
-                                    window.dispatchEvent(new Event('show_cluster_centers'));
-                                }
-                            }}
-                            onMouseDown={() => {
-                                if (location.pathname.startsWith('/map')) {
-                                    window.logoPressTimer = setTimeout(() => {
+                    <div className={`w-full px-4 ${isMap ? 'relative' : 'sticky top-0 z-50'}`}>
+                        <div className={`w-full max-w-[1400px] mx-auto ${isMap ? 'mt-0 mb-2' : 'mt-6 mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
+                            {/* Brand */}
+                            <div
+                                className="flex items-center gap-3 cursor-pointer select-none"
+                                onClick={() => navigate('/')}
+                                onContextMenu={(e) => {
+                                    if (location.pathname.startsWith('/map')) {
+                                        e.preventDefault();
                                         window.dispatchEvent(new Event('show_cluster_centers'));
-                                    }, 3000);
-                                }
-                            }}
-                            onMouseUp={() => clearTimeout(window.logoPressTimer)}
-                            onMouseLeave={() => clearTimeout(window.logoPressTimer)}
-                            onTouchStart={() => {
-                                if (location.pathname.startsWith('/map')) {
-                                    window.logoPressTimer = setTimeout(() => {
-                                        window.dispatchEvent(new Event('show_cluster_centers'));
-                                    }, 3000);
-                                }
-                            }}
-                            onTouchEnd={() => clearTimeout(window.logoPressTimer)}
-                        >
-                            <img src="/logo.svg" alt="App Logo" className="w-10 h-10 rounded-2xl shadow-sm hover:scale-105 transition-transform drop-shadow-md" />
-                            <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5] whitespace-nowrap">KON-NECT</span>
-                        </div>
-
-                        <M3SegmentedButton
-                            className="hidden md:inline-flex"
-                            segments={[
-                                { value: '/', label: 'Home', icon: 'home' },
-                                { value: '/map', label: 'Map', icon: 'map' },
-                                { value: '/social', label: 'Social', icon: 'explore' },
-                                { value: '/friends', label: 'Friends', icon: 'group' },
-                            ]}
-                            value={location.pathname === '/' ? '/' : location.pathname}
-                            onChange={(val) => navigate(val)}
-                        />
-
-                        {/* Right Profile & Actions */}
-                        <div className="flex items-center gap-3">
-                            {/* Theme Toggle — M3 Switch (Sun/Moon) */}
-                            <M3Switch
-                                checked={mode === 'dark'}
-                                onChange={toggleColorMode}
-                                iconOn="dark_mode"
-                                iconOff="light_mode"
-                            />
-
-                            <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/profile')}>
-                                <div className="text-right hidden lg:block">
-                                    <p className="text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] leading-none">{user.displayName?.split(' ')[0]}</p>
-                                </div>
-                                <Avatar user={user} sx={{ width: 40, height: 40, border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                                    }
+                                }}
+                                onMouseDown={() => {
+                                    if (location.pathname.startsWith('/map')) {
+                                        window.logoPressTimer = setTimeout(() => {
+                                            window.dispatchEvent(new Event('show_cluster_centers'));
+                                        }, 3000);
+                                    }
+                                }}
+                                onMouseUp={() => clearTimeout(window.logoPressTimer)}
+                                onMouseLeave={() => clearTimeout(window.logoPressTimer)}
+                                onTouchStart={() => {
+                                    if (location.pathname.startsWith('/map')) {
+                                        window.logoPressTimer = setTimeout(() => {
+                                            window.dispatchEvent(new Event('show_cluster_centers'));
+                                        }, 3000);
+                                    }
+                                }}
+                                onTouchEnd={() => clearTimeout(window.logoPressTimer)}
+                            >
+                                <img src="/logo.svg" alt="App Logo" className="w-10 h-10 rounded-2xl shadow-sm hover:scale-105 transition-transform drop-shadow-md" />
+                                <span className="font-display font-bold text-xl tracking-tight text-[#1a100f] dark:text-[#E6E1E5] whitespace-nowrap">KON-NECT</span>
                             </div>
-                            {/* Logout — M3 Icon Button */}
-                            <M3IconButton
-                                icon="logout"
-                                variant="standard"
-                                onClick={handleLogout}
-                                ariaLabel="Log out"
-                                size="default"
+
+                            <M3SegmentedButton
+                                className="hidden md:inline-flex"
+                                segments={[
+                                    { value: '/', label: 'Home', icon: 'home' },
+                                    { value: '/map', label: 'Map', icon: 'map' },
+                                    { value: '/social', label: 'Social', icon: 'explore' },
+                                    { value: '/friends', label: 'Friends', icon: 'group' },
+                                ]}
+                                value={location.pathname === '/' ? '/' : location.pathname}
+                                onChange={(val) => navigate(val)}
                             />
-                        </div>
-                    </div>
+
+                            {/* Right Profile & Actions */}
+                            <div className="flex items-center gap-3">
+                                {/* Theme Toggle — M3 Switch (Sun/Moon) */}
+                                <M3Switch
+                                    checked={mode === 'dark'}
+                                    onChange={toggleColorMode}
+                                    iconOn="dark_mode"
+                                    iconOff="light_mode"
+                                />
+
+                                <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/profile')}>
+                                    <div className="text-right hidden lg:block">
+                                        <p className="text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5] leading-none">{user.displayName?.split(' ')[0]}</p>
+                                    </div>
+                                    <Avatar user={user} sx={{ width: 40, height: 40, border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                                </div>
+                                {/* Logout — M3 Icon Button */}
+                                <M3IconButton
+                                    icon="logout"
+                                    variant="standard"
+                                    onClick={handleLogout}
+                                    ariaLabel="Log out"
+                                    size="default"
+                                />
+                            </div>
+                        </div></div>
                 )}
 
                 {/* Page Content */}
