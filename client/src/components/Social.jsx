@@ -375,7 +375,7 @@ const Social = () => {
                         </div>
                     </div>
 
-                    <div className="w-full md:w-auto flex-1 flex justify-center md:justify-end">
+                    <div className="w-full max-w-xs flex-shrink-0">
                         <M3ShapeSlider
                             value={fetchLimit}
                             onChange={(val) => setFetchLimit(val)}

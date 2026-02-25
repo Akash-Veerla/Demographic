@@ -1,19 +1,13 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 // ── Shape geometry ──────────────────────────────────────────────────────────
 const NUM_PTS = 20;
-
 const SHAPE_FNS = [
-    // 0 → stop=10 → near-circle (smoothest)
-    (_i, a) => 38 + 1.5 * Math.cos(3 * a),
-    // 1 → stop=20 → soft scallop
-    (i, _a) => i % 2 === 0 ? 40 : 32,
-    // 2 → stop=30 → 5-petal flower
-    (_i, a) => 34 + 7 * Math.cos(5 * a),
-    // 3 → stop=40 → 4-lobe blob
-    (_i, a) => 33 + 9 * Math.cos(4 * a + 0.5),
-    // 4 → stop=50 → sharp starburst
-    (i, _a) => i % 2 === 0 ? 43 : 24,
+    (_i, a) => 38 + 1.5 * Math.cos(3 * a),       // stop 0 – near-circle
+    (i) => i % 2 === 0 ? 40 : 32,             // stop 1 – soft scallop
+    (_i, a) => 34 + 7 * Math.cos(5 * a),         // stop 2 – 5-petal
+    (_i, a) => 33 + 9 * Math.cos(4 * a + 0.5),   // stop 3 – 4-lobe blob
+    (i) => i % 2 === 0 ? 43 : 24,             // stop 4 – starburst
 ];
 
 function computeShape(fn) {
@@ -24,57 +18,56 @@ function computeShape(fn) {
         return [50 + r * Math.cos(a), 50 + r * Math.sin(a)];
     });
 }
-
 const SHAPES = SHAPE_FNS.map(computeShape);
 
 function toClipPath(pts) {
     return `polygon(${pts.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(', ')})`;
 }
 
+// ── Constants ──────────────────────────────────────────────────────────────
+const KNOB_W = 40;   // knob pill width  (px)
+const KNOB_H = 24;   // knob pill height (px)
+const HALF_K = KNOB_W / 2; // 20px — used as padding so knob never overflows
+
 // ── Component ────────────────────────────────────────────────────────────────
 const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50] }) => {
-    const curIndex = Math.max(0, stops.indexOf(value));
-    const progress = curIndex / (stops.length - 1);
-
-    const trackRef = useRef(null);
+    const wrapRef = useRef(null); // the full slider wrapper (includes padding)
     const [active, setActive] = useState(false);
 
-    // Resolve pointer X → nearest stop index
-    const resolveIndex = (clientX) => {
-        const rect = trackRef.current?.getBoundingClientRect();
+    const n = stops.length;
+    const curIndex = Math.max(0, stops.indexOf(value));
+    const progress = curIndex / (n - 1); // 0 → 1
+
+    // ── Resolve a pointer X into the nearest stop ──────────────────────────
+    // The "live track" runs from HALF_K to (wrapWidth - HALF_K).
+    const resolveStop = (clientX) => {
+        const rect = wrapRef.current?.getBoundingClientRect();
         if (!rect) return curIndex;
-        const p = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        return Math.round(p * (stops.length - 1));
+        const liveWidth = rect.width - KNOB_W; // effective drag range
+        const x = clientX - rect.left - HALF_K;
+        const p = Math.max(0, Math.min(1, x / liveWidth));
+        return stops[Math.round(p * (n - 1))];
     };
 
-    const onDown = (clientX) => {
-        setActive(true);
-        onChange(stops[resolveIndex(clientX)]);
-    };
-    const onMove = (clientX) => {
-        if (!active) return;
-        onChange(stops[resolveIndex(clientX)]);
-    };
+    const onDown = (cx) => { setActive(true); onChange(resolveStop(cx)); };
+    const onMove = (cx) => { if (active) onChange(resolveStop(cx)); };
     const onUp = () => setActive(false);
 
-    // ── Colors (CSS custom-prop aware) ──────────────────────────────────────
-    // Light: primary = #be3627  Dark: primary = #D0BCFF
-    // We use Tailwind dark: classes throughout.
+    // ── Knob CSS left — offset from left edge of wrapper ──────────────────
+    // At progress=0  → left = 0      (knob centre at HALF_K from wrapper left)
+    // At progress=1  → left = 100%   (knob centre at wrapper right - HALF_K)
+    // We achieve this by keeping knob inside a div that has px padding = HALF_K
+    // and setting left as percentage of the INNER track div (which has no padding).
 
     const shapeClip = toClipPath(SHAPES[curIndex]);
 
-    // Knob left offset (percentage of track width, accounting for knob half-width)
-    const knobLeft = `${progress * 100}%`;
-
     return (
-        <div
-            className="select-none w-full"
-            style={{ padding: '8px 0 36px' }}
-        >
-            {/* ── Outer layout: [track area] ── */}
+        <div className="select-none w-full" style={{ padding: '6px 0 32px' }}>
+
+            {/* ── Outer wrapper — the ref for hit-testing ── */}
             <div
-                ref={trackRef}
-                className="relative w-full cursor-pointer"
+                ref={wrapRef}
+                className="relative cursor-pointer touch-none"
                 style={{ height: '44px' }}
                 onMouseDown={e => onDown(e.clientX)}
                 onMouseMove={e => { if (e.buttons === 1) onMove(e.clientX); }}
@@ -84,112 +77,116 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
                 onTouchMove={e => { e.preventDefault(); onMove(e.touches[0].clientX); }}
                 onTouchEnd={onUp}
             >
-                {/* ── Track (6px tall, rounded) ── */}
+                {/* ── Inner track area — horizontally inset by HALF_K so knob centres align with numbers ── */}
                 <div
-                    className="absolute left-0 right-0 rounded-full overflow-hidden"
-                    style={{ height: '6px', top: 'calc(50% - 3px)' }}
+                    className="absolute top-0 bottom-0"
+                    style={{ left: `${HALF_K}px`, right: `${HALF_K}px` }}
                 >
-                    {/* Background track */}
-                    <div className="absolute inset-0 bg-[rgba(120,120,120,0.2)] dark:bg-white/15 rounded-full" />
-                    {/* Filled portion */}
+                    {/* Track background */}
                     <div
-                        className="absolute left-0 top-0 bottom-0 rounded-full bg-[#be3627] dark:bg-[#D0BCFF]"
+                        className="absolute rounded-full bg-[rgba(120,120,120,0.2)] dark:bg-white/15"
+                        style={{ height: '6px', top: 'calc(50% - 3px)', left: 0, right: 0 }}
+                    />
+
+                    {/* Active fill */}
+                    <div
+                        className="absolute rounded-full bg-[#be3627] dark:bg-[#D0BCFF]"
                         style={{
+                            height: '6px',
+                            top: 'calc(50% - 3px)',
+                            left: 0,
                             width: `${progress * 100}%`,
-                            transition: 'width 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                        }}
-                    />
-                </div>
-
-                {/* ── Tick dots (4×4px, centred on each stop position, below track centre) ── */}
-                {stops.map((stop, i) => {
-                    const tickLeft = `${(i / (stops.length - 1)) * 100}%`;
-                    const isPassed = i < curIndex;
-                    const isCurrent = i === curIndex;
-                    return (
-                        <div
-                            key={`tick-${stop}`}
-                            className="absolute rounded-full pointer-events-none"
-                            style={{
-                                width: '4px',
-                                height: '4px',
-                                // Place ticks 9px below track centre (matches Apple spec: top = 50% - 4/2 + 9)
-                                top: 'calc(50% + 6px)',
-                                left: tickLeft,
-                                transform: 'translateX(-50%)',
-                                background: isCurrent
-                                    ? 'transparent'
-                                    : isPassed
-                                        ? 'rgba(255,255,255,0.5)'
-                                        : 'rgba(60,60,67,0.18)',
-                                transition: 'background 0.2s ease'
-                            }}
-                        />
-                    );
-                })}
-
-                {/* ── Knob: pill shape (38×28px) with morphing shape on top ── */}
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        top: '50%',
-                        left: knobLeft,
-                        transform: 'translate(-50%, -50%)',
-                        transition: 'left 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                        zIndex: 10,
-                        width: '44px',
-                        height: '28px',
-                    }}
-                >
-                    {/* White pill with shadow — matches Apple reference knob */}
-                    <div
-                        className="absolute inset-0 rounded-full bg-white dark:bg-[#2D2835]"
-                        style={{
-                            boxShadow: '0px 0.5px 4px rgba(0,0,0,0.12), 0px 6px 13px rgba(0,0,0,0.16)'
+                            transition: 'width 0.18s ease',
                         }}
                     />
 
-                    {/* Morphing material shape floats centred on the pill */}
-                    <div
-                        className="absolute bg-[#be3627] dark:bg-[#D0BCFF]"
-                        style={{
-                            width: '26px',
-                            height: '26px',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            clipPath: shapeClip,
-                            transition: [
-                                'clip-path 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                                'width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                                'height 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            ].join(', '),
-                        }}
-                    />
-                </div>
-
-                {/* ── Number labels ── */}
-                <div className="absolute left-0 right-0 flex justify-between" style={{ top: 'calc(100% + 8px)' }}>
+                    {/* Tick dots — one per stop, positioned at the exact stop % */}
                     {stops.map((stop, i) => {
-                        const isCurrent = i === curIndex;
+                        const pct = (i / (n - 1)) * 100;
+                        const passed = i < curIndex;
+                        const current = i === curIndex;
                         return (
-                            <span
-                                key={`label-${stop}`}
-                                className={`text-[13px] font-bold tabular-nums transition-all duration-200 ${isCurrent
-                                        ? 'text-[#be3627] dark:text-[#D0BCFF] scale-110'
-                                        : 'text-[rgba(60,60,67,0.55)] dark:text-[rgba(202,196,208,0.55)] scale-100'
-                                    }`}
+                            <div
+                                key={`tick-${stop}`}
+                                className="absolute rounded-full pointer-events-none"
                                 style={{
-                                    display: 'block',
-                                    width: `${100 / stops.length}%`,
-                                    textAlign: 'center',
-                                    transformOrigin: 'center bottom',
+                                    width: '4px',
+                                    height: '4px',
+                                    top: 'calc(50% + 5px)',        // below track centre
+                                    left: `${pct}%`,
+                                    transform: 'translateX(-50%)',
+                                    background: current
+                                        ? 'transparent'
+                                        : passed
+                                            ? 'rgba(255,255,255,0.45)'
+                                            : 'rgba(60,60,67,0.18)',
+                                    transition: 'background 0.15s',
                                 }}
-                            >
-                                {stop}
-                            </span>
+                            />
                         );
                     })}
+
+                    {/* Knob — positioned by left:  progress * 100% inside the inner div */}
+                    <div
+                        className="absolute pointer-events-none"
+                        style={{
+                            width: `${KNOB_W}px`,
+                            height: `${KNOB_H}px`,
+                            top: '50%',
+                            left: `${progress * 100}%`,
+                            // translate(-50%,-50%) centres the knob on the stop position
+                            transform: 'translate(-50%, -50%)',
+                            transition: 'left 0.18s ease',
+                            zIndex: 10,
+                        }}
+                    >
+                        {/* Pill shadow base */}
+                        <div
+                            className="absolute inset-0 rounded-full bg-white dark:bg-[#2D2835]"
+                            style={{ boxShadow: '0 0.5px 4px rgba(0,0,0,0.14), 0 6px 13px rgba(0,0,0,0.18)' }}
+                        />
+
+                        {/* Morphing shape centred inside the pill */}
+                        <div
+                            className="absolute bg-[#be3627] dark:bg-[#D0BCFF]"
+                            style={{
+                                width: '22px',
+                                height: '22px',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                clipPath: shapeClip,
+                                transition: 'clip-path 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            }}
+                        />
+                    </div>
+
+                    {/* Number labels — absolutely positioned at the same stop % */}
+                    <div className="absolute left-0 right-0" style={{ top: 'calc(100% + 10px)' }}>
+                        {stops.map((stop, i) => {
+                            const pct = (i / (n - 1)) * 100;
+                            const active = i === curIndex;
+                            return (
+                                <span
+                                    key={`lbl-${stop}`}
+                                    className={`absolute text-[12px] font-bold tabular-nums transition-all duration-200 ${active
+                                        ? 'text-[#be3627] dark:text-[#D0BCFF]'
+                                        : 'text-[rgba(60,60,67,0.5)] dark:text-[rgba(202,196,208,0.5)]'
+                                        }`}
+                                    style={{
+                                        left: `${pct}%`,
+                                        transform: active
+                                            ? 'translateX(-50%) scale(1.1)'
+                                            : 'translateX(-50%) scale(1)',
+                                        transformOrigin: 'center top',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {stop}
+                                </span>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>
