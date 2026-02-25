@@ -1,149 +1,195 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
-const NUM_POINTS = 24;
-const ANGLE_STEP = (2 * Math.PI) / NUM_POINTS;
+// ── Shape geometry ──────────────────────────────────────────────────────────
+const NUM_PTS = 20;
 
 const SHAPE_FNS = [
-    // 0. Near-circle (smooth, minimal shape for smallest value)
-    (_i, _a) => 44,
-    // 1. Soft scallop
-    (i, _a) => i % 2 === 0 ? 46 : 38,
-    // 2. Petal / soft star
-    (_i, a) => 41 + 6 * Math.cos(5 * a),
-    // 3. 4-lobe organic blob
-    (_i, a) => 40 + 8 * Math.cos(4 * a + 0.4),
-    // 4. Bold starburst (biggest value)
-    (i, _a) => i % 2 === 0 ? 48 : 29,
+    // 0 → stop=10 → near-circle (smoothest)
+    (_i, a) => 38 + 1.5 * Math.cos(3 * a),
+    // 1 → stop=20 → soft scallop
+    (i, _a) => i % 2 === 0 ? 40 : 32,
+    // 2 → stop=30 → 5-petal flower
+    (_i, a) => 34 + 7 * Math.cos(5 * a),
+    // 3 → stop=40 → 4-lobe blob
+    (_i, a) => 33 + 9 * Math.cos(4 * a + 0.5),
+    // 4 → stop=50 → sharp starburst
+    (i, _a) => i % 2 === 0 ? 43 : 24,
 ];
 
-const computeShape = (fn) => {
-    const points = [];
-    for (let i = 0; i < NUM_POINTS; i++) {
-        const a = i * ANGLE_STEP;
+function computeShape(fn) {
+    const step = (2 * Math.PI) / NUM_PTS;
+    return Array.from({ length: NUM_PTS }, (_, i) => {
+        const a = i * step;
         const r = fn(i, a);
-        points.push([50 + r * Math.cos(a), 50 + r * Math.sin(a)]);
-    }
-    return points;
-};
+        return [50 + r * Math.cos(a), 50 + r * Math.sin(a)];
+    });
+}
 
-// One shape per stop (index 0-4 for stops 10-50)
-const SHAPE_INDICES = [0, 1, 2, 3, 4];
+const SHAPES = SHAPE_FNS.map(computeShape);
 
+function toClipPath(pts) {
+    return `polygon(${pts.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(', ')})`;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50] }) => {
-    const shapes = useMemo(() => SHAPE_INDICES.map(idx => computeShape(SHAPE_FNS[idx])), []);
-    const [dragging, setDragging] = useState(false);
-
-    const curIndex = stops.indexOf(value) !== -1 ? stops.indexOf(value) : 0;
+    const curIndex = Math.max(0, stops.indexOf(value));
     const progress = curIndex / (stops.length - 1);
 
-    const getPoly = (shapePoints) =>
-        `polygon(${shapePoints.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(', ')})`;
+    const trackRef = useRef(null);
+    const [active, setActive] = useState(false);
 
-    const handleInteraction = (e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const x = clientX - rect.left;
-        const p = Math.max(0, Math.min(1, x / rect.width));
-        const stopIdx = Math.round(p * (stops.length - 1));
-        onChange(stops[stopIdx]);
+    // Resolve pointer X → nearest stop index
+    const resolveIndex = (clientX) => {
+        const rect = trackRef.current?.getBoundingClientRect();
+        if (!rect) return curIndex;
+        const p = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        return Math.round(p * (stops.length - 1));
     };
+
+    const onDown = (clientX) => {
+        setActive(true);
+        onChange(stops[resolveIndex(clientX)]);
+    };
+    const onMove = (clientX) => {
+        if (!active) return;
+        onChange(stops[resolveIndex(clientX)]);
+    };
+    const onUp = () => setActive(false);
+
+    // ── Colors (CSS custom-prop aware) ──────────────────────────────────────
+    // Light: primary = #be3627  Dark: primary = #D0BCFF
+    // We use Tailwind dark: classes throughout.
+
+    const shapeClip = toClipPath(SHAPES[curIndex]);
+
+    // Knob left offset (percentage of track width, accounting for knob half-width)
+    const knobLeft = `${progress * 100}%`;
 
     return (
         <div
-            className="flex flex-col items-center select-none w-full"
-            style={{ padding: '4px 20px 40px' }}
+            className="select-none w-full"
+            style={{ padding: '8px 0 36px' }}
         >
-            <div className="relative w-full" style={{ height: '72px' }}>
-
-                {/* Touch/Mouse Interaction Layer */}
+            {/* ── Outer layout: [track area] ── */}
+            <div
+                ref={trackRef}
+                className="relative w-full cursor-pointer"
+                style={{ height: '44px' }}
+                onMouseDown={e => onDown(e.clientX)}
+                onMouseMove={e => { if (e.buttons === 1) onMove(e.clientX); }}
+                onMouseUp={onUp}
+                onMouseLeave={onUp}
+                onTouchStart={e => { e.preventDefault(); onDown(e.touches[0].clientX); }}
+                onTouchMove={e => { e.preventDefault(); onMove(e.touches[0].clientX); }}
+                onTouchEnd={onUp}
+            >
+                {/* ── Track (6px tall, rounded) ── */}
                 <div
-                    className="absolute inset-0 z-20 cursor-pointer touch-none"
-                    onMouseDown={(e) => { setDragging(true); handleInteraction(e); }}
-                    onMouseMove={(e) => { if (dragging || e.buttons === 1) handleInteraction(e); }}
-                    onMouseUp={() => setDragging(false)}
-                    onMouseLeave={() => setDragging(false)}
-                    onTouchStart={(e) => { setDragging(true); handleInteraction(e); }}
-                    onTouchMove={(e) => { e.preventDefault(); handleInteraction(e); }}
-                    onTouchEnd={() => setDragging(false)}
-                />
+                    className="absolute left-0 right-0 rounded-full overflow-hidden"
+                    style={{ height: '6px', top: 'calc(50% - 3px)' }}
+                >
+                    {/* Background track */}
+                    <div className="absolute inset-0 bg-[rgba(120,120,120,0.2)] dark:bg-white/15 rounded-full" />
+                    {/* Filled portion */}
+                    <div
+                        className="absolute left-0 top-0 bottom-0 rounded-full bg-[#be3627] dark:bg-[#D0BCFF]"
+                        style={{
+                            width: `${progress * 100}%`,
+                            transition: 'width 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                        }}
+                    />
+                </div>
 
-                {/* ── Track Background ── */}
-                <div
-                    className="absolute left-0 right-0 rounded-full bg-[#be3627]/12 dark:bg-white/10"
-                    style={{ height: '16px', top: 'calc(50% - 8px)' }}
-                />
-
-                {/* ── Active Fill Track ── */}
-                <div
-                    className="absolute left-0 rounded-full bg-[#be3627] dark:bg-[#D0BCFF]"
-                    style={{
-                        height: '16px',
-                        top: 'calc(50% - 8px)',
-                        width: `${progress * 100}%`,
-                        transition: 'width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                    }}
-                />
-
-                {/* ── Stop Ticks (subtle vertical lines on the track) ── */}
-                <div className="absolute inset-0 flex items-center justify-between" style={{ paddingLeft: '1px', paddingRight: '1px' }}>
-                    {stops.map((stop, i) => (
+                {/* ── Tick dots (4×4px, centred on each stop position, below track centre) ── */}
+                {stops.map((stop, i) => {
+                    const tickLeft = `${(i / (stops.length - 1)) * 100}%`;
+                    const isPassed = i < curIndex;
+                    const isCurrent = i === curIndex;
+                    return (
                         <div
                             key={`tick-${stop}`}
-                            className={`rounded-full transition-all duration-300 z-10 flex-shrink-0 ${i < curIndex
-                                    ? 'bg-white/50 dark:bg-[#141218]/40'
-                                    : i === curIndex
-                                        ? 'opacity-0'
-                                        : 'bg-[#be3627]/25 dark:bg-white/25'
-                                }`}
+                            className="absolute rounded-full pointer-events-none"
                             style={{
                                 width: '4px',
-                                height: i === curIndex ? '0px' : '10px',
-                                transition: 'all 0.3s ease'
+                                height: '4px',
+                                // Place ticks 9px below track centre (matches Apple spec: top = 50% - 4/2 + 9)
+                                top: 'calc(50% + 6px)',
+                                left: tickLeft,
+                                transform: 'translateX(-50%)',
+                                background: isCurrent
+                                    ? 'transparent'
+                                    : isPassed
+                                        ? 'rgba(255,255,255,0.5)'
+                                        : 'rgba(60,60,67,0.18)',
+                                transition: 'background 0.2s ease'
                             }}
                         />
-                    ))}
-                </div>
+                    );
+                })}
 
-                {/* ── Morphing Knob ── */}
+                {/* ── Knob: pill shape (38×28px) with morphing shape on top ── */}
                 <div
-                    className="absolute z-30 pointer-events-none bg-[#be3627] dark:bg-[#D0BCFF] flex items-center justify-center"
+                    className="absolute pointer-events-none"
                     style={{
-                        width: '56px',
-                        height: '56px',
                         top: '50%',
-                        left: `${progress * 100}%`,
+                        left: knobLeft,
                         transform: 'translate(-50%, -50%)',
-                        clipPath: getPoly(shapes[curIndex]),
-                        boxShadow: '0 8px 24px -4px rgba(0,0,0,0.35)',
-                        transition: 'left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        border: '4px solid',
-                        borderColor: 'var(--knob-border, white)'
+                        transition: 'left 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                        zIndex: 10,
+                        width: '44px',
+                        height: '28px',
                     }}
-                // We rely on CSS custom property; override via inline for dark detection fallback
                 >
-                    {/* Gloss overlay */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/25 to-transparent pointer-events-none" style={{ clipPath: 'inherit' }} />
-                    {/* Value text inside knob */}
-                    <span className="relative z-10 text-white dark:text-[#1D1B20] text-[13px] font-black leading-none select-none"
-                        style={{ textShadow: 'none' }}>
-                        {value}
-                    </span>
+                    {/* White pill with shadow — matches Apple reference knob */}
+                    <div
+                        className="absolute inset-0 rounded-full bg-white dark:bg-[#2D2835]"
+                        style={{
+                            boxShadow: '0px 0.5px 4px rgba(0,0,0,0.12), 0px 6px 13px rgba(0,0,0,0.16)'
+                        }}
+                    />
+
+                    {/* Morphing material shape floats centred on the pill */}
+                    <div
+                        className="absolute bg-[#be3627] dark:bg-[#D0BCFF]"
+                        style={{
+                            width: '26px',
+                            height: '26px',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            clipPath: shapeClip,
+                            transition: [
+                                'clip-path 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                'width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                'height 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            ].join(', '),
+                        }}
+                    />
                 </div>
 
-                {/* ── Stop Labels ── */}
-                <div className="absolute left-0 right-0 flex justify-between" style={{ top: 'calc(100% + 6px)' }}>
-                    {stops.map((stop, i) => (
-                        <div
-                            key={`label-${stop}`}
-                            className={`text-[12px] font-black tracking-tight transition-all duration-300 text-center ${i === curIndex
-                                    ? 'text-[#be3627] dark:text-[#D0BCFF] scale-110'
-                                    : 'text-[#5e413d]/50 dark:text-[#CAC4D0]/50 scale-100'
-                                }`}
-                            style={{ width: `${100 / stops.length}%`, transition: 'all 0.3s ease' }}
-                        >
-                            {stop}
-                        </div>
-                    ))}
+                {/* ── Number labels ── */}
+                <div className="absolute left-0 right-0 flex justify-between" style={{ top: 'calc(100% + 8px)' }}>
+                    {stops.map((stop, i) => {
+                        const isCurrent = i === curIndex;
+                        return (
+                            <span
+                                key={`label-${stop}`}
+                                className={`text-[13px] font-bold tabular-nums transition-all duration-200 ${isCurrent
+                                        ? 'text-[#be3627] dark:text-[#D0BCFF] scale-110'
+                                        : 'text-[rgba(60,60,67,0.55)] dark:text-[rgba(202,196,208,0.55)] scale-100'
+                                    }`}
+                                style={{
+                                    display: 'block',
+                                    width: `${100 / stops.length}%`,
+                                    textAlign: 'center',
+                                    transformOrigin: 'center bottom',
+                                }}
+                            >
+                                {stop}
+                            </span>
+                        );
+                    })}
                 </div>
             </div>
         </div>
@@ -151,5 +197,4 @@ const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50
 });
 
 M3ShapeSlider.displayName = 'M3ShapeSlider';
-
 export default M3ShapeSlider;

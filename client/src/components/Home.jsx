@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Map, User, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
@@ -60,22 +60,40 @@ const Home = () => {
         </M3Card>
     );
 
-    const PulseCard = ({ category, count, index }) => (
-        <M3Card
-            variant="elevated"
-            interactive
-            onClick={() => navigate(`/map?filter=${category}`)}
-            className="flex-shrink-0 w-64 bg-white dark:bg-white/5 dark:backdrop-blur-2xl border-[0.5px] border-white/30 dark:border-white/10 relative overflow-hidden group hover:border-white/60 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-            padding="p-6"
-        >
-            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-sq-xs animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
+    const carouselRef = useRef(null);
 
-            <h4 className="text-xl font-black text-[#1a100f] dark:text-white mb-1">{category}</h4>
-            <p className="text-sm text-primary font-black uppercase tracking-tight">{count} Active Nearby</p>
-            <div className="mt-4 h-1.5 w-full bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-main-rgb),0.5)]" style={{ width: '70%' }}></div>
+    const scrollCarousel = (dir) => {
+        if (carouselRef.current) {
+            carouselRef.current.scrollBy({ left: dir * 220, behavior: 'smooth' });
+        }
+    };
+
+    const PulseCard = ({ category, count }) => (
+        <div
+            className="flex-shrink-0 w-52 h-32 bg-white dark:bg-white/5 dark:backdrop-blur-2xl border border-white/40 dark:border-white/10 rounded-sq-2xl p-5 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:border-white/70 dark:hover:border-white/25 transition-all duration-200 active:scale-95 relative overflow-hidden group"
+            onClick={() => navigate(`/map?filter=${category}`)}
+        >
+            {/* Pulsing indicator */}
+            <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+
+            {/* Category name */}
+            <h4 className="text-[15px] font-black text-[#1a100f] dark:text-white leading-snug pr-4 group-hover:text-primary dark:group-hover:text-[#D0BCFF] transition-colors">
+                {category}
+            </h4>
+
+            {/* Bottom bar */}
+            <div>
+                <p className="text-xs text-primary dark:text-[#D0BCFF] font-black uppercase tracking-tight mb-2">
+                    {count} Active Nearby
+                </p>
+                <div className="h-1 w-full bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-primary dark:bg-[#D0BCFF] rounded-full"
+                        style={{ width: `${Math.min(100, (count / 15) * 100)}%` }}
+                    />
+                </div>
             </div>
-        </M3Card>
+        </div>
     );
 
     return (
@@ -124,17 +142,38 @@ const Home = () => {
 
                 {/* 4. Live Pulse Carousel (New Row) */}
                 {stats.topInterests && stats.topInterests.length > 0 && (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                                 Trending Near You (20km)
                             </h3>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => scrollCarousel(-1)}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-white/10 border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/20 transition-colors shadow-sm"
+                                    aria-label="Scroll left"
+                                >
+                                    <span className="material-symbols-outlined text-[18px] text-[#5e413d] dark:text-[#CAC4D0]">chevron_left</span>
+                                </button>
+                                <button
+                                    onClick={() => scrollCarousel(1)}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-white/10 border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/20 transition-colors shadow-sm"
+                                    aria-label="Scroll right"
+                                >
+                                    <span className="material-symbols-outlined text-[18px] text-[#5e413d] dark:text-[#CAC4D0]">chevron_right</span>
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+                        {/* Scrollable carousel — hidden scrollbar, snap, uniform card height */}
+                        <div
+                            ref={carouselRef}
+                            className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
                             {stats.topInterests.map((item, i) => (
-                                <div key={i} className="snap-start">
-                                    <PulseCard category={item.category} count={item.count} index={i} />
+                                <div key={i} className="snap-start flex-shrink-0">
+                                    <PulseCard category={item.category} count={item.count} />
                                 </div>
                             ))}
                         </div>

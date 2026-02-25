@@ -1246,6 +1246,7 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
         const userFriends = currentUser.friends || [];
 
         // 1. Friends Online Nearby (mutual friends within 20km)
+        // Seed bots (emails ending @konnect.com or @seed.konnect) are always counted as active
         let activeNearby = 0;
         if (userFriends.length > 0) {
             const result = await User.aggregate([
@@ -1256,10 +1257,20 @@ app.get('/api/stats/local', requireAuth, async (req, res) => {
                         maxDistance: maxDistance,
                         query: {
                             _id: { $in: userFriends },
-                            'location.coordinates': { $ne: [0, 0] },
-                            lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+                            'location.coordinates': { $ne: [0, 0] }
                         },
                         spherical: true
+                    }
+                },
+                {
+                    $match: {
+                        $or: [
+                            // Real users active within last 24h
+                            { lastLogin: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+                            // Seed bots always count as active
+                            { email: { $regex: /@konnect\.com$/ } },
+                            { email: { $regex: /@seed\.konnect$/ } }
+                        ]
                     }
                 },
                 { $count: "count" }
