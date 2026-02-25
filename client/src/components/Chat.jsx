@@ -101,7 +101,9 @@ const Chat = () => {
 
         const trimmed = newMessage.trim();
 
-        // Optimistically add the message to state so messages_read can update it
+        // Detect seed bot: email ends with @konnect.com
+        const isBot = friend.email?.endsWith('@konnect.com') || friend.isBot === true;
+
         const tempMsg = {
             _id: `temp_${Date.now()}`,
             sender: user._id,
@@ -110,7 +112,9 @@ const Chat = () => {
             receiver: friend._id,
             content: trimmed,
             text: trimmed,
-            status: 'sent',
+            // For bots: immediately show as read (blue ticks); for real users: sent
+            status: isBot ? 'read' : 'sent',
+            readAt: isBot ? new Date().toISOString() : null,
             createdAt: new Date().toISOString(),
             timestamp: new Date().toISOString()
         };
