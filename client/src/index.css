@@ -46,6 +46,7 @@
     --blur-tint: rgba(190, 54, 39, 0.05);
     /* Light Red Tint */
     --glass-border: rgba(190, 54, 39, 0.1);
+    --knob-border: #ffffff;
   }
 
   .dark {
@@ -71,6 +72,7 @@
     /* Light Purple Tint */
     /* Dark Mode Border */
     --glass-border: rgba(255, 255, 255, 0.2);
+    --knob-border: #141218;
   }
 }
 

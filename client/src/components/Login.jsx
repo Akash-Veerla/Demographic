@@ -105,8 +105,14 @@ const Login = () => {
                 </div>
 
                 {displayError && (
-                    <div className="mb-4 p-3 bg-error/10 text-error rounded-lg text-sm text-center font-medium">
-                        {displayError}
+                    <div className={`mb-4 p-3 rounded-lg text-sm text-center font-medium flex items-start gap-2 ${displayError.includes('already') || displayError.includes('login')
+                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/40'
+                            : 'bg-error/10 text-error'
+                        }`}>
+                        {(displayError.includes('already') || displayError.includes('login')) && (
+                            <span className="material-symbols-outlined text-[18px] text-blue-500 shrink-0 mt-0.5">info</span>
+                        )}
+                        <span>{displayError}</span>
                     </div>
                 )}
 

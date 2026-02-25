@@ -18,10 +18,12 @@ const Layout = ({ children }) => {
     const location = useLocation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const isNarrow = useMediaQuery('(max-width: 860px)'); // covers mobile + zoomed desktop
     const { toggleColorMode, mode } = useContext(ColorModeContext);
     const { socket } = useAuth();
 
     const [notifAlert, setNotifAlert] = useState(null);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     // 1. Request Notification Permission and handle Alert
     useEffect(() => {
@@ -162,24 +164,77 @@ const Layout = ({ children }) => {
                 position: 'relative',
                 zIndex: 1 // Content above background
             }}>
-                {/* Mobile Top Bar */}
-                {isMobile && user && (
-                    <div className="flex items-center justify-between px-4 h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl border-b border-white/30 dark:border-white/10 sticky top-0 z-50">
-                        <div className="flex items-center gap-2" onClick={() => navigate('/')}>
-                            <img src="/logo.svg" alt="App Logo" className="w-8 h-8 rounded-2xl shadow-sm drop-shadow-sm" />
-                            <span className="font-display font-bold text-lg tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
+                {/* Mobile / Narrow Top Bar */}
+                {isNarrow && user && (
+                    <>
+                        <div className="flex items-center justify-between px-4 h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl border-b border-white/30 dark:border-white/10 sticky top-0 z-50">
+                            <div className="flex items-center gap-2" onClick={() => { navigate('/'); setMenuOpen(false); }}>
+                                <img src="/logo.svg" alt="App Logo" className="w-8 h-8 rounded-2xl shadow-sm drop-shadow-sm" />
+                                <span className="font-display font-bold text-lg tracking-tight text-[#1a100f] dark:text-[#E6E1E5]">KON-NECT</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <M3Switch
+                                    checked={mode === 'dark'}
+                                    onChange={toggleColorMode}
+                                    iconOn="dark_mode"
+                                    iconOff="light_mode"
+                                />
+                                {/* Hamburger Button */}
+                                <button
+                                    id="hamburger-menu-btn"
+                                    aria-label="Toggle navigation menu"
+                                    aria-expanded={menuOpen}
+                                    onClick={() => setMenuOpen(prev => !prev)}
+                                    className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-sq-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                >
+                                    <span className={`block w-5 h-0.5 bg-[#1a100f] dark:bg-[#E6E1E5] rounded-full transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
+                                    <span className={`block w-5 h-0.5 bg-[#1a100f] dark:bg-[#E6E1E5] rounded-full transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
+                                    <span className={`block w-5 h-0.5 bg-[#1a100f] dark:bg-[#E6E1E5] rounded-full transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
+                                </button>
+                            </div>
                         </div>
-                        <M3Switch
-                            checked={mode === 'dark'}
-                            onChange={toggleColorMode}
-                            iconOn="dark_mode"
-                            iconOff="light_mode"
-                        />
-                    </div>
+
+                        {/* Slide-down Hamburger Menu */}
+                        <div
+                            className={`sticky top-16 z-40 overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'
+                                }`}
+                        >
+                            <div className="bg-white dark:bg-[#141218]/95 dark:backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-xl px-4 py-3 flex flex-col gap-1">
+                                {navItems.map(item => {
+                                    const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+                                    return (
+                                        <button
+                                            key={item.path}
+                                            onClick={() => { navigate(item.path); setMenuOpen(false); }}
+                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-sq-xl font-bold text-sm transition-all duration-200 ${isActive
+                                                ? 'bg-primary/10 dark:bg-[#D0BCFF]/10 text-primary dark:text-[#D0BCFF]'
+                                                : 'text-[#1a100f] dark:text-[#E6E1E5] hover:bg-gray-100 dark:hover:bg-white/8'
+                                                }`}
+                                        >
+                                            <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 600" : "'FILL' 0, 'wght' 400" }}>
+                                                {isActive ? item.activeIcon : item.icon}
+                                            </span>
+                                            {item.label}
+                                        </button>
+                                    );
+                                })}
+                                <div className="border-t border-gray-100 dark:border-white/10 mt-1 pt-2 flex items-center justify-between">
+                                    <button
+                                        onClick={() => { navigate('/profile'); setMenuOpen(false); }}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-sq-xl hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
+                                    >
+                                        <Avatar user={user} sx={{ width: 28, height: 28, border: '2px solid white' }} />
+                                        <span className="text-sm font-bold text-[#1a100f] dark:text-[#E6E1E5]">{user.displayName?.split(' ')[0]}</span>
+                                    </button>
+                                    <M3IconButton icon="logout" variant="standard" onClick={() => { handleLogout(); setMenuOpen(false); }} ariaLabel="Log out" size="default" />
+                                </div>
+                            </div>
+                        </div>
+                    </>
                 )}
 
-                {/* Desktop / Tablet Navbar (In Flow) */}
-                {!isMobile && user && (
+                {/* Desktop / Wide Navbar (In Flow) — only when not narrow */}
+                {!isNarrow && user && (
                     <div className={`w-[98%] max-w-[1400px] mx-auto ${location.pathname.startsWith('/map') ? 'mt-0 mb-2' : 'mt-6 mb-6'} h-16 bg-white dark:bg-[#141218]/10 dark:backdrop-blur-2xl rounded-sq-2xl shadow-xl flex items-center px-6 justify-between border-[0.5px] border-white/30 dark:border-white/10 shrink-0 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
                         {/* Brand */}
                         <div
@@ -265,8 +320,9 @@ const Layout = ({ children }) => {
                 </Box>
             </Box>
 
-            {/* Mobile Bottom Nav — M3 Navigation Bar */}
-            {isMobile && user && (
+            {/* Bottom Nav is replaced by the hamburger menu for narrow viewports */}
+            {/* Only show on the 860px-900px window gap (rare edge case) */}
+            {isMobile && !isNarrow && user && (
                 <M3NavBar items={navItems} />
             )}
 

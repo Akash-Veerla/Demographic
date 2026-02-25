@@ -567,10 +567,19 @@ const MapComponent = () => {
                 return;
             }
 
+            // Only use users within 20km radius for clustering (not global users)
+            const centerLonLat = toLonLat(center);
+            const radiusUsers = nearbyUsersList.filter(u => {
+                if (!u.location?.coordinates) return false;
+                if (u.location.coordinates[0] === 0 && u.location.coordinates[1] === 0) return false;
+                const dist = getDistance(centerLonLat, u.location.coordinates);
+                return dist <= 20000;
+            });
+
             // All coordinates for the bounding polygon
             const pointsVec = [center];
 
-            const matchingUsers = nearbyUsersList.filter(u => {
+            const matchingUsers = radiusUsers.filter(u => {
                 if (!u.interests || !user.interests) return false;
                 return u.interests.some(i => user.interests.includes(i));
             });
@@ -1084,7 +1093,12 @@ const MapComponent = () => {
                                     try {
                                         const res = await api.post('/api/friend-request/send', { toUserId: selectedUser._id });
                                         setAlertMessage(res.data.message);
-                                        setSelectedUser(prev => ({ ...prev, friendRequestSent: true }));
+                                        // If bot auto-accepted, update card to isFriend
+                                        if (res.data.status === 'accepted') {
+                                            setSelectedUser(prev => ({ ...prev, friendRequestSent: false, isFriend: true }));
+                                        } else {
+                                            setSelectedUser(prev => ({ ...prev, friendRequestSent: true }));
+                                        }
                                         fetchNearbyUsers();
                                     } catch (err) {
                                         setAlertMessage(err.response?.data?.error || 'Failed to send request');

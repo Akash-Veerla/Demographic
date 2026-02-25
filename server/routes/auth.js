@@ -38,6 +38,11 @@ router.get('/google/callback', (req, res, next) => {
 
         // Successful authentication
         try {
+            // If registering but user already exists with Google account → redirect to login with message
+            if (action === 'register' && info && info.isNew === false) {
+                return res.redirect(`${clientUrl}/login?error=${encodeURIComponent('You already have an account with us. Please login to continue.')}`);
+            }
+
             const token = jwt.sign(
                 { id: user._id },
                 process.env.JWT_SECRET,

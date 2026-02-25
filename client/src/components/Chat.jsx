@@ -51,7 +51,19 @@ const Chat = () => {
         socket.emit('mark_read', { roomId, senderId: friend._id });
 
         const handleReceive = (msg) => {
-            setMessages(prev => [...prev, msg]);
+            setMessages(prev => {
+                const isMe = msg.sender === user._id || msg.senderId === user._id;
+                if (isMe) {
+                    // Replace the optimistic temp message if it exists
+                    const tempIdx = prev.findIndex(m => m._id && m._id.startsWith('temp_') && m.content === (msg.content || msg.text));
+                    if (tempIdx !== -1) {
+                        const updated = [...prev];
+                        updated[tempIdx] = msg;
+                        return updated;
+                    }
+                }
+                return [...prev, msg];
+            });
             if (msg.senderId === friend._id || msg.sender === friend._id) {
                 socket.emit('mark_read', { roomId, senderId: friend._id });
             }
@@ -87,9 +99,26 @@ const Chat = () => {
         e.preventDefault();
         if (!newMessage.trim() || !socket || !friend) return;
 
+        const trimmed = newMessage.trim();
+
+        // Optimistically add the message to state so messages_read can update it
+        const tempMsg = {
+            _id: `temp_${Date.now()}`,
+            sender: user._id,
+            senderId: user._id,
+            senderName: user.displayName,
+            receiver: friend._id,
+            content: trimmed,
+            text: trimmed,
+            status: 'sent',
+            createdAt: new Date().toISOString(),
+            timestamp: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, tempMsg]);
+
         socket.emit('send_message', {
             roomId,
-            message: newMessage,
+            message: trimmed,
             receiverId: friend._id
         });
 

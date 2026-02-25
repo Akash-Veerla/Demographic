@@ -1,23 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 const NUM_POINTS = 24;
 const ANGLE_STEP = (2 * Math.PI) / NUM_POINTS;
 
 const SHAPE_FNS = [
-    // 0. Starburst
-    (i, a) => i % 2 === 0 ? 48 : 30,
-    // 1. Scalloped
-    (i, a) => i % 2 === 0 ? 47 : 38,
-    // 2. Soft pentagon
-    (i, a) => 44 + 3.5 * Math.cos(5 * a),
-    // 3. Near-circle
-    (i, _a) => 46,
-    // 4. Star flower
-    (i, a) => 40 + 8 * Math.cos(6 * a),
-    // 5. 4-lobe organic blob
-    (i, a) => 41 + 8 * Math.cos(4 * a + 0.4),
-    // 6. Egg
-    (i, a) => 43 + 6 * Math.cos(a),
+    // 0. Near-circle (smooth, minimal shape for smallest value)
+    (_i, _a) => 44,
+    // 1. Soft scallop
+    (i, _a) => i % 2 === 0 ? 46 : 38,
+    // 2. Petal / soft star
+    (_i, a) => 41 + 6 * Math.cos(5 * a),
+    // 3. 4-lobe organic blob
+    (_i, a) => 40 + 8 * Math.cos(4 * a + 0.4),
+    // 4. Bold starburst (biggest value)
+    (i, _a) => i % 2 === 0 ? 48 : 29,
 ];
 
 const computeShape = (fn) => {
@@ -30,104 +26,130 @@ const computeShape = (fn) => {
     return points;
 };
 
-const SELECTED_SHAPE_INDICES = [3, 2, 4, 5, 0]; // 10, 20, 30, 40, 50
+// One shape per stop (index 0-4 for stops 10-50)
+const SHAPE_INDICES = [0, 1, 2, 3, 4];
 
 const M3ShapeSlider = React.memo(({ value, onChange, stops = [10, 20, 30, 40, 50] }) => {
-    const shapes = useMemo(() => SELECTED_SHAPE_INDICES.map(idx => computeShape(SHAPE_FNS[idx])), []);
+    const shapes = useMemo(() => SHAPE_INDICES.map(idx => computeShape(SHAPE_FNS[idx])), []);
+    const [dragging, setDragging] = useState(false);
 
     const curIndex = stops.indexOf(value) !== -1 ? stops.indexOf(value) : 0;
     const progress = curIndex / (stops.length - 1);
 
-    const getPoly = (shapePoints) => {
-        return `polygon(${shapePoints.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(', ')})`;
-    };
+    const getPoly = (shapePoints) =>
+        `polygon(${shapePoints.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(', ')})`;
 
     const handleInteraction = (e) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const x = clientX - rect.left;
         const p = Math.max(0, Math.min(1, x / rect.width));
         const stopIdx = Math.round(p * (stops.length - 1));
         onChange(stops[stopIdx]);
     };
 
-    // Theme accurate colors: Red (#be3627) for Light, Purple (#D0BCFF) for Dark
-    const activeColorClass = "bg-[#be3627] dark:bg-[#D0BCFF]";
-    const activeTextColorClass = "text-[#be3627] dark:text-[#D0BCFF]";
-    const trackBgColorClass = "bg-[#be3627]/10 dark:bg-white/10";
-
     return (
         <div
-            className="flex flex-col items-center select-none w-full max-w-[450px]"
-            style={{ padding: '8px 24px 36px' }}
+            className="flex flex-col items-center select-none w-full"
+            style={{ padding: '4px 20px 40px' }}
         >
-            <div className="relative w-full h-[64px] flex items-center">
-                {/* Interaction Overlay */}
+            <div className="relative w-full" style={{ height: '72px' }}>
+
+                {/* Touch/Mouse Interaction Layer */}
                 <div
-                    className="absolute inset-0 z-20 cursor-pointer"
-                    onMouseDown={handleInteraction}
-                    onMouseMove={(e) => { if (e.buttons === 1) handleInteraction(e); }}
+                    className="absolute inset-0 z-20 cursor-pointer touch-none"
+                    onMouseDown={(e) => { setDragging(true); handleInteraction(e); }}
+                    onMouseMove={(e) => { if (dragging || e.buttons === 1) handleInteraction(e); }}
+                    onMouseUp={() => setDragging(false)}
+                    onMouseLeave={() => setDragging(false)}
+                    onTouchStart={(e) => { setDragging(true); handleInteraction(e); }}
+                    onTouchMove={(e) => { e.preventDefault(); handleInteraction(e); }}
+                    onTouchEnd={() => setDragging(false)}
                 />
 
-                {/* Track Background - Thickened to 18px */}
+                {/* ── Track Background ── */}
                 <div
-                    className={`absolute h-[18px] left-0 right-0 rounded-full ${trackBgColorClass}`}
-                    style={{ top: 'calc(50% - 9px)' }}
+                    className="absolute left-0 right-0 rounded-full bg-[#be3627]/12 dark:bg-white/10"
+                    style={{ height: '16px', top: 'calc(50% - 8px)' }}
                 />
 
-                {/* Fill Track - Thickened to 18px */}
+                {/* ── Active Fill Track ── */}
                 <div
-                    className={`absolute h-[18px] left-0 rounded-full transition-all duration-300 ease-out ${activeColorClass}`}
+                    className="absolute left-0 rounded-full bg-[#be3627] dark:bg-[#D0BCFF]"
                     style={{
-                        top: 'calc(50% - 9px)',
-                        width: `${progress * 100}%`
+                        height: '16px',
+                        top: 'calc(50% - 8px)',
+                        width: `${progress * 100}%`,
+                        transition: 'width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)'
                     }}
                 />
 
-                {/* Stop Points (Bold thick dots ON the track) */}
-                <div className="absolute inset-0 flex items-center justify-between px-[1px]">
+                {/* ── Stop Ticks (subtle vertical lines on the track) ── */}
+                <div className="absolute inset-0 flex items-center justify-between" style={{ paddingLeft: '1px', paddingRight: '1px' }}>
                     {stops.map((stop, i) => (
                         <div
-                            key={`point-${stop}`}
-                            className={`w-5 h-5 rounded-full transition-all duration-300 z-10 border-[2.5px] border-white dark:border-[#141218] shadow-md flex items-center justify-center ${i <= curIndex ? activeColorClass : 'bg-gray-300 dark:bg-gray-700'
+                            key={`tick-${stop}`}
+                            className={`rounded-full transition-all duration-300 z-10 flex-shrink-0 ${i < curIndex
+                                    ? 'bg-white/50 dark:bg-[#141218]/40'
+                                    : i === curIndex
+                                        ? 'opacity-0'
+                                        : 'bg-[#be3627]/25 dark:bg-white/25'
                                 }`}
                             style={{
-                                transform: i === curIndex ? 'scale(1.2)' : 'scale(1)'
+                                width: '4px',
+                                height: i === curIndex ? '0px' : '10px',
+                                transition: 'all 0.3s ease'
                             }}
-                        >
-                            {/* Inner dot to prevent mixing into the white border */}
-                            <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
-                        </div>
+                        />
                     ))}
                 </div>
 
-                {/* Stop Labels (Numbers 10-50 below) */}
-                <div className="absolute top-[115%] left-0 right-0 flex justify-between">
+                {/* ── Morphing Knob ── */}
+                <div
+                    className="absolute z-30 pointer-events-none bg-[#be3627] dark:bg-[#D0BCFF] flex items-center justify-center"
+                    style={{
+                        width: '56px',
+                        height: '56px',
+                        top: '50%',
+                        left: `${progress * 100}%`,
+                        transform: 'translate(-50%, -50%)',
+                        clipPath: getPoly(shapes[curIndex]),
+                        boxShadow: '0 8px 24px -4px rgba(0,0,0,0.35)',
+                        transition: 'left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        border: '4px solid',
+                        borderColor: 'var(--knob-border, white)'
+                    }}
+                // We rely on CSS custom property; override via inline for dark detection fallback
+                >
+                    {/* Gloss overlay */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/25 to-transparent pointer-events-none" style={{ clipPath: 'inherit' }} />
+                    {/* Value text inside knob */}
+                    <span className="relative z-10 text-white dark:text-[#1D1B20] text-[13px] font-black leading-none select-none"
+                        style={{ textShadow: 'none' }}>
+                        {value}
+                    </span>
+                </div>
+
+                {/* ── Stop Labels ── */}
+                <div className="absolute left-0 right-0 flex justify-between" style={{ top: 'calc(100% + 6px)' }}>
                     {stops.map((stop, i) => (
                         <div
                             key={`label-${stop}`}
-                            className={`text-[13px] font-black uppercase tracking-tight transition-all duration-300 w-10 text-center ${i === curIndex ? activeTextColorClass : 'text-[#5e413d]/60 dark:text-[#CAC4D0]/60'
+                            className={`text-[12px] font-black tracking-tight transition-all duration-300 text-center ${i === curIndex
+                                    ? 'text-[#be3627] dark:text-[#D0BCFF] scale-110'
+                                    : 'text-[#5e413d]/50 dark:text-[#CAC4D0]/50 scale-100'
                                 }`}
+                            style={{ width: `${100 / stops.length}%`, transition: 'all 0.3s ease' }}
                         >
                             {stop}
                         </div>
                     ))}
                 </div>
-
-                {/* Knob (The Morphing Shape) */}
-                <div
-                    className={`absolute w-14 h-14 shadow-[0_15px_35px_-5px_rgba(0,0,0,0.4)] z-30 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-all duration-500 ease-out border-[4px] border-white dark:border-[#141218] flex items-center justify-center ${activeColorClass}`}
-                    style={{
-                        left: `${progress * 100}%`,
-                        clipPath: getPoly(shapes[curIndex]),
-                        transition: 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), clip-path 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                    }}
-                >
-                    {/* Interior highlights to make it look premium */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent pointer-none" />
-                </div>
             </div>
         </div>
     );
 });
+
+M3ShapeSlider.displayName = 'M3ShapeSlider';
 
 export default M3ShapeSlider;
