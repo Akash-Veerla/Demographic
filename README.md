@@ -2,8 +2,6 @@
 
 **KON-NECT** is a real-time social discovery platform that helps you find and connect with people near you who share your interests. Open the map, see who's around, send a request, and start a real conversation — no algorithms, no endless feeds.
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/792a6f44-959b-44b8-8b6a-1af3107aa91d" />
-
 ---
 
 ## What KON-NECT Does
